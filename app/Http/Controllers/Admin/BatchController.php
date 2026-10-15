@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\PurchaseBatchRequest;
+use App\Models\Product;
+use App\Models\PurchaseBatch;
+use App\Models\Store;
+use App\Services\InventoryService;
+use Illuminate\Http\Request;
+
+class BatchController extends Controller
+{
+    public function index(Request $request, Store $store)
+    {
+        $batches = PurchaseBatch::where('store_id', $store->id)
+            ->with(['creator'])
+            ->withCount('items')
+            ->when($request->q, fn ($q, $term) => $q->where(function ($qq) use ($term) {
+                $qq->where('batch_code', 'like', "%{$term}%")
+                    ->orWhere('supplier_name', 'like', "%{$term}%");
+            }))
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->latest('purchase_date')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('admin.batches.index', compact('store', 'batches'));
+    }
+
+    public function create(Store $store)
+    {
+        $this->authorize('create', [PurchaseBatch::class, $store->id]);
+        $products = Product::forStore($store->id)->orderBy('name')->get(['id', 'name', 'sku']);
+
+        return view('admin.batches.form', compact('store', 'products'));
+    }
+
+    public function store(PurchaseBatchRequest $request, Store $store, InventoryService $inventory)
+    {
+        $data = $request->validated();
+
+        $batch = $inventory->createBatch(
+            $data + ['store_id' => $store->id],
+            $data['items'],
+            $request->user()
+        );
+
+        return redirect()->route('admin.batches.show', [$store, $batch])->with('status', 'Batch dibuat. Total biaya: Rp '.number_format($batch->totalCost(), 0, ',', '.'));
+    }
+
+    public function show(Store $store, PurchaseBatch $batch)
+    {
+        $this->ensureSameStore($store, $batch);
+        $this->authorize('view', $batch);
+        $batch->load(['items.product', 'creator']);
+
+        return view('admin.batches.show', compact('store', 'batch'));
+    }
+
+    public function cancel(Request $request, Store $store, PurchaseBatch $batch, InventoryService $inventory)
+    {
+        $this->ensureSameStore($store, $batch);
+        $this->authorize('cancel', $batch);
+
+        $request->validate(['reason' => ['nullable', 'string', 'max:1000']]);
+        $inventory->cancelBatch($batch, $request->user(), $request->reason);
+
+        return redirect()->route('admin.batches.show', [$store, $batch])->with('status', 'Batch dibatalkan dan stok dikembalikan.');
+    }
+
+    protected function ensureSameStore(Store $store, PurchaseBatch $batch): void
+    {
+        if ((int) $batch->store_id !== (int) $store->id) {
+            abort(404);
+        }
+    }
+}

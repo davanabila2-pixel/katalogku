@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /toko
+Allow: /sitemap.xml
+Disallow: /login
+Disallow: /register
+Disallow: /admin
+Disallow: /superadmin
+Disallow: /auth/
+
+Sitemap: /sitemap.xml

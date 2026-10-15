@@ -1,0 +1,31 @@
+@extends('layouts.dashboard')
+@section('title', ($category->exists ? 'Edit' : 'Tambah').' Kategori')
+@section('subtitle', $store->name)
+@section('nav')
+<a href="{{ route('admin.dashboard', $store) }}">Dashboard</a>
+<a href="{{ route('admin.profile.edit', $store) }}">Profil Toko</a>
+<a class="active" href="{{ route('admin.categories.index', $store) }}">Kategori</a>
+<a href="{{ route('admin.products.index', $store) }}">Produk</a>
+<a href="{{ route('admin.batches.index', $store) }}">Batch Pembelian</a>
+<a href="{{ route('admin.stock.index', $store) }}">Stok</a>
+@endsection
+@section('content')
+<div class="panel form-card">
+<form method="POST" action="{{ $category->exists ? route('admin.categories.update', [$store, $category]) : route('admin.categories.store', $store) }}" enctype="multipart/form-data">
+@csrf @if($category->exists)@method('PUT')@endif
+  <div class="field"><label>Nama</label><input class="input" type="text" name="name" value="{{ old('name', $category->name) }}" required></div>
+  <div class="field"><label>Slug (opsional — otomatis dari nama)</label><input class="input" type="text" name="slug" value="{{ old('slug', $category->slug) }}"></div>
+  <div class="field"><label>Kategori induk (opsional — jadikan subkategori)</label>
+    <select class="select" name="parent_id"><option value="">— Kategori utama —</option>
+    @foreach($parents as $p)<option value="{{ $p->id }}" {{ (string)old('parent_id', $category->parent_id) === (string)$p->id ? 'selected' : '' }}>{{ $p->name }}</option>@endforeach</select></div>
+  <div class="field"><label>Deskripsi</label><textarea class="textarea" name="description">{{ old('description', $category->description) }}</textarea></div>
+  <div class="form-row">
+    <div class="field"><label>Urutan tampil</label><input class="input" type="number" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}" min="0"></div>
+    <div class="field"><label>&nbsp;</label><label style="font-weight:400"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $category->is_active ?? true) ? 'checked' : '' }}> Aktif (tampil di katalog)</label></div>
+  </div>
+  <div class="field"><label>Gambar (opsional)</label><input type="file" name="image" accept="image/*"></div>
+  <button class="btn btn-buy" type="submit">Simpan</button>
+  <a class="btn btn-ghost" href="{{ route('admin.categories.index', $store) }}">Batal</a>
+</form>
+</div>
+@endsection
