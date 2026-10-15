@@ -48,6 +48,7 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'superadmi
 // ---- Admin toko ----
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('no-store', [AuthController::class, 'noStore'])->name('nostore');
+    Route::post('stores', [AuthController::class, 'createStore'])->name('stores.store');
 
     Route::middleware('store.access')->prefix('{store}')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');

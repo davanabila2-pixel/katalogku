@@ -59,22 +59,94 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'account_type' => ['required', 'in:user,toko'],
+            'store_name' => ['required_if:account_type,toko', 'nullable', 'string', 'max:100'],
+            'store_description' => ['nullable', 'string', 'max:2000'],
+            'store_contact' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'role' => 'admin',
-            'is_active' => true,
-        ]);
+        $store = null;
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($data, &$store) {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'role' => 'admin',
+                'is_active' => true,
+            ]);
 
-        AuditLogger::log('auth.register', $user, "Akun admin {$user->email} terdaftar.", null, $user);
+            AuditLogger::log('auth.register', $user, "Akun admin {$user->email} terdaftar.", null, $user);
+
+            if (($data['account_type'] ?? 'user') === 'toko') {
+                $store = $this->makeStoreFor($user, $data['store_name'], [
+                    'description' => $data['store_description'] ?? null,
+                    'contact_information' => $data['store_contact'] ?? null,
+                ]);
+            }
+
+            return $user;
+        });
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('admin.nostore')->with('status', 'Akun dibuat. Minta Superadmin menautkan akun Anda ke toko.');
+        if ($store) {
+            return redirect()->route('admin.dashboard', $store)
+                ->with('status', "Toko {$store->name} dibuat. Katalog publik: {$store->url()}");
+        }
+
+        return redirect()->route('admin.nostore')->with('status', 'Akun dibuat. Anda bisa membuat toko sendiri atau menunggu Superadmin menautkan Anda ke toko.');
+    }
+
+    /**
+     * User yang sudah login (mis. via Google) membuat tokonya sendiri
+     * dan otomatis menjadi admin utama toko tersebut.
+     */
+    public function createStore(Request $request)
+    {
+        $data = $request->validate([
+            'store_name' => ['required', 'string', 'max:100'],
+            'store_description' => ['nullable', 'string', 'max:2000'],
+            'store_contact' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $user = $request->user();
+        if (! $user->is_active) {
+            abort(403, 'Akun tidak aktif.');
+        }
+
+        $store = \Illuminate\Support\Facades\DB::transaction(function () use ($user, $data) {
+            return $this->makeStoreFor($user, $data['store_name'], [
+                'description' => $data['store_description'] ?? null,
+                'contact_information' => $data['store_contact'] ?? null,
+            ]);
+        });
+
+        return redirect()->route('admin.dashboard', $store)
+            ->with('status', "Toko {$store->name} dibuat. Katalog publik: {$store->url()}");
+    }
+
+    protected function makeStoreFor(User $user, string $storeName, array $extra = []): \App\Models\Store
+    {
+        $store = \App\Models\Store::create([
+            'name' => $storeName,
+            'description' => $extra['description'] ?? null,
+            'contact_information' => $extra['contact_information'] ?? null,
+            'status' => 'active',
+        ]);
+
+        $store->users()->syncWithoutDetaching([$user->id => ['is_primary' => true]]);
+
+        AuditLogger::log(
+            'store.created.self',
+            $store,
+            "Toko {$store->name} dibuat via registrasi oleh {$user->email}.",
+            ['url' => $store->url()],
+            $user,
+            $store->id
+        );
+
+        return $store;
     }
 
     public function logout(Request $request)

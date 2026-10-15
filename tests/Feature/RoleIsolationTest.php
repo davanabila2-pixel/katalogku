@@ -87,6 +87,7 @@ class RoleIsolationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Nakal', 'email' => 'nakal@x.com',
             'password' => 'password123', 'password_confirmation' => 'password123',
+            'account_type' => 'user',
             'role' => 'superadmin',
         ]);
 

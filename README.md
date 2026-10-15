@@ -59,7 +59,16 @@ SUPERADMIN_EMAIL=superadmin@example.com SUPERADMIN_PASSWORD=yang-kuat \
 php artisan serve
 ```
 
-Buka `http://localhost:8000`. Login sebagai Superadmin, buat toko + tautkan admin.
+Buka `http://localhost:8000`. Ada dua cara masuk sebagai admin:
+
+- **Daftar sebagai Toko** (`/register` → pilih "Toko", isi nama toko):
+  akun + toko baru langsung dibuat, Anda menjadi **admin utama**,
+  dan katalog publik (`/{slug-toko}`) langsung hidup.
+- **Daftar sebagai Pengguna**: akun saja; buat toko sendiri nanti di halaman
+  `admin/no-store`, atau minta Superadmin menautkan Anda ke toko
+  (termasuk akun yang masuk via Google).
+
+Login sebagai Superadmin untuk membuat/menonaktifkan toko dan mengatur admin.
 
 > Demo lokal (opsional, JANGAN di production):
 > `php artisan db:seed --class=Database\Seeders\DemoSeeder` → `/toko-1`, `/toko-2`.
