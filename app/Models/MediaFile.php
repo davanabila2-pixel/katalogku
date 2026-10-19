@@ -40,14 +40,6 @@ class MediaFile extends Model
 
     public function url(): ?string
     {
-        if ($this->public_url) {
-            return $this->public_url;
-        }
-
-        if ($this->disk === 'local' && $this->file_name) {
-            return asset('storage/'.$this->file_name);
-        }
-
-        return null;
+        return $this->public_url ?: null;
     }
 }

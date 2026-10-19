@@ -20,6 +20,17 @@
   <div class="field"><label>Kontak</label><input class="input" type="text" name="contact_information" value="{{ old('contact_information', $store->contact_information) }}"></div>
   <div class="field"><label>Alamat</label><textarea class="textarea" name="address">{{ old('address', $store->address) }}</textarea></div>
   <div class="field"><label>Logo</label><input type="file" name="logo" accept="image/*"></div>
+  <div class="field" style="margin-bottom:20px;padding:14px;background:var(--surface-soft);border-radius:var(--r-lg)">
+    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin:0">
+      <input type="checkbox" name="hide_component_products" value="1" {{ old('hide_component_products', $store->hide_component_products) ? 'checked' : '' }} style="margin-top:3px;width:16px;height:16px">
+      <div>
+        <strong>Sembunyikan otomatis produk satuan komponen setelan</strong>
+        <div style="font-size:13px;color:var(--steel);margin-top:2px">
+          Semua produk tunggal yang telah digabungkan ke dalam paket setelan akan otomatis disembunyikan dari etalase katalog publik toko.
+        </div>
+      </div>
+    </label>
+  </div>
   <button class="btn btn-buy" type="submit">Simpan</button>
 </form>
 </div>

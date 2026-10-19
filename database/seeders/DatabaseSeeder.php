@@ -26,5 +26,7 @@ class DatabaseSeeder extends Seeder
         } else {
             $this->command->info('Superadmin sudah ada, dilewati.');
         }
+
+        $this->call(CategoryHierarchySeeder::class);
     }
 }

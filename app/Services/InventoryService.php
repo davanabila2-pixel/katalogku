@@ -43,6 +43,12 @@ class InventoryService
                     ]);
                 }
 
+                if ($product->isBundle()) {
+                    throw ValidationException::withMessages([
+                        'items' => "Produk '{$product->name}' adalah produk setelan (bundle). Stoknya dihitung otomatis dari komponen dan tidak dapat dibeli via batch.",
+                    ]);
+                }
+
                 $allocated = $itemsSubtotal > 0
                     ? round($additional * (($row['quantity'] * $row['unit_purchase_price']) / $itemsSubtotal), 2)
                     : 0;
@@ -69,6 +75,10 @@ class InventoryService
                 ]);
 
                 $product->increment('stock', $row['quantity']);
+
+                foreach ($product->partOfBundles as $bundle) {
+                    $bundle->syncBundleStock();
+                }
             }
 
             AuditLogger::log(
@@ -109,6 +119,10 @@ class InventoryService
                 ]);
 
                 $product->decrement('stock', $item->quantity);
+
+                foreach ($product->partOfBundles as $bundle) {
+                    $bundle->syncBundleStock();
+                }
             }
 
             $batch->update(['status' => 'cancelled']);
@@ -119,6 +133,12 @@ class InventoryService
 
     public function adjustStock(Product $product, int $quantity, User $user, ?string $reason = null): StockMovement
     {
+        if ($product->isBundle()) {
+            throw ValidationException::withMessages([
+                'quantity' => "Produk '{$product->name}' adalah produk setelan (bundle). Stoknya mengikuti produk komponen penyusunnya dan tidak dapat dikoreksi manual.",
+            ]);
+        }
+
         if ($quantity === 0) {
             throw ValidationException::withMessages(['quantity' => 'Kuantitas koreksi tidak boleh nol.']);
         }
@@ -140,6 +160,10 @@ class InventoryService
             ]);
 
             $product->increment('stock', $quantity);
+
+            foreach ($product->partOfBundles as $bundle) {
+                $bundle->syncBundleStock();
+            }
 
             AuditLogger::log(
                 'stock.adjusted',

@@ -15,7 +15,7 @@
 <div class="grid grid-4">
   @foreach($stores as $store)
   <a class="card-photo" href="{{ $store->url() }}">
-    <img src="{{ $store->logo_path ? asset('storage/'.$store->logo_path) : asset('images/product-fallback.svg') }}" alt="{{ $store->name }}" loading="lazy">
+    <img src="{{ $store->logoUrl() ?? asset('images/product-fallback.svg') }}" alt="{{ $store->name }}" loading="lazy">
     <div class="card-photo-body"><h3>{{ $store->name }}</h3><div class="store-name">{{ $store->products()->where('status','active')->count() }} produk</div></div>
   </a>
   @endforeach

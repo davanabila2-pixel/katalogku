@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\HppService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -15,9 +16,13 @@ class Product extends Model
     protected $fillable = [
         'store_id',
         'category_id',
+        'is_bundle',
+        'is_hidden_from_catalog',
         'name',
         'slug',
         'sku',
+        'barcode',
+        'barcode_image_path',
         'description',
         'selling_price',
         'stock',
@@ -28,6 +33,8 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'is_bundle' => 'boolean',
+            'is_hidden_from_catalog' => 'boolean',
             'selling_price' => 'decimal:2',
             'stock' => 'integer',
         ];
@@ -53,9 +60,98 @@ class Product extends Model
         return $this->hasMany(StockMovement::class)->orderByDesc('created_at')->orderByDesc('id');
     }
 
+    public function bundleItems(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_bundles', 'bundle_id', 'item_product_id')
+            ->using(ProductBundle::class)
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function partOfBundles(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_bundles', 'item_product_id', 'bundle_id')
+            ->using(ProductBundle::class)
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function isBundle(): bool
+    {
+        return (bool) $this->is_bundle;
+    }
+
+    public function calculateBundleStock(): int
+    {
+        if (! $this->isBundle()) {
+            return (int) ($this->attributes['stock'] ?? 0);
+        }
+
+        $items = $this->bundleItems;
+        if ($items->isEmpty()) {
+            return 0;
+        }
+
+        $possibleSets = [];
+        foreach ($items as $item) {
+            if ($item->status !== 'active') {
+                return 0;
+            }
+
+            $needed = max(1, (int) ($item->pivot->quantity ?? 1));
+            $available = max(0, (int) $item->stock);
+            $possibleSets[] = intdiv($available, $needed);
+        }
+
+        return ! empty($possibleSets) ? min($possibleSets) : 0;
+    }
+
+    public function getStockAttribute($value): int
+    {
+        if ($this->isBundle()) {
+            return $this->calculateBundleStock();
+        }
+
+        return (int) $value;
+    }
+
+    public function syncBundleStock(): void
+    {
+        if ($this->isBundle()) {
+            $this->unsetRelation('bundleItems');
+            $calculated = $this->calculateBundleStock();
+            $this->updateQuietly(['stock' => $calculated]);
+        }
+    }
+
+    public function bundleOriginalPrice(): float
+    {
+        if (! $this->isBundle()) {
+            return (float) $this->selling_price;
+        }
+
+        return (float) $this->bundleItems->sum(function ($item) {
+            return (float) $item->selling_price * (int) ($item->pivot->quantity ?? 1);
+        });
+    }
+
+    public function bundleSavings(): float
+    {
+        $original = $this->bundleOriginalPrice();
+        $selling = (float) $this->selling_price;
+
+        return max(0.0, round($original - $selling, 2));
+    }
+
+    public function isHiddenFromCatalog(): bool
+    {
+        return (bool) $this->is_hidden_from_catalog;
+    }
+
     public function scopePubliclyVisible($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', 'active')
+            ->where('is_hidden_from_catalog', false);
     }
 
     public function scopeForStore($query, int $storeId)
@@ -70,7 +166,7 @@ class Product extends Model
 
     public function isPubliclyVisible(): bool
     {
-        return $this->status === 'active';
+        return $this->status === 'active' && ! $this->is_hidden_from_catalog;
     }
 
     public function inStock(): bool
@@ -95,10 +191,20 @@ class Product extends Model
             return $this->image_path;
         }
 
-        if ($this->image_path) {
-            return asset('storage/'.$this->image_path);
+        return asset('images/product-fallback.svg');
+    }
+
+    public function barcodeUrl(): ?string
+    {
+        if ($this->barcode_image_path && str_starts_with($this->barcode_image_path, 'http')) {
+            return $this->barcode_image_path;
         }
 
-        return asset('images/product-fallback.svg');
+        return null;
+    }
+
+    public function scanUrl(): string
+    {
+        return route('product.scan', $this->barcode ?? $this->id);
     }
 }

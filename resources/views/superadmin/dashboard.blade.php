@@ -18,7 +18,30 @@
   <div class="stat-card"><div class="num">{{ $stats['products'] }}</div><div class="lbl">Produk</div></div>
   <div class="stat-card"><div class="num">{{ $stats['categories'] }}</div><div class="lbl">Kategori</div></div>
   <div class="stat-card"><div class="num">{{ $stats['batches'] }}</div><div class="lbl">Batch</div></div>
-  <div class="stat-card"><div class="num">{{ $stats['stock'] }}</div><div class="lbl">Total stok</div></div>
+</div>
+<div class="panel" style="margin-bottom:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <h2 style="margin:0 0 4px;font-size:16px">Penyimpanan Media (Google Drive)</h2>
+      <p style="margin:0;font-size:14px;color:var(--steel)">
+        @if($driveStatus['configured'])
+          <span class="badge badge-success">Google Drive Aktif</span> Gambar otomatis tersimpan ke cloud (Folder ID: <code>{{ $driveStatus['folder_id'] }}</code>).
+        @else
+          <span class="badge badge-neutral">Fallback Lokal Aktif</span> Gambar disimpan di server lokal (<code>public/storage</code>).
+          @if(!$driveStatus['has_token'])
+            · Token Drive belum terhubung.
+          @elseif(!$driveStatus['folder_id'])
+            · Masukkan <code>GOOGLE_DRIVE_ROOT_FOLDER_ID</code> di <code>.env</code> untuk mengaktifkan.
+          @endif
+        @endif
+      </p>
+    </div>
+    @if(!$driveStatus['has_token'] && $driveStatus['has_client'])
+      <div>
+        <a href="{{ route('superadmin.drive.connect') }}" class="btn btn-primary btn-sm">Hubungkan Google Drive</a>
+      </div>
+    @endif
+  </div>
 </div>
 <div class="grid" style="grid-template-columns:1fr 1fr">
   <div class="panel"><h2>Toko terbaru</h2>

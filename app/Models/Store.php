@@ -20,7 +20,15 @@ class Store extends Model
         'contact_information',
         'address',
         'status',
+        'hide_component_products',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'hide_component_products' => 'boolean',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -96,5 +104,18 @@ class Store extends Model
     public function url(): string
     {
         return url('/'.$this->slug);
+    }
+
+    public function logoUrl(): ?string
+    {
+        if (! $this->logo_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->logo_path, 'http://') || str_starts_with($this->logo_path, 'https://')) {
+            return $this->logo_path;
+        }
+
+        return null;
     }
 }

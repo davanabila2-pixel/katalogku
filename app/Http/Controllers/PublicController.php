@@ -16,7 +16,7 @@ class PublicController extends Controller
         $products = Product::query()
             ->where('status', 'active')
             ->whereHas('store', fn ($q) => $q->where('status', 'active'))
-            ->with(['store', 'category'])
+            ->with(['store', 'category', 'bundleItems'])
             ->latest()
             ->take(8)
             ->get();
@@ -105,7 +105,11 @@ class PublicController extends Controller
 
         $products = Product::forStore($store->id)
             ->publiclyVisible()
-            ->with(['category'])
+            ->when($store->hide_component_products, fn ($q) => $q->where(function ($qq) {
+                $qq->where('is_bundle', true)
+                    ->orWhereDoesntHave('partOfBundles', fn ($b) => $b->where('status', 'active'));
+            }))
+            ->with(['category', 'store', 'bundleItems'])
             ->when($categoryIds, fn ($q) => $q->whereIn('category_id', $categoryIds))
             ->when($request->q, fn ($q, $term) => $q->where(function ($qq) use ($term) {
                 $qq->where('name', 'like', "%{$term}%")
@@ -128,7 +132,7 @@ class PublicController extends Controller
             'canonical' => $category
                 ? url("/{$store->slug}/kategori/{$category->slug}")
                 : $store->url(),
-            'image' => $store->logo_path ? asset('storage/'.$store->logo_path) : null,
+            'image' => $store->logoUrl(),
         ];
 
         return view('public.store', compact('store', 'rootCategories', 'activeCategory', 'products', 'seo'));
@@ -145,11 +149,20 @@ class PublicController extends Controller
         $product = Product::forStore($store->id)
             ->where('slug', $productSlug)
             ->where('status', 'active')
-            ->with(['category', 'store'])
+            ->with([
+                'category',
+                'store',
+                'bundleItems' => fn ($q) => $q->where('status', 'active'),
+                'partOfBundles' => fn ($q) => $q->where('status', 'active'),
+            ])
             ->firstOrFail();
 
         $related = Product::forStore($store->id)
             ->publiclyVisible()
+            ->when($store->hide_component_products, fn ($q) => $q->where(function ($qq) {
+                $qq->where('is_bundle', true)
+                    ->orWhereDoesntHave('partOfBundles', fn ($b) => $b->where('status', 'active'));
+            }))
             ->where('id', '!=', $product->id)
             ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
             ->take(4)
@@ -162,7 +175,15 @@ class PublicController extends Controller
             'image' => $product->imageUrl(),
         ];
 
-        return view('public.product', compact('store', 'product', 'related', 'seo'));
+        $rootCategories = Category::forStore($store->id)
+            ->active()
+            ->roots()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->take(5)
+            ->get();
+
+        return view('public.product', compact('store', 'product', 'related', 'seo', 'rootCategories'));
     }
 
     public function sitemap()

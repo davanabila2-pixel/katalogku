@@ -7,10 +7,12 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController as AdminStockController;
 use App\Http\Controllers\Admin\StoreProfileController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BarcodeScanController;
 use App\Http\Controllers\GoogleOAuthController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Superadmin\CatalogController as SuperadminCatalogController;
 use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardController;
+use App\Http\Controllers\Superadmin\GoogleDriveController;
 use App\Http\Controllers\Superadmin\StoreController as SuperadminStoreController;
 use App\Http\Controllers\Superadmin\UserController as SuperadminUserController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('/toko', [PublicController::class, 'stores'])->name('stores.index');
 Route::get('/sitemap.xml', [PublicController::class, 'sitemap'])->name('sitemap');
+Route::get('/scan/{code}', [BarcodeScanController::class, 'scan'])->name('product.scan');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -30,6 +33,13 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::get('/sanctum/csrf-cookie', function () {
+    $response = response()->json(['status' => 'success']);
+    return $response->withHeaders([
+        'X-CSRF-TOKEN' => csrf_token(),
+    ]);
+});
 
 // ---- Superadmin ----
 Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'superadmin'])->group(function () {
@@ -43,6 +53,8 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'superadmi
     Route::get('batch', [SuperadminCatalogController::class, 'batches'])->name('batches');
     Route::get('stok', [SuperadminCatalogController::class, 'stock'])->name('stock');
     Route::get('audit', [SuperadminCatalogController::class, 'audit'])->name('audit');
+    Route::get('drive/connect', [GoogleDriveController::class, 'connect'])->name('drive.connect');
+    Route::get('drive/callback', [GoogleDriveController::class, 'callback'])->name('drive.callback');
 });
 
 // ---- Admin toko ----
@@ -58,6 +70,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::resource('categories', AdminCategoryController::class)->except(['show']);
         Route::resource('products', AdminProductController::class)->except(['show']);
         Route::post('products/{product}/adjust', [AdminProductController::class, 'adjust'])->name('products.adjust');
+        Route::post('products/{product}/barcode/regenerate', [AdminProductController::class, 'regenerateBarcode'])->name('products.barcode.regenerate');
 
         Route::get('batches', [AdminBatchController::class, 'index'])->name('batches.index');
         Route::get('batches/create', [AdminBatchController::class, 'create'])->name('batches.create');

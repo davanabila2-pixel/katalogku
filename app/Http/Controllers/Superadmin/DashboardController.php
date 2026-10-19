@@ -27,6 +27,13 @@ class DashboardController extends Controller
         $latestStores = Store::withCount(['products', 'categories'])->latest()->take(5)->get();
         $activity = AuditLog::with(['user', 'store'])->latest('created_at')->take(10)->get();
 
-        return view('superadmin.dashboard', compact('stats', 'latestStores', 'activity'));
+        $driveStatus = [
+            'configured' => app(\App\Services\GoogleDriveService::class)->isConfigured(),
+            'has_token' => (bool) (config('services.google_drive.refresh_token') || file_exists(storage_path('app/drive-token.json'))),
+            'has_client' => (bool) (config('services.google_drive.client_id') && config('services.google_drive.client_secret')),
+            'folder_id' => config('services.google_drive.root_folder_id'),
+        ];
+
+        return view('superadmin.dashboard', compact('stats', 'latestStores', 'activity', 'driveStatus'));
     }
 }

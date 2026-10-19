@@ -34,7 +34,10 @@ class StoreProfileController extends Controller
             'contact_information' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'hide_component_products' => ['nullable', 'boolean'],
         ]);
+
+        $data['hide_component_products'] = (bool) ($request->hide_component_products ?? false);
 
         if (! empty($data['slug'])) {
             if (SlugService::isReserved(strtolower($data['slug'])) && $data['slug'] !== $store->slug) {

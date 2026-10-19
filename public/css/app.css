@@ -34,8 +34,8 @@ body {
   font-feature-settings: "ss01", "ss02";
   line-height: 1.5;
 }
-a { color: inherit; }
-.container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+.container { width: 100%; max-width: 100%; margin: 0; padding: 0 40px; }
+@media (max-width: 1023px) { .container { padding: 0 24px; } }
 @media (max-width: 767px) { .container { padding: 0 16px; } }
 
 /* Header */
@@ -46,6 +46,24 @@ a { color: inherit; }
 .pillnav { display: flex; gap: 8px; margin-left: 16px; }
 @media (max-width: 767px) { .pillnav { display: none; } }
 .topbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+/* Topbar Toko */
+.topbar-store-left { display: flex; align-items: center; gap: 12px; }
+.topbar-back-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--r-full); background: var(--surface-soft); font-size: 13px; font-weight: 600; color: var(--steel); text-decoration: none; transition: background .15s ease, color .15s ease; }
+.topbar-back-pill:hover { background: var(--hairline-soft); color: var(--ink-deep); }
+.topbar-divider { width: 1px; height: 24px; background: var(--hairline-soft); }
+.store-brand-link { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.store-topbar-logo { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; border: 1px solid var(--hairline-soft); }
+.store-topbar-initial { width: 34px; height: 34px; border-radius: 8px; background: var(--primary); color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.store-brand-name { font-weight: 700; font-size: 18px; color: var(--ink-deep); letter-spacing: -0.3px; }
+.store-contact-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--success) !important; border-color: rgba(49,162,76,.3) !important; }
+.store-contact-btn:hover { background: #e6f6ea !important; }
+
+@media (max-width: 767px) {
+  .topbar-back-pill span { display: none; }
+  .topbar-back-pill { padding: 8px; }
+  .store-brand-name { font-size: 15px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
 
 /* Buttons — pill selalu */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-full); font-size: 14px; font-weight: 700; letter-spacing: -0.14px; padding: 14px 30px; text-decoration: none; cursor: pointer; border: none; transition: background 150ms ease-out; }
@@ -73,9 +91,8 @@ a { color: inherit; }
 .section-title { font-size: 36px; font-weight: 500; margin: 64px 0 8px; }
 .section-sub { color: var(--steel); margin: 0 0 24px; }
 .grid { display: grid; gap: 24px; }
-.grid-4 { grid-template-columns: repeat(4, 1fr); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 1023px) { .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+.grid-4 { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 @media (max-width: 767px) { .grid-4, .grid-3 { grid-template-columns: 1fr; } }
 .card { background: var(--canvas); border: 1px solid var(--hairline-soft); border-radius: var(--r-xxxl); padding: 32px; }
 .card-photo { border-radius: var(--r-xxxl); overflow: hidden; background: var(--surface-soft); text-decoration: none; display: block; }
@@ -92,6 +109,7 @@ a { color: inherit; }
 .badge-warning { background: var(--f2a918, #f2a918); background: var(--attention); color: #fff; }
 .badge-critical { background: var(--critical); color: #fff; }
 .badge-neutral { background: var(--surface-soft); color: var(--charcoal); }
+.badge-bundle { background: #e0e7ff; color: #3730a3; }
 
 /* Forms */
 .field { margin-bottom: 16px; }

@@ -97,6 +97,9 @@ class CategoryController extends Controller
         }
 
         $name = $category->name;
+        if ($category->image_path) {
+            $this->deleteImage($store, $category->image_path);
+        }
         $category->delete();
         AuditLogger::log('category.deleted', null, "Kategori {$name} dihapus.", ['store_id' => $store->id], $request->user(), $store->id);
 

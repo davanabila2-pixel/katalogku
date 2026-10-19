@@ -12,7 +12,7 @@ class SlugService
     /** Slug yang dicadangkan untuk route sistem — tidak boleh dipakai toko. */
     public const RESERVED = [
         'login', 'logout', 'register', 'admin', 'superadmin', 'dashboard',
-        'api', 'oauth', 'auth', 'toko', 'kategori', 'produk', 'storage',
+        'api', 'oauth', 'auth', 'toko', 'kategori', 'produk', 'storage', 'scan', 'barcode',
         'build', 'assets', 'css', 'js', 'images', 'favicon.ico',
         'password', 'email', 'profil', 'profile', 'cart', 'checkout',
         'search', 'cari', 'sitemap.xml', 'robots.txt', '.well-known',

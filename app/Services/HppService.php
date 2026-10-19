@@ -23,6 +23,21 @@ class HppService
 {
     public function hppForProduct(Product $product): ?float
     {
+        if ($product->isBundle()) {
+            $totalBundleHpp = 0.0;
+            $hasAnyHpp = false;
+            foreach ($product->bundleItems as $item) {
+                $itemHpp = $this->hppForProduct($item);
+                if ($itemHpp !== null) {
+                    $hasAnyHpp = true;
+                    $qty = (int) ($item->pivot->quantity ?? 1);
+                    $totalBundleHpp += $itemHpp * $qty;
+                }
+            }
+
+            return $hasAnyHpp ? round($totalBundleHpp, 2) : null;
+        }
+
         $items = PurchaseBatchItem::query()
             ->join('purchase_batches', 'purchase_batches.id', '=', 'purchase_batch_items.purchase_batch_id')
             ->where('purchase_batch_items.product_id', $product->id)

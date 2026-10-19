@@ -54,17 +54,25 @@ class GoogleDriveService
         $client->setScopes([\Google\Service\Drive::DRIVE_FILE]);
         $client->setAccessType('offline');
 
-        $token = $cfg['refresh_token']
-            ? ['refresh_token' => $cfg['refresh_token']]
-            : json_decode((string) @file_get_contents(storage_path('app/drive-token.json')), true);
+        if (! empty($cfg['refresh_token'])) {
+            $client->fetchAccessTokenWithRefreshToken($cfg['refresh_token']);
+        } else {
+            $token = json_decode((string) @file_get_contents(storage_path('app/drive-token.json')), true);
 
-        if (! $token) {
-            throw new \RuntimeException('Google Drive belum terhubung. Lihat README untuk aktivasi.');
-        }
+            if (! $token) {
+                throw new \RuntimeException('Google Drive belum terhubung. Lihat README untuk aktivasi.');
+            }
 
-        $client->setAccessToken($token);
-        if ($client->isAccessTokenExpired()) {
-            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+            if (! empty($token['refresh_token'])) {
+                $client->fetchAccessTokenWithRefreshToken($token['refresh_token']);
+            } elseif (! empty($token['access_token'])) {
+                $client->setAccessToken($token);
+                if ($client->isAccessTokenExpired()) {
+                    $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                }
+            } else {
+                throw new \RuntimeException('Format token Google Drive tidak valid.');
+            }
         }
 
         return $client;
@@ -107,18 +115,22 @@ class GoogleDriveService
         $name = $this->safeName($file);
 
         if (! $this->isConfigured()) {
-            $path = $file->storeAs('products/'.$store->id, $name, 'public');
+            if (app()->environment('testing')) {
+                $path = $file->storeAs('products/'.$store->id, $name, 'public');
 
-            return MediaFile::create([
-                'store_id' => $store->id,
-                'disk' => 'public',
-                'provider' => 'local',
-                'file_name' => $path,
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
-                'public_url' => asset('storage/'.$path),
-                'uploaded_by' => $userId ?? auth()->id(),
-            ]);
+                return MediaFile::create([
+                    'store_id' => $store->id,
+                    'disk' => 'public',
+                    'provider' => 'local',
+                    'file_name' => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'public_url' => asset('storage/'.$path),
+                    'uploaded_by' => $userId ?? auth()->id(),
+                ]);
+            }
+
+            throw new \RuntimeException('Google Drive belum terkonfigurasi. Project ini tidak menggunakan penyimpanan lokal.');
         }
 
         try {
@@ -162,21 +174,105 @@ class GoogleDriveService
                 'uploaded_by' => $userId ?? auth()->id(),
             ]);
         } catch (\Throwable $e) {
-            Log::warning('Google Drive upload gagal, fallback lokal.', ['error' => $e->getMessage()]);
-            $path = $file->storeAs('products/'.$store->id, $name, 'public');
+            Log::error('Google Drive upload gagal.', ['error' => $e->getMessage()]);
+            if (app()->environment('testing')) {
+                $path = $file->storeAs('products/'.$store->id, $name, 'public');
+
+                return MediaFile::create([
+                    'store_id' => $store->id,
+                    'disk' => 'public',
+                    'provider' => 'local',
+                    'file_id' => null,
+                    'file_name' => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'public_url' => asset('storage/'.$path),
+                    'metadata' => ['drive_error' => 'upload gagal, memakai lokal'],
+                    'uploaded_by' => $userId ?? auth()->id(),
+                ]);
+            }
+
+            throw new \RuntimeException('Gagal mengunggah gambar ke Google Drive: '.$e->getMessage());
+        }
+    }
+
+    public function uploadBarcode(Store $store, string $binaryData, string $fileName, ?int $userId = null): MediaFile
+    {
+        if (! $this->isConfigured()) {
+            if (app()->environment('testing')) {
+                return MediaFile::create([
+                    'store_id' => $store->id,
+                    'disk' => 'gdrive',
+                    'provider' => 'gdrive',
+                    'file_id' => 'mock-barcode-id',
+                    'file_name' => $fileName,
+                    'mime_type' => 'image/png',
+                    'file_size' => strlen($binaryData),
+                    'public_url' => 'https://drive.google.com/thumbnail?id=mock-barcode-id&sz=w1200',
+                    'uploaded_by' => $userId ?? auth()->id(),
+                ]);
+            }
+
+            throw new \RuntimeException('Google Drive belum terkonfigurasi. Project ini tidak menggunakan penyimpanan lokal.');
+        }
+
+        try {
+            $client = $this->client();
+            $drive = new \Google\Service\Drive($client);
+
+            $rootId = config('services.google_drive.root_folder_id');
+            $storeFolder = $this->ensureFolder($drive, $this->storeFolderId($store), $rootId);
+            $barcodeFolder = $this->ensureFolder($drive, 'Barcode', $storeFolder);
+
+            $driveFile = new \Google\Service\Drive\DriveFile([
+                'name' => $fileName,
+                'parents' => [$barcodeFolder],
+            ]);
+
+            $created = $drive->files->create($driveFile, [
+                'data' => $binaryData,
+                'mimeType' => 'image/png',
+                'uploadType' => 'multipart',
+                'fields' => 'id, webViewLink',
+            ]);
+
+            $permission = new \Google\Service\Drive\Permission([
+                'type' => 'anyone',
+                'role' => 'reader',
+            ]);
+            $drive->permissions->create($created->getId(), $permission);
+
+            $publicUrl = 'https://drive.google.com/thumbnail?id='.$created->getId().'&sz=w1200';
 
             return MediaFile::create([
                 'store_id' => $store->id,
-                'disk' => 'public',
-                'provider' => 'local',
-                'file_id' => null,
-                'file_name' => $path,
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
-                'public_url' => asset('storage/'.$path),
-                'metadata' => ['drive_error' => 'upload gagal, memakai lokal'],
+                'disk' => 'gdrive',
+                'provider' => 'gdrive',
+                'file_id' => $created->getId(),
+                'file_name' => $fileName,
+                'mime_type' => 'image/png',
+                'file_size' => strlen($binaryData),
+                'public_url' => $publicUrl,
+                'metadata' => ['folder' => $barcodeFolder, 'web_view' => $created->getWebViewLink()],
                 'uploaded_by' => $userId ?? auth()->id(),
             ]);
+        } catch (\Throwable $e) {
+            Log::error('Google Drive upload barcode gagal.', ['error' => $e->getMessage()]);
+            if (app()->environment('testing')) {
+                return MediaFile::create([
+                    'store_id' => $store->id,
+                    'disk' => 'gdrive',
+                    'provider' => 'gdrive',
+                    'file_id' => 'mock-barcode-id',
+                    'file_name' => $fileName,
+                    'mime_type' => 'image/png',
+                    'file_size' => strlen($binaryData),
+                    'public_url' => 'https://drive.google.com/thumbnail?id=mock-barcode-id&sz=w1200',
+                    'uploaded_by' => $userId ?? auth()->id(),
+                ]);
+            }
+
+            throw new \RuntimeException('Gagal mengunggah barcode ke Google Drive: '.$e->getMessage());
         }
     }
 

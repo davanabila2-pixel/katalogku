@@ -18,13 +18,31 @@ trait HandlesImages
         $media = app(GoogleDriveService::class)->uploadProductImage($store, $file);
 
         if ($currentPath) {
-            $old = MediaFile::where('store_id', $store->id)->where('public_url', $currentPath)->first()
-                ?? MediaFile::where('store_id', $store->id)->where('file_name', $currentPath)->first();
-            if ($old && $old->id !== $media->id) {
-                app(GoogleDriveService::class)->delete($old);
-            }
+            $this->deleteImage($store, $currentPath, $media->id);
         }
 
         return $media->public_url ?? $currentPath;
+    }
+
+    protected function deleteImage(Store $store, ?string $path, ?int $excludeMediaId = null): void
+    {
+        if (! $path) {
+            return;
+        }
+
+        $query = MediaFile::where('store_id', $store->id)
+            ->where(function ($q) use ($path) {
+                $q->where('public_url', $path)
+                  ->orWhere('file_name', $path);
+            });
+
+        if ($excludeMediaId) {
+            $query->where('id', '!=', $excludeMediaId);
+        }
+
+        $old = $query->first();
+        if ($old) {
+            app(GoogleDriveService::class)->delete($old);
+        }
     }
 }
