@@ -1,14 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', ($category->exists ? 'Edit' : 'Tambah').' Kategori')
 @section('subtitle', $store->name)
-@section('nav')
-<a href="{{ route('admin.dashboard', $store) }}">Dashboard</a>
-<a href="{{ route('admin.profile.edit', $store) }}">Profil Toko</a>
-<a class="active" href="{{ route('admin.categories.index', $store) }}">Kategori</a>
-<a href="{{ route('admin.products.index', $store) }}">Produk</a>
-<a href="{{ route('admin.batches.index', $store) }}">Batch Pembelian</a>
-<a href="{{ route('admin.stock.index', $store) }}">Stok</a>
-@endsection
 @section('content')
 <div class="panel form-card">
 <form method="POST" action="{{ $category->exists ? route('admin.categories.update', [$store, $category]) : route('admin.categories.store', $store) }}" enctype="multipart/form-data">

@@ -77,6 +77,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::post('batches', [AdminBatchController::class, 'store'])->name('batches.store');
         Route::get('batches/{batch}', [AdminBatchController::class, 'show'])->name('batches.show');
         Route::post('batches/{batch}/cancel', [AdminBatchController::class, 'cancel'])->name('batches.cancel');
+        Route::post('batches/{batch}/generate-qr', [AdminBatchController::class, 'generateQrCodes'])->name('batches.generate-qr');
+        Route::get('batches/{batch}/labels', [AdminBatchController::class, 'labels'])->name('batches.labels');
 
         Route::get('stok', [AdminStockController::class, 'index'])->name('stock.index');
         Route::get('stok/riwayat', [AdminStockController::class, 'history'])->name('stock.history');

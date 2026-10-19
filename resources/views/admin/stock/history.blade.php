@@ -1,13 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', 'Riwayat Stok')
 @section('subtitle', $store->name.' — setiap perubahan tercatat dan dapat diaudit')
-@section('nav')
-<a href="{{ route('admin.dashboard', $store) }}">Dashboard</a>
-<a href="{{ route('admin.batches.index', $store) }}">Batch Pembelian</a>
-<a href="{{ route('admin.stock.index', $store) }}">Stok</a>
-<a class="active" href="{{ route('admin.stock.history', $store) }}">Riwayat Stok</a>
-<a href="{{ route('admin.activity', $store) }}">Aktivitas</a>
-@endsection
 @section('content')
 <div class="toolbar">
   <form method="GET" style="display:flex;gap:8px">

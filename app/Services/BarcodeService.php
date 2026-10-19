@@ -119,4 +119,55 @@ class BarcodeService
 
         return $media->public_url;
     }
+
+    public function generateQrCodeDataUri(Product $product): string
+    {
+        if (empty($product->barcode)) {
+            $product->barcode = $this->generateBarcodeString($product);
+            $product->saveQuietly();
+        }
+
+        $scanUrl = route('product.scan', $product->barcode);
+
+        return (new QRCode)->render($scanUrl);
+    }
+
+    public function ensureBarcodeAndQr(Product $product, ?User $user = null): Product
+    {
+        if (empty($product->barcode) || empty($product->barcode_image_path)) {
+            try {
+                $this->generateAndUpload($product, $user);
+                $product->refresh();
+            } catch (\Throwable $e) {
+                if (empty($product->barcode)) {
+                    $product->updateQuietly(['barcode' => $this->generateBarcodeString($product)]);
+                }
+            }
+        }
+
+        return $product;
+    }
+
+    public function generateBatchQrCodes(\App\Models\PurchaseBatch $batch, ?User $user = null): array
+    {
+        $batch->loadMissing('items.product');
+        $updated = [];
+
+        foreach ($batch->items as $item) {
+            if ($item->product) {
+                try {
+                    $this->generateAndUpload($item->product, $user);
+                    $updated[] = $item->product->refresh();
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Gagal upload barcode produk {$item->product_id} pada batch {$batch->id}: ".$e->getMessage());
+                    if (empty($item->product->barcode)) {
+                        $item->product->updateQuietly(['barcode' => $this->generateBarcodeString($item->product)]);
+                    }
+                    $updated[] = $item->product->refresh();
+                }
+            }
+        }
+
+        return $updated;
+    }
 }

@@ -7,6 +7,8 @@ use App\Http\Requests\PurchaseBatchRequest;
 use App\Models\Product;
 use App\Models\PurchaseBatch;
 use App\Models\Store;
+use App\Services\AuditLogger;
+use App\Services\BarcodeService;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
@@ -47,7 +49,18 @@ class BatchController extends Controller
             $request->user()
         );
 
-        return redirect()->route('admin.batches.show', [$store, $batch])->with('status', 'Batch dibuat. Total biaya: Rp '.number_format($batch->totalCost(), 0, ',', '.'));
+        $barcodeNotice = '';
+        try {
+            $updated = app(BarcodeService::class)->generateBatchQrCodes($batch, $request->user());
+            if (count($updated) > 0) {
+                $barcodeNotice = ' QR code identitas produk batch berhasil di-generate.';
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Gagal auto-generate QR batch: '.$e->getMessage());
+        }
+
+        return redirect()->route('admin.batches.show', [$store, $batch])
+            ->with('status', 'Batch dibuat. Total biaya: Rp '.number_format($batch->totalCost(), 0, ',', '.').$barcodeNotice);
     }
 
     public function show(Store $store, PurchaseBatch $batch)
@@ -57,6 +70,40 @@ class BatchController extends Controller
         $batch->load(['items.product', 'creator']);
 
         return view('admin.batches.show', compact('store', 'batch'));
+    }
+
+    public function generateQrCodes(Request $request, Store $store, PurchaseBatch $batch)
+    {
+        $this->ensureSameStore($store, $batch);
+        $this->authorize('view', $batch);
+
+        try {
+            $updated = app(BarcodeService::class)->generateBatchQrCodes($batch, $request->user());
+            AuditLogger::log('batch.qr_generated', $batch, "Generate QR code untuk produk pada batch {$batch->batch_code}.", ['total_produk' => count($updated)], $request->user(), $store->id);
+
+            return back()->with('status', 'QR code dan label untuk '.count($updated).' produk dalam batch ini berhasil di-generate.');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['qr' => 'Gagal generate QR code batch: '.$e->getMessage()]);
+        }
+    }
+
+    public function labels(Request $request, Store $store, PurchaseBatch $batch)
+    {
+        $this->ensureSameStore($store, $batch);
+        $this->authorize('view', $batch);
+        $batch->load(['items.product', 'creator']);
+
+        $mode = $request->query('mode', 'qty'); // 'qty' atau 'unique'
+
+        // Pastikan semua produk minimal memiliki barcode string
+        foreach ($batch->items as $item) {
+            if ($item->product && empty($item->product->barcode)) {
+                $item->product->barcode = app(BarcodeService::class)->generateBarcodeString($item->product);
+                $item->product->saveQuietly();
+            }
+        }
+
+        return view('admin.batches.labels', compact('store', 'batch', 'mode'));
     }
 
     public function cancel(Request $request, Store $store, PurchaseBatch $batch, InventoryService $inventory)

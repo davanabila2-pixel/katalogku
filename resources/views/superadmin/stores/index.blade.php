@@ -1,12 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', 'Toko')
 @section('subtitle', 'Kelola seluruh toko lintas aplikasi')
-@section('nav')
-<a href="{{ route('superadmin.dashboard') }}">Dashboard</a>
-<a class="active" href="{{ route('superadmin.stores.index') }}">Toko</a>
-<a href="{{ route('superadmin.users.index') }}">Pengguna</a>
-<a href="{{ route('superadmin.audit') }}">Audit Log</a>
-@endsection
 @section('content')
 <div class="toolbar">
   <form method="GET" style="display:flex;gap:8px"><input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari toko…">

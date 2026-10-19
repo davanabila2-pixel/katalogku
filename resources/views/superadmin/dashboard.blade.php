@@ -1,16 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', 'Superadmin')
 @section('subtitle', 'Statistik nyata seluruh aplikasi')
-@section('nav')
-<a class="active" href="{{ route('superadmin.dashboard') }}">Dashboard</a>
-<a href="{{ route('superadmin.stores.index') }}">Toko</a>
-<a href="{{ route('superadmin.users.index') }}">Pengguna</a>
-<a href="{{ route('superadmin.categories') }}">Kategori</a>
-<a href="{{ route('superadmin.products') }}">Produk</a>
-<a href="{{ route('superadmin.batches') }}">Batch</a>
-<a href="{{ route('superadmin.stock') }}">Stok</a>
-<a href="{{ route('superadmin.audit') }}">Audit Log</a>
-@endsection
 @section('content')
 <div class="stat-grid">
   <div class="stat-card"><div class="num">{{ $stats['stores'] }}</div><div class="lbl">Toko ({{ $stats['stores_active'] }} aktif)</div></div>

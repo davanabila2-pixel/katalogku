@@ -1,10 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', 'Kelola '.$user->name)
 @section('subtitle', $user->email)
-@section('nav')
-<a href="{{ route('superadmin.dashboard') }}">Dashboard</a>
-<a class="active" href="{{ route('superadmin.users.index') }}">Pengguna</a>
-@endsection
 @section('content')
 <div class="panel form-card">
 <form method="POST" action="{{ route('superadmin.users.update', $user) }}">@csrf @method('PUT')

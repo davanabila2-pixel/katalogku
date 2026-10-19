@@ -22,24 +22,12 @@ class ProductController extends Controller
 
     public function index(Request $request, Store $store)
     {
-        $products = Product::forStore($store->id)
-            ->with(['category', 'bundleItems'])
-            ->when($request->q, fn ($q, $term) => $q->where(function ($qq) use ($term) {
-                $qq->where('name', 'like', "%{$term}%")->orWhere('sku', 'like', "%{$term}%");
-            }))
-            ->when($request->category_id, fn ($q, $id) => $q->where('category_id', $id))
-            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
-            ->when($request->visibility === 'visible', fn ($q) => $q->where('is_hidden_from_catalog', false))
-            ->when($request->visibility === 'hidden', fn ($q) => $q->where('is_hidden_from_catalog', true))
-            ->when($request->stock === 'empty', fn ($q) => $q->where('stock', '<=', 0))
-            ->when($request->stock === 'low', fn ($q) => $q->whereBetween('stock', [1, 5]))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-
+        // Data produk dimuat oleh JavaScript lewat API JSON
+        // (lihat App\Http\Controllers\Api\ProductController),
+        // Blade hanya menyiapkan kerangka + filter kategori.
         $categories = Category::forStore($store->id)->orderBy('name')->get();
 
-        return view('admin.products.index', compact('store', 'products', 'categories'));
+        return view('admin.products.index', compact('store', 'categories'));
     }
 
     public function create(Store $store)

@@ -133,4 +133,77 @@ class BatchStockTest extends TestCase
             'items' => [['product_id' => $product->id, 'quantity' => 0, 'unit_purchase_price' => -100]],
         ])->assertSessionHasErrors(['items.0.quantity', 'items.0.unit_purchase_price']);
     }
+
+    public function test_batch_pembelian_otomatis_generate_qr_code_produk(): void
+    {
+        [$admin, $store, $product] = $this->bootstrap();
+
+        $response = $this->actingAs($admin)->post(route('admin.batches.store', $store), [
+            'batch_code' => 'BATCH-QR-01',
+            'purchase_date' => now()->toDateString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 25, 'unit_purchase_price' => 25000],
+            ],
+        ]);
+
+        $batch = PurchaseBatch::where('batch_code', 'BATCH-QR-01')->firstOrFail();
+        $response->assertRedirect(route('admin.batches.show', [$store, $batch]));
+
+        $product->refresh();
+        $this->assertNotEmpty($product->barcode);
+        $this->assertNotEmpty($product->barcode_image_path);
+        $this->assertStringStartsWith('data:image/', $product->qrCodeDataUri());
+
+        // Halaman detail batch menampilkan QR code
+        $showResponse = $this->actingAs($admin)->get(route('admin.batches.show', [$store, $batch]));
+        $showResponse->assertOk();
+        $showResponse->assertSee($product->barcode);
+        $showResponse->assertSee('Cetak Lembar Label QR');
+    }
+
+    public function test_admin_dapat_memicu_generate_qr_code_batch_manual(): void
+    {
+        [$admin, $store, $product] = $this->bootstrap();
+
+        $batch = app(InventoryService::class)->createBatch([
+            'store_id' => $store->id,
+            'batch_code' => 'BATCH-MANUAL-02',
+            'purchase_date' => now()->toDateString(),
+        ], [
+            ['product_id' => $product->id, 'quantity' => 10, 'unit_purchase_price' => 30000],
+        ], $admin);
+
+        $response = $this->actingAs($admin)->post(route('admin.batches.generate-qr', [$store, $batch]));
+        $response->assertRedirect();
+        $response->assertSessionHas('status');
+
+        $product->refresh();
+        $this->assertNotEmpty($product->barcode);
+    }
+
+    public function test_admin_dapat_membuka_lembar_label_qr_batch(): void
+    {
+        [$admin, $store, $product] = $this->bootstrap();
+
+        $batch = app(InventoryService::class)->createBatch([
+            'store_id' => $store->id,
+            'batch_code' => 'BATCH-PRINT-03',
+            'purchase_date' => now()->toDateString(),
+        ], [
+            ['product_id' => $product->id, 'quantity' => 3, 'unit_purchase_price' => 40000],
+        ], $admin);
+
+        // Cetak mode unique (1 stiker)
+        $respUnique = $this->actingAs($admin)->get(route('admin.batches.labels', [$store, $batch, 'mode' => 'unique']));
+        $respUnique->assertOk();
+        $respUnique->assertSee('Lembar Stiker Label QR Code');
+        $respUnique->assertSee($product->name);
+
+        // Cetak mode qty (3 stiker sesuai Qty)
+        $respQty = $this->actingAs($admin)->get(route('admin.batches.labels', [$store, $batch, 'mode' => 'qty']));
+        $respQty->assertOk();
+        $respQty->assertSee('(1/3)');
+        $respQty->assertSee('(2/3)');
+        $respQty->assertSee('(3/3)');
+    }
 }

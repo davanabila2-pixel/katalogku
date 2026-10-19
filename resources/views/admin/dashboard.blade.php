@@ -1,17 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', $store->name)
 @section('subtitle', 'Ringkasan toko Anda')
-@section('nav')
-<a class="active" href="{{ route('admin.dashboard', $store) }}">Dashboard</a>
-<a href="{{ route('admin.profile.edit', $store) }}">Profil Toko</a>
-<a href="{{ route('admin.categories.index', $store) }}">Kategori</a>
-<a href="{{ route('admin.products.index', $store) }}">Produk</a>
-<a href="{{ route('admin.batches.index', $store) }}">Batch Pembelian</a>
-<a href="{{ route('admin.stock.index', $store) }}">Stok</a>
-<a href="{{ route('admin.stock.history', $store) }}">Riwayat Stok</a>
-<a href="{{ route('admin.activity', $store) }}">Aktivitas</a>
-<a href="{{ $store->url() }}" target="_blank">Lihat Katalog ↗</a>
-@endsection
 @section('content')
 <div class="stat-grid">
   <div class="stat-card"><div class="num">{{ $totalProducts }}</div><div class="lbl">Produk</div></div>

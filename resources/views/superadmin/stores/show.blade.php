@@ -1,11 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', $store->name)
 @section('subtitle', $store->url())
-@section('nav')
-<a href="{{ route('superadmin.dashboard') }}">Dashboard</a>
-<a class="active" href="{{ route('superadmin.stores.index') }}">Toko</a>
-<a href="{{ route('superadmin.users.index') }}">Pengguna</a>
-@endsection
 @section('content')
 <div class="stat-grid">
   <div class="stat-card"><div class="num">{{ $stats['products'] }}</div><div class="lbl">Produk</div></div>

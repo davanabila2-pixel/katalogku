@@ -1,11 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', ($store->exists ? 'Edit' : 'Buat').' Toko')
 @section('subtitle', $store->exists ? 'ID internal #'.$store->id.' (relasi tidak berubah saat slug diganti)' : 'Slug dibuat otomatis dari nama')
-@section('nav')
-<a href="{{ route('superadmin.dashboard') }}">Dashboard</a>
-<a class="active" href="{{ route('superadmin.stores.index') }}">Toko</a>
-<a href="{{ route('superadmin.users.index') }}">Pengguna</a>
-@endsection
 @section('content')
 <div class="panel form-card">
 <form method="POST" action="{{ $store->exists ? route('superadmin.stores.update', $store) : route('superadmin.stores.store') }}" enctype="multipart/form-data">

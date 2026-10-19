@@ -1,14 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', ($product->exists ? 'Edit' : 'Tambah').' Produk')
 @section('subtitle', $store->name)
-@section('nav')
-<a href="{{ route('admin.dashboard', $store) }}">Dashboard</a>
-<a href="{{ route('admin.profile.edit', $store) }}">Profil Toko</a>
-<a href="{{ route('admin.categories.index', $store) }}">Kategori</a>
-<a class="active" href="{{ route('admin.products.index', $store) }}">Produk</a>
-<a href="{{ route('admin.batches.index', $store) }}">Batch Pembelian</a>
-<a href="{{ route('admin.stock.index', $store) }}">Stok</a>
-@endsection
 @section('content')
 @if($product->exists && isset($hpp))
 <div class="panel"><h2>Biaya & Margin (internal)</h2>

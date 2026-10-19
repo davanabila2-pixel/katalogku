@@ -207,4 +207,9 @@ class Product extends Model
     {
         return route('product.scan', $this->barcode ?? $this->id);
     }
+
+    public function qrCodeDataUri(): string
+    {
+        return app(\App\Services\BarcodeService::class)->generateQrCodeDataUri($this);
+    }
 }

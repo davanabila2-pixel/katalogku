@@ -1,11 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', 'Aktivitas Toko')
 @section('subtitle', $store->name)
-@section('nav')
-<a href="{{ route('admin.dashboard', $store) }}">Dashboard</a>
-<a href="{{ route('admin.stock.history', $store) }}">Riwayat Stok</a>
-<a class="active" href="{{ route('admin.activity', $store) }}">Aktivitas</a>
-@endsection
 @section('content')
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
 <table class="table"><thead><tr><th>Waktu</th><th>Aksi</th><th>Deskripsi</th><th>Oleh</th></tr></thead><tbody>

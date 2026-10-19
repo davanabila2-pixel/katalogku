@@ -366,17 +366,19 @@ class ProductBundleTest extends TestCase
         $responseDirect->assertOk();
         $responseDirect->assertSee('Produk satuan ini disembunyikan dari katalog umum');
 
-        // 4. Admin dapat memfilter produk tersembunyi
+        // 4. Admin dapat memfilter produk tersembunyi (lewat API daftar produk)
         $this->actingAs($admin);
-        $responseAdminHidden = $this->get(route('admin.products.index', [$store, 'visibility' => 'hidden']));
+        $responseAdminHidden = $this->getJson(route('api.products.index', [$store, 'visibility' => 'hidden']));
         $responseAdminHidden->assertOk();
-        $responseAdminHidden->assertSee($atasan->name);
-        $responseAdminHidden->assertDontSee($bawahan->name);
+        $hiddenNames = collect($responseAdminHidden->json('data'))->pluck('name');
+        $this->assertTrue($hiddenNames->contains($atasan->name));
+        $this->assertFalse($hiddenNames->contains($bawahan->name));
 
-        $responseAdminVisible = $this->get(route('admin.products.index', [$store, 'visibility' => 'visible']));
+        $responseAdminVisible = $this->getJson(route('api.products.index', [$store, 'visibility' => 'visible']));
         $responseAdminVisible->assertOk();
-        $responseAdminVisible->assertDontSee($atasan->name);
-        $responseAdminVisible->assertSee($bawahan->name);
+        $visibleNames = collect($responseAdminVisible->json('data'))->pluck('name');
+        $this->assertFalse($visibleNames->contains($atasan->name));
+        $this->assertTrue($visibleNames->contains($bawahan->name));
     }
 
     public function test_pengaturan_toko_otomatis_sembunyikan_komponen_bundle(): void

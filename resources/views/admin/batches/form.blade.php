@@ -1,12 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', 'Buat Batch Pembelian')
 @section('subtitle', $store->name.' — total = Σ(qty × harga) + biaya tambahan')
-@section('nav')
-<a href="{{ route('admin.dashboard', $store) }}">Dashboard</a>
-<a href="{{ route('admin.products.index', $store) }}">Produk</a>
-<a class="active" href="{{ route('admin.batches.index', $store) }}">Batch Pembelian</a>
-<a href="{{ route('admin.stock.index', $store) }}">Stok</a>
-@endsection
 @section('content')
 <div class="panel form-card" style="max-width:800px">
 <form method="POST" action="{{ route('admin.batches.store', $store) }}">@csrf
