@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\HandlesImages;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StockAdjustRequest;
 use App\Models\Product;
 use App\Models\Store;
+use App\Services\AuditLogger;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    use HandlesImages;
+
     /**
      * Daftar produk (JSON) untuk tabel admin tanpa reload halaman.
      * Filter yang didukung sama seperti halaman web sebelumnya:
@@ -47,7 +53,8 @@ class ProductController extends Controller
                 'is_bundle' => $product->isBundle(),
                 'is_hidden' => $product->isHiddenFromCatalog(),
                 'edit_url' => route('admin.products.edit', [$store, $product]),
-                'destroy_url' => route('admin.products.destroy', [$store, $product]),
+                'destroy_url' => route('api.products.destroy', [$store, $product]),
+                'adjust_url' => route('api.products.adjust', [$store, $product]),
             ])->values(),
             'meta' => [
                 'current_page' => $products->currentPage(),
@@ -58,5 +65,76 @@ class ProductController extends Controller
                 'to' => $products->lastItem(),
             ],
         ]);
+    }
+
+    /**
+     * Hapus/arsipkan produk tanpa reload halaman.
+     * Aturan sama dengan destroy versi web: produk yang menjadi komponen
+     * paket setelan ditolak, produk dengan riwayat stok hanya diarsipkan.
+     */
+    public function destroy(Request $request, Store $store, Product $product)
+    {
+        $this->ensureSameStore($store, $product);
+        $this->authorize('delete', $product);
+
+        if ($product->partOfBundles()->exists()) {
+            $bundleNames = $product->partOfBundles()->pluck('name')->implode(', ');
+
+            return response()->json([
+                'message' => "Produk ini tidak dapat dihapus karena menjadi komponen dalam paket setelan: {$bundleNames}. Hapus komponen dari paket terlebih dahulu agar stok tidak rancu.",
+            ], 422);
+        }
+
+        if ($product->stockMovements()->exists() || $product->batchItems()->exists()) {
+            $product->update(['status' => 'inactive']);
+            foreach ($product->partOfBundles as $bundle) {
+                $bundle->syncBundleStock();
+            }
+            AuditLogger::log('product.archived', $product, "Produk {$product->name} diarsipkan (memiliki riwayat stok).", null, $request->user(), $store->id);
+
+            return response()->json([
+                'message' => 'Produk memiliki riwayat stok — diarsipkan, bukan dihapus.',
+                'action' => 'archived',
+            ]);
+        }
+
+        $name = $product->name;
+        if ($product->image_path) {
+            $this->deleteImage($store, $product->image_path);
+        }
+        $product->delete();
+        AuditLogger::log('product.deleted', null, "Produk {$name} dihapus.", ['store_id' => $store->id], $request->user(), $store->id);
+
+        return response()->json([
+            'message' => 'Produk dihapus.',
+            'action' => 'deleted',
+        ]);
+    }
+
+    /**
+     * Koreksi stok cepat (selisih) tanpa reload halaman.
+     * Validasi & aturan bisnis sama dengan koreksi stok versi web
+     * (bundle tidak bisa dikoreksi manual, alasan wajib untuk audit).
+     */
+    public function adjust(StockAdjustRequest $request, Store $store, Product $product)
+    {
+        $this->ensureSameStore($store, $product);
+
+        app(InventoryService::class)->adjustStock(
+            $product, (int) $request->quantity, $request->user(), $request->reason
+        );
+
+        return response()->json([
+            'message' => 'Stok dikoreksi.',
+            'product_id' => $product->id,
+            'stock' => (int) $product->fresh()->stock,
+        ]);
+    }
+
+    protected function ensureSameStore(Store $store, Product $product): void
+    {
+        if ((int) $product->store_id !== (int) $store->id) {
+            abort(404);
+        }
     }
 }

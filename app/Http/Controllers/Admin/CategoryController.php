@@ -17,18 +17,9 @@ class CategoryController extends Controller
 
     public function index(Request $request, Store $store)
     {
-        $categories = Category::forStore($store->id)
-            ->with(['parent'])
-            ->withCount(['children', 'products'])
-            ->when($request->q, fn ($q, $term) => $q->where('name', 'like', "%{$term}%"))
-            ->when($request->status === 'active', fn ($q) => $q->where('is_active', true))
-            ->when($request->status === 'inactive', fn ($q) => $q->where('is_active', false))
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('admin.categories.index', compact('store', 'categories'));
+        // Daftar dimuat lewat API JSON (App\Http\Controllers\Api\CategoryController)
+        // agar filter/pencarian/pagination berjalan tanpa reload halaman.
+        return view('admin.categories.index', compact('store'));
     }
 
     public function create(Store $store)

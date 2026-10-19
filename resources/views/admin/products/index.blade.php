@@ -27,33 +27,10 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
     var table = document.getElementById('product-table');
-    if (!table || !window.AdminApi) { return; }
+    if (!table || !window.AdminTable) { return; }
 
-    var apiUrl = table.getAttribute('data-api-url');
-    var tbody = document.getElementById('product-rows');
-    var paginationBox = document.getElementById('product-pagination');
-    var countEl = document.getElementById('product-count');
-    var form = document.getElementById('product-filters');
-    var searchInput = form.querySelector('input[name="q"]');
-    var csrfToken = AdminApi.token();
-    var currentPage = 1;
-    var debounceTimer = null;
-    var requestSeq = 0;
-
-    var emptyRow = '<tr><td colspan="6"><div class="empty"><h3>Belum ada produk</h3><p>Tambahkan produk pertama untuk tokomu.</p></div></td></tr>';
-    var noMatchRow = '<tr><td colspan="6"><div class="empty"><h3>Tidak ada produk yang cocok</h3><p>Coba ubah kata kunci atau filternya.</p></div></td></tr>';
-    var loadingRow = '<tr><td colspan="6"><div class="table-loading"><span class="skeleton" style="width:140px"></span> Memuat data produk…</div></td></tr>';
-
-    function esc(value) {
-        return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
-        });
-    }
-
-    function statusBadge(status) {
-        var cls = status === 'active' ? 'badge-success' : (status === 'draft' ? 'badge-warning' : 'badge-neutral');
-        return '<span class="badge ' + cls + '">' + esc(status) + '</span>';
-    }
+    var esc = AdminTable.esc;
+    var statusBadge = AdminTable.statusBadge;
 
     function rowHtml(p) {
         var badges = '';
@@ -77,10 +54,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (p.barcode_url) {
             actions += ' · <a href="' + esc(p.barcode_url) + '" target="_blank" rel="noopener" title="Buka Label Barcode di Google Drive">Barcode</a>';
         }
-        actions += ' · <form method="POST" action="' + esc(p.destroy_url) + '" style="display:inline" onsubmit="return confirm(\'Arsipkan/hapus produk ini?\')">'
-            + '<input type="hidden" name="_token" value="' + esc(csrfToken) + '">'
-            + '<input type="hidden" name="_method" value="DELETE">'
-            + '<button type="submit" style="background:none;border:none;color:var(--critical);cursor:pointer;font-size:14px">Arsip</button></form>';
+        if (!p.is_bundle) {
+            actions += ' · <button type="button" data-action="adjust" data-url="' + esc(p.adjust_url) + '" data-name="' + esc(p.name) + '" data-stock="' + esc(p.stock) + '" title="Koreksi stok cepat" style="background:none;border:none;padding:0;color:var(--primary);cursor:pointer;font-size:14px">Stok</button>';
+        }
+        actions += ' · <button type="button" data-action="destroy" data-url="' + esc(p.destroy_url) + '" data-name="' + esc(p.name) + '" title="Hapus / arsipkan produk" style="background:none;border:none;padding:0;color:var(--critical);cursor:pointer;font-size:14px">Arsip</button>';
 
         return '<tr>'
             + '<td><strong>' + esc(p.name) + '</strong>' + badges
@@ -93,102 +70,77 @@ document.addEventListener('DOMContentLoaded', function () {
             + '</tr>';
     }
 
-    function renderPagination(meta) {
-        if (!meta || meta.last_page <= 1) { paginationBox.innerHTML = ''; return; }
+    var controller = AdminTable.mount({
+        tbody: 'product-rows',
+        apiUrl: table.getAttribute('data-api-url'),
+        form: 'product-filters',
+        pagination: 'product-pagination',
+        count: 'product-count',
+        countSuffix: 'produk',
+        empty: { title: 'Belum ada produk', text: 'Tambahkan produk pertama untuk tokomu.' },
+        noMatch: { title: 'Tidak ada produk yang cocok', text: 'Coba ubah kata kunci atau filternya.' },
+        renderRow: rowHtml
+    });
 
-        var from = Math.max(1, meta.current_page - 2);
-        var to = Math.min(meta.last_page, meta.current_page + 2);
-        var html = '<ul class="pagination">';
+    if (!controller) { return; }
 
-        html += meta.current_page > 1
-            ? '<li><a href="#" data-page="' + (meta.current_page - 1) + '">‹</a></li>'
-            : '<li><span>‹</span></li>';
+    // ---- Aksi baris tanpa reload halaman ----
 
-        for (var i = from; i <= to; i++) {
-            html += i === meta.current_page
-                ? '<li><span class="current">' + i + '</span></li>'
-                : '<li><a href="#" data-page="' + i + '">' + i + '</a></li>';
-        }
+    function arsipkan(button) {
+        var name = button.getAttribute('data-name');
 
-        html += meta.current_page < meta.last_page
-            ? '<li><a href="#" data-page="' + (meta.current_page + 1) + '">›</a></li>'
-            : '<li><span>›</span></li>';
+        AdminUI.confirm({
+            title: 'Hapus / arsipkan produk?',
+            message: name + ' akan dihapus. Kalau produk sudah punya riwayat stok, produk hanya diarsipkan (dinonaktifkan).',
+            confirmText: 'Ya, lanjutkan',
+            danger: true
+        }).then(function (ok) {
+            if (!ok) { return; }
 
-        paginationBox.innerHTML = html + '</ul>';
-    }
-
-    function syncUrl(filters, page) {
-        var url = new URL(window.location.href);
-        url.search = '';
-        Object.keys(filters).forEach(function (key) {
-            if (filters[key]) { url.searchParams.set(key, filters[key]); }
-        });
-        if (page > 1) { url.searchParams.set('page', page); }
-        window.history.replaceState({}, '', url.toString());
-    }
-
-    function load(page) {
-        currentPage = page || 1;
-
-        var filters = {};
-        new FormData(form).forEach(function (value, key) { filters[key] = value; });
-        syncUrl(filters, currentPage);
-
-        var params = Object.assign({}, filters);
-        if (currentPage > 1) { params.page = currentPage; }
-
-        var seq = ++requestSeq;
-        tbody.innerHTML = loadingRow;
-
-        AdminApi.get(apiUrl, params).then(function (json) {
-            if (seq !== requestSeq) { return; } // abaikan respons yang sudah basi
-
-            if (!json.data.length) {
-                var adaFilter = Object.keys(filters).some(function (key) { return filters[key]; });
-                tbody.innerHTML = adaFilter ? noMatchRow : emptyRow;
-                countEl.textContent = '';
-                renderPagination(null);
-                return;
-            }
-
-            tbody.innerHTML = json.data.map(rowHtml).join('');
-            countEl.textContent = 'Menampilkan ' + json.meta.from + '–' + json.meta.to + ' dari ' + json.meta.total + ' produk';
-            renderPagination(json.meta);
-        }).catch(function (error) {
-            if (seq !== requestSeq) { return; }
-            tbody.innerHTML = '<tr><td colspan="6"><div class="alert alert-error" style="margin:16px">Gagal memuat data produk: '
-                + esc(error.message) + ' <button type="button" class="btn btn-secondary btn-sm" data-retry style="margin-left:8px">Coba lagi</button></div></td></tr>';
-            renderPagination(null);
+            AdminApi.request(button.getAttribute('data-url'), { method: 'DELETE' }).then(function (json) {
+                AdminUI.toast(json.message, 'success');
+                controller.reload();
+            }).catch(function (error) {
+                AdminUI.toast(error.message, 'error');
+            });
         });
     }
 
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        load(1);
-    });
+    function koreksiStok(button) {
+        var name = button.getAttribute('data-name');
+        var stock = button.getAttribute('data-stock');
 
-    form.querySelectorAll('select').forEach(function (select) {
-        select.addEventListener('change', function () { load(1); });
-    });
+        AdminUI.formModal({
+            title: 'Koreksi stok',
+            message: name + ' — stok saat ini: ' + stock + '.',
+            submitText: 'Koreksi stok',
+            fields: [
+                { name: 'quantity', label: 'Selisih stok', type: 'number', required: true, placeholder: 'cth: -2', help: 'Positif menambah, negatif mengurangi. Tidak boleh 0.' },
+                { name: 'reason', label: 'Alasan koreksi', type: 'textarea', required: true, placeholder: 'cth: koreksi hasil stok opname mingguan' }
+            ]
+        }).then(function (values) {
+            if (!values) { return; }
 
-    searchInput.addEventListener('input', function () {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(function () { load(1); }, 300);
-    });
+            AdminApi.request(button.getAttribute('data-url'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: parseInt(values.quantity, 10), reason: values.reason })
+            }).then(function (json) {
+                AdminUI.toast(json.message + ' Stok baru: ' + json.stock + '.', 'success');
+                controller.reload();
+            }).catch(function (error) {
+                AdminUI.toast(error.message, 'error');
+            });
+        });
+    }
 
-    paginationBox.addEventListener('click', function (event) {
-        var link = event.target.closest('a[data-page]');
-        if (!link) { return; }
-        event.preventDefault();
-        load(parseInt(link.getAttribute('data-page'), 10) || 1);
-    });
+    controller.tbody.addEventListener('click', function (event) {
+        var destroyBtn = event.target.closest('[data-action="destroy"]');
+        if (destroyBtn) { arsipkan(destroyBtn); return; }
 
-    tbody.addEventListener('click', function (event) {
-        if (event.target.closest('[data-retry]')) { load(currentPage); }
+        var adjustBtn = event.target.closest('[data-action="adjust"]');
+        if (adjustBtn) { koreksiStok(adjustBtn); }
     });
-
-    var initialPage = parseInt(new URLSearchParams(window.location.search).get('page') || '1', 10) || 1;
-    load(initialPage);
 });
 </script>
 @endsection

@@ -3,90 +3,50 @@
 namespace App\Http\Controllers\Superadmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
-use App\Models\Category;
-use App\Models\Product;
-use App\Models\PurchaseBatch;
-use App\Models\StockMovement;
 use App\Models\Store;
 use Illuminate\Http\Request;
 
 class CatalogController extends Controller
 {
+    /*
+     * Halaman-halaman katalog lintas toko kini hanya merender kerangka;
+     * datanya dimuat lewat API JSON (Api\Superadmin\CatalogController)
+     * supaya filter/pagination berjalan tanpa reload halaman.
+     * Daftar toko tetap dirender server-side untuk mengisi dropdown filter.
+     */
+
     public function categories(Request $request)
     {
-        $categories = Category::query()
-            ->with(['store', 'parent'])
-            ->withCount(['children', 'products'])
-            ->when($request->store_id, fn ($q, $id) => $q->where('store_id', $id))
-            ->when($request->q, fn ($q, $term) => $q->where('name', 'like', "%{$term}%"))
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
-
         $stores = Store::orderBy('name')->get(['id', 'name']);
 
-        return view('superadmin.catalog.categories', compact('categories', 'stores'));
+        return view('superadmin.catalog.categories', compact('stores'));
     }
 
     public function products(Request $request)
     {
-        $products = Product::query()
-            ->with(['store', 'category'])
-            ->when($request->store_id, fn ($q, $id) => $q->where('store_id', $id))
-            ->when($request->q, fn ($q, $term) => $q->where('name', 'like', "%{$term}%"))
-            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
-
         $stores = Store::orderBy('name')->get(['id', 'name']);
 
-        return view('superadmin.catalog.products', compact('products', 'stores'));
+        return view('superadmin.catalog.products', compact('stores'));
     }
 
     public function batches(Request $request)
     {
-        $batches = PurchaseBatch::query()
-            ->with(['store', 'creator'])
-            ->withCount('items')
-            ->when($request->store_id, fn ($q, $id) => $q->where('store_id', $id))
-            ->latest('purchase_date')
-            ->paginate(20)
-            ->withQueryString();
-
         $stores = Store::orderBy('name')->get(['id', 'name']);
 
-        return view('superadmin.catalog.batches', compact('batches', 'stores'));
+        return view('superadmin.catalog.batches', compact('stores'));
     }
 
     public function stock(Request $request)
     {
-        $movements = StockMovement::query()
-            ->with(['store', 'product', 'creator'])
-            ->when($request->store_id, fn ($q, $id) => $q->where('stock_movements.store_id', $id))
-            ->latest('created_at')
-            ->latest('id')
-            ->paginate(20)
-            ->withQueryString();
-
         $stores = Store::orderBy('name')->get(['id', 'name']);
 
-        return view('superadmin.catalog.stock', compact('movements', 'stores'));
+        return view('superadmin.catalog.stock', compact('stores'));
     }
 
     public function audit(Request $request)
     {
-        $logs = AuditLog::query()
-            ->with(['user', 'store'])
-            ->when($request->store_id, fn ($q, $id) => $q->where('store_id', $id))
-            ->when($request->action, fn ($q, $action) => $q->where('action', 'like', "%{$action}%"))
-            ->latest('created_at')
-            ->paginate(25)
-            ->withQueryString();
-
         $stores = Store::orderBy('name')->get(['id', 'name']);
 
-        return view('superadmin.catalog.audit', compact('logs', 'stores'));
+        return view('superadmin.catalog.audit', compact('stores'));
     }
 }

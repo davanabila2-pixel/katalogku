@@ -1,0 +1,198 @@
+/**
+ * Tabel admin berbasis API JSON (tanpa reload halaman).
+ *
+ * Menangani semua perilaku umum: fetch data, loading skeleton, state kosong,
+ * error + retry, pagination, sinkronisasi URL, dan debounce pencarian.
+ * Halaman cukup menyediakan markup kerangka + fungsi renderRow(item).
+ *
+ * Contoh:
+ *   var table = AdminTable.mount({
+ *     tbody: 'product-rows',
+ *     apiUrl: '/api/v1/stores/1/products',
+ *     form: 'product-filters',
+ *     pagination: 'product-pagination',
+ *     count: 'product-count',
+ *     countSuffix: 'produk',
+ *     empty: { title: 'Belum ada produk', text: 'Tambahkan produk pertama.' },
+ *     noMatch: { title: 'Tidak ada yang cocok', text: 'Coba ubah filternya.' },
+ *     renderRow: function (item) { return '<tr>...</tr>'; }
+ *   });
+ *   table.reload();          // muat ulang halaman saat ini
+ *   table.reload(1);         // kembali ke halaman 1
+ */
+window.AdminTable = (function () {
+    'use strict';
+
+    function esc(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+        });
+    }
+
+    function statusBadge(status) {
+        var cls = status === 'active' ? 'badge-success' : (status === 'draft' ? 'badge-warning' : 'badge-neutral');
+        return '<span class="badge ' + cls + '">' + esc(status) + '</span>';
+    }
+
+    function mount(options) {
+        var tbody = document.getElementById(options.tbody);
+        if (!tbody) { return null; }
+
+        var form = options.form ? document.getElementById(options.form) : null;
+        var paginationBox = options.pagination ? document.getElementById(options.pagination) : null;
+        var countEl = options.count ? document.getElementById(options.count) : null;
+
+        var currentPage = 1;
+        var requestSeq = 0;
+        var debounceTimer = null;
+
+        var loadingRow = '<tr><td colspan="99"><div class="table-loading"><span class="skeleton" style="width:140px"></span> Memuat data…</div></td></tr>';
+
+        function hasActiveFilter() {
+            if (!form) { return false; }
+            var active = false;
+            new FormData(form).forEach(function (value) {
+                if (value !== '' && value !== null && String(value).trim() !== '') { active = true; }
+            });
+            return active;
+        }
+
+        function emptyStateRow() {
+            var state = hasActiveFilter() && options.noMatch ? options.noMatch : options.empty;
+            if (!state) { return ''; }
+
+            return '<tr><td colspan="99"><div class="empty"><h3>' + esc(state.title) + '</h3>'
+                + (state.text ? '<p>' + esc(state.text) + '</p>' : '') + '</div></td></tr>';
+        }
+
+        function collectFilters() {
+            var filters = {};
+            if (form) {
+                new FormData(form).forEach(function (value, key) { filters[key] = value; });
+            }
+            return filters;
+        }
+
+        function syncUrl(filters, page) {
+            var url = new URL(window.location.href);
+            url.search = '';
+            Object.keys(filters).forEach(function (key) {
+                if (filters[key]) { url.searchParams.set(key, filters[key]); }
+            });
+            if (page > 1) { url.searchParams.set('page', page); }
+            window.history.replaceState({}, '', url.toString());
+        }
+
+        function renderPagination(meta) {
+            if (!paginationBox) { return; }
+
+            if (!meta || meta.last_page <= 1) {
+                paginationBox.innerHTML = '';
+                return;
+            }
+
+            var from = Math.max(1, meta.current_page - 2);
+            var to = Math.min(meta.last_page, meta.current_page + 2);
+            var html = '<ul class="pagination">';
+
+            html += meta.current_page > 1
+                ? '<li><a href="#" data-page="' + (meta.current_page - 1) + '">‹</a></li>'
+                : '<li><span>‹</span></li>';
+
+            for (var i = from; i <= to; i++) {
+                html += i === meta.current_page
+                    ? '<li><span class="current">' + i + '</span></li>'
+                    : '<li><a href="#" data-page="' + i + '">' + i + '</a></li>';
+            }
+
+            html += meta.current_page < meta.last_page
+                ? '<li><a href="#" data-page="' + (meta.current_page + 1) + '">›</a></li>'
+                : '<li><span>›</span></li>';
+
+            paginationBox.innerHTML = html + '</ul>';
+        }
+
+        function reload(page) {
+            currentPage = page || currentPage || 1;
+
+            var filters = collectFilters();
+            var params = Object.assign({}, filters);
+            if (currentPage > 1) { params.page = currentPage; }
+
+            syncUrl(filters, currentPage);
+
+            var seq = ++requestSeq;
+            tbody.innerHTML = loadingRow;
+
+            AdminApi.get(options.apiUrl, params).then(function (json) {
+                if (seq !== requestSeq) { return; } // abaikan respons yang sudah basi
+
+                if (!json.data || !json.data.length) {
+                    tbody.innerHTML = emptyStateRow();
+                    if (countEl) { countEl.textContent = ''; }
+                    renderPagination(null);
+                } else {
+                    tbody.innerHTML = json.data.map(options.renderRow).join('');
+
+                    if (countEl && json.meta) {
+                        countEl.textContent = 'Menampilkan ' + json.meta.from + '–' + json.meta.to + ' dari ' + json.meta.total + ' ' + (options.countSuffix || 'data');
+                    }
+                    renderPagination(json.meta);
+                }
+
+                if (options.onLoaded) { options.onLoaded(json); }
+            }).catch(function (error) {
+                if (seq !== requestSeq) { return; }
+
+                tbody.innerHTML = '<tr><td colspan="99"><div class="alert alert-error" style="margin:16px">Gagal memuat data: '
+                    + esc(error.message) + ' <button type="button" class="btn btn-secondary btn-sm" data-retry style="margin-left:8px">Coba lagi</button></div></td></tr>';
+                renderPagination(null);
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                reload(1);
+            });
+            form.querySelectorAll('select').forEach(function (select) {
+                select.addEventListener('change', function () { reload(1); });
+            });
+            form.querySelectorAll('input[type="search"]').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(function () { reload(1); }, 300);
+                });
+            });
+        }
+
+        if (paginationBox) {
+            paginationBox.addEventListener('click', function (event) {
+                var link = event.target.closest('a[data-page]');
+                if (!link) { return; }
+                event.preventDefault();
+                reload(parseInt(link.getAttribute('data-page'), 10) || 1);
+            });
+        }
+
+        tbody.addEventListener('click', function (event) {
+            if (event.target.closest('[data-retry]')) { reload(currentPage); }
+        });
+
+        var initialPage = parseInt(new URLSearchParams(window.location.search).get('page') || '1', 10) || 1;
+        reload(initialPage);
+
+        return {
+            reload: reload,
+            tbody: tbody,
+            form: form,
+            page: function () { return currentPage; }
+        };
+    }
+
+    return {
+        esc: esc,
+        statusBadge: statusBadge,
+        mount: mount
+    };
+})();

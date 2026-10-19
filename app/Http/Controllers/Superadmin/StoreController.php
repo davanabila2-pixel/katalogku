@@ -17,15 +17,9 @@ class StoreController extends Controller
 
     public function index(Request $request)
     {
-        $stores = Store::query()
-            ->withCount(['products', 'categories', 'purchaseBatches'])
-            ->when($request->q, fn ($q, $term) => $q->where('name', 'like', "%{$term}%"))
-            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('superadmin.stores.index', compact('stores'));
+        // Daftar dimuat lewat API JSON (Api\Superadmin\StoreController)
+        // agar filter/pencarian/pagination berjalan tanpa reload halaman.
+        return view('superadmin.stores.index');
     }
 
     public function create()

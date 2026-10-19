@@ -12,17 +12,9 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::query()
-            ->with(['stores'])
-            ->when($request->q, fn ($q, $term) => $q->where(function ($qq) use ($term) {
-                $qq->where('name', 'like', "%{$term}%")->orWhere('email', 'like', "%{$term}%");
-            }))
-            ->when($request->role, fn ($q, $role) => $q->where('role', $role))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('superadmin.users.index', compact('users'));
+        // Daftar dimuat lewat API JSON (Api\Superadmin\UserController)
+        // agar filter/pencarian/pagination berjalan tanpa reload halaman.
+        return view('superadmin.users.index');
     }
 
     public function edit(User $user)

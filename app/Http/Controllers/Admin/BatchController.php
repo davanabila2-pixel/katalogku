@@ -16,19 +16,9 @@ class BatchController extends Controller
 {
     public function index(Request $request, Store $store)
     {
-        $batches = PurchaseBatch::where('store_id', $store->id)
-            ->with(['creator'])
-            ->withCount('items')
-            ->when($request->q, fn ($q, $term) => $q->where(function ($qq) use ($term) {
-                $qq->where('batch_code', 'like', "%{$term}%")
-                    ->orWhere('supplier_name', 'like', "%{$term}%");
-            }))
-            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
-            ->latest('purchase_date')
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('admin.batches.index', compact('store', 'batches'));
+        // Daftar dimuat lewat API JSON (App\Http\Controllers\Api\BatchController)
+        // agar filter/pencarian/pagination berjalan tanpa reload halaman.
+        return view('admin.batches.index', compact('store'));
     }
 
     public function create(Store $store)

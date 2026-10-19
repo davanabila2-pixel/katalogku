@@ -1,6 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\BatchController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\StockController;
+use App\Http\Controllers\Api\Superadmin\CatalogController as SuperadminCatalogApiController;
+use App\Http\Controllers\Api\Superadmin\StoreController as SuperadminStoreApiController;
+use App\Http\Controllers\Api\Superadmin\UserController as SuperadminUserApiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,4 +23,30 @@ Route::middleware(['web', 'auth', 'store.access'])
     ->prefix('v1/stores/{store}')
     ->group(function () {
         Route::get('products', [ProductController::class, 'index'])->name('api.products.index');
+        Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('api.products.destroy');
+        Route::post('products/{product}/adjust', [ProductController::class, 'adjust'])->name('api.products.adjust');
+
+        Route::get('categories', [CategoryController::class, 'index'])->name('api.categories.index');
+        Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('api.categories.destroy');
+
+        Route::get('batches', [BatchController::class, 'index'])->name('api.batches.index');
+
+        Route::get('stock', [StockController::class, 'index'])->name('api.stock.index');
+        Route::get('stock/history', [StockController::class, 'history'])->name('api.stock.history');
+        Route::get('stock/activity', [StockController::class, 'activity'])->name('api.stock.activity');
+    });
+
+// API superadmin (lintas toko) — hanya untuk role superadmin.
+Route::middleware(['web', 'auth', 'superadmin'])
+    ->prefix('v1/superadmin')
+    ->name('api.superadmin.')
+    ->group(function () {
+        Route::get('stores', [SuperadminStoreApiController::class, 'index'])->name('stores.index');
+        Route::get('users', [SuperadminUserApiController::class, 'index'])->name('users.index');
+
+        Route::get('catalog/categories', [SuperadminCatalogApiController::class, 'categories'])->name('catalog.categories');
+        Route::get('catalog/products', [SuperadminCatalogApiController::class, 'products'])->name('catalog.products');
+        Route::get('catalog/batches', [SuperadminCatalogApiController::class, 'batches'])->name('catalog.batches');
+        Route::get('catalog/stock', [SuperadminCatalogApiController::class, 'stock'])->name('catalog.stock');
+        Route::get('catalog/audit', [SuperadminCatalogApiController::class, 'audit'])->name('catalog.audit');
     });

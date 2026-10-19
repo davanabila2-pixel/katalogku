@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -122,5 +123,134 @@ class ProductApiTest extends TestCase
             ->assertSee('Memuat data produk', false)
             ->assertSee('id="product-rows"', false)
             ->assertSee(route('api.products.index', $store), false);
+    }
+
+    public function test_guest_tidak_bisa_menghapus_produk(): void
+    {
+        [, $store] = $this->makeStoreWithAdmin();
+        $product = $this->makeProduct($store);
+
+        $this->deleteJson(route('api.products.destroy', [$store, $product]))->assertUnauthorized();
+    }
+
+    public function test_produk_tanpa_riwayat_dihapus_via_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+        $product = $this->makeProduct($store);
+
+        $response = $this->actingAs($admin)->deleteJson(route('api.products.destroy', [$store, $product]));
+
+        $response->assertOk()->assertJsonPath('action', 'deleted');
+        $this->assertSoftDeleted('products', ['id' => $product->id]);
+    }
+
+    public function test_produk_dengan_riwayat_stok_diarsipkan_via_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+        $product = $this->makeProduct($store);
+
+        app(InventoryService::class)->adjustStock($product, 3, $admin, 'koreksi hasil stok opname');
+
+        $response = $this->actingAs($admin)->deleteJson(route('api.products.destroy', [$store, $product]));
+
+        $response->assertOk()->assertJsonPath('action', 'archived');
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'status' => 'inactive']);
+        $this->assertNull($product->fresh()->deleted_at);
+    }
+
+    public function test_produk_komponen_bundle_tidak_bisa_dihapus_via_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+        $komponen = $this->makeProduct($store, ['name' => 'Kaos Komponen', 'slug' => 'kaos-komponen']);
+
+        $bundle = Product::create([
+            'store_id' => $store->id,
+            'name' => 'Paket Setelan',
+            'slug' => 'paket-setelan',
+            'selling_price' => 100000,
+            'stock' => 0,
+            'status' => 'active',
+            'is_bundle' => true,
+        ]);
+        $bundle->bundleItems()->attach([$komponen->id => ['quantity' => 1]]);
+        $bundle->syncBundleStock();
+
+        $response = $this->actingAs($admin)->deleteJson(route('api.products.destroy', [$store, $komponen]));
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('products', ['id' => $komponen->id, 'deleted_at' => null]);
+    }
+
+    public function test_produk_toko_lain_tidak_bisa_dihapus_via_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+
+        $tokoLain = Store::create(['name' => 'Toko Lain', 'slug' => 'toko-lain-api', 'status' => 'active']);
+        $produkTokoLain = $this->makeProduct($tokoLain, ['name' => 'Produk Toko Lain', 'slug' => 'produk-toko-lain']);
+
+        $this->actingAs($admin)
+            ->deleteJson(route('api.products.destroy', [$store, $produkTokoLain]))
+            ->assertNotFound();
+    }
+
+    public function test_koreksi_stok_via_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+        $product = $this->makeProduct($store, ['stock' => 5]);
+
+        $response = $this->actingAs($admin)->postJson(route('api.products.adjust', [$store, $product]), [
+            'quantity' => 4,
+            'reason' => 'koreksi hasil stok opname mingguan',
+        ]);
+
+        $response->assertOk()->assertJsonPath('stock', 9);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 9]);
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'movement_type' => 'adjustment',
+            'quantity' => 4,
+        ]);
+    }
+
+    public function test_koreksi_stok_bundle_ditolak_via_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+
+        $bundle = Product::create([
+            'store_id' => $store->id,
+            'name' => 'Paket Setelan',
+            'slug' => 'paket-setelan',
+            'selling_price' => 100000,
+            'stock' => 0,
+            'status' => 'active',
+            'is_bundle' => true,
+        ]);
+
+        $this->actingAs($admin)->postJson(route('api.products.adjust', [$store, $bundle]), [
+            'quantity' => 1,
+            'reason' => 'koreksi manual bundle',
+        ])->assertStatus(422);
+    }
+
+    public function test_koreksi_stok_tanpa_alasan_ditolak_via_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+        $product = $this->makeProduct($store);
+
+        $this->actingAs($admin)->postJson(route('api.products.adjust', [$store, $product]), [
+            'quantity' => 1,
+        ])->assertStatus(422);
+    }
+
+    protected function makeProduct(Store $store, array $overrides = []): Product
+    {
+        return Product::create(array_merge([
+            'store_id' => $store->id,
+            'name' => 'Kaos Polos',
+            'slug' => 'kaos-polos',
+            'selling_price' => 50000,
+            'stock' => 5,
+            'status' => 'active',
+        ], $overrides));
     }
 }

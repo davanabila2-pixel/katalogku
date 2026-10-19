@@ -8,6 +8,8 @@
   <title>@yield('title', 'Dashboard') — {{ config('app.name') }}</title>
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
   <script src="{{ asset('js/admin-api.js') }}" defer></script>
+  <script src="{{ asset('js/admin-ui.js') }}" defer></script>
+  <script src="{{ asset('js/admin-table.js') }}" defer></script>
 </head>
 <body>
 @php($dashboardStore = $store ?? null)

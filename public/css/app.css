@@ -310,3 +310,22 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table-loading { display: flex; align-items: center; gap: 10px; color: var(--steel); font-size: 14px; padding: 10px 0; }
 .skeleton { display: inline-block; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #e8eef5 25%, #f6f9fc 37%, #e8eef5 63%); background-size: 400% 100%; animation: skeleton-pulse 1.2s ease infinite; }
 @keyframes skeleton-pulse { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* Toast + modal (aksi API tanpa reload) */
+.toast-wrap { position: fixed; right: 20px; bottom: 20px; z-index: 1200; display: flex; flex-direction: column; gap: 10px; max-width: min(92vw, 380px); }
+.toast { background: #0f172a; color: #fff; font-size: 14px; line-height: 1.45; padding: 12px 16px; border-radius: 12px; border-left: 4px solid var(--success); box-shadow: 0 14px 34px rgba(15, 23, 42, .28); animation: toast-in .18s ease; }
+.toast-error { border-left-color: var(--critical-strong); }
+.toast-out { opacity: 0; transform: translateY(6px); transition: opacity .2s ease, transform .2s ease; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.modal-backdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(15, 23, 42, .48); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fade-in .15s ease; }
+.modal { background: var(--canvas); width: 100%; max-width: 440px; border-radius: 16px; padding: 22px 24px; box-shadow: 0 30px 70px rgba(15, 23, 42, .35); animation: modal-in .16s ease; max-height: 90vh; overflow-y: auto; }
+.modal-title { margin: 0 0 6px; font-size: 17px; color: var(--ink-deep); }
+.modal-text { margin: 0; color: var(--steel); font-size: 14px; line-height: 1.5; }
+.modal-form .field { margin-top: 14px; margin-bottom: 0; }
+.modal-form textarea.input { height: auto; min-height: 84px; resize: vertical; }
+.modal-help { display: block; margin-top: 4px; color: var(--stone); font-size: 12.5px; }
+.modal-error { margin-top: 12px; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: 10px 12px; border-radius: 10px; font-size: 13.5px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
