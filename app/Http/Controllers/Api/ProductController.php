@@ -4,12 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Concerns\HandlesImages;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductRequest;
 use App\Http\Requests\StockAdjustRequest;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Services\AuditLogger;
+use App\Services\BarcodeService;
+use App\Services\HppService;
 use App\Services\InventoryService;
+use App\Services\SlugService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -53,6 +59,8 @@ class ProductController extends Controller
                 'is_bundle' => $product->isBundle(),
                 'is_hidden' => $product->isHiddenFromCatalog(),
                 'edit_url' => route('admin.products.edit', [$store, $product]),
+                'update_url' => route('api.products.update', [$store, $product]),
+                'form_data_url' => route('api.products.product_form_data', [$store, $product]),
                 'destroy_url' => route('api.products.destroy', [$store, $product]),
                 'adjust_url' => route('api.products.adjust', [$store, $product]),
             ])->values(),
@@ -65,6 +73,173 @@ class ProductController extends Controller
                 'to' => $products->lastItem(),
             ],
         ]);
+    }
+
+    /**
+     * Data untuk modal "Tambah produk": pilihan kategori (aktif) + produk
+     * satuan yang bisa dijadikan komponen paket setelan.
+     */
+    public function formData(Request $request, Store $store)
+    {
+        $this->authorize('create', [Product::class, $store->id]);
+
+        return response()->json([
+            'categories' => $this->categoryOptions($store, true),
+            'components' => $this->componentOptions($store),
+        ]);
+    }
+
+    /**
+     * Data untuk modal "Edit produk": nilai produk + komponen paket +
+     * HPP/margin + info barcode. Mengikuti form web edit: kategori semua.
+     */
+    public function productFormData(Request $request, Store $store, Product $product)
+    {
+        $this->ensureSameStore($store, $product);
+        $this->authorize('update', $product);
+
+        $product->loadMissing('bundleItems');
+
+        return response()->json([
+            'categories' => $this->categoryOptions($store, false),
+            'components' => $this->componentOptions($store, $product->id),
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'sku' => $product->sku,
+                'category_id' => $product->category_id,
+                'description' => $product->description,
+                'selling_price' => (float) $product->selling_price,
+                'status' => $product->status,
+                'is_bundle' => $product->isBundle(),
+                'is_hidden_from_catalog' => (bool) $product->is_hidden_from_catalog,
+                'stock' => (int) $product->stock,
+                'hpp' => app(HppService::class)->hppForProduct($product),
+                'margin' => app(HppService::class)->marginForProduct($product),
+                'update_url' => route('api.products.update', [$store, $product]),
+            ],
+            'bundle_items' => $product->bundleItems->map(fn (Product $item) => [
+                'product_id' => $item->id,
+                'quantity' => (int) $item->pivot->quantity,
+            ])->values(),
+            'barcode' => [
+                'code' => $product->barcode,
+                'label_url' => $product->barcodeUrl(),
+                'scan_url' => $product->scanUrl(),
+                'regenerate_url' => route('api.products.barcode', [$store, $product]),
+            ],
+        ]);
+    }
+
+    /**
+     * Simpan produk baru tanpa reload halaman (termasuk paket setelan).
+     * Aturan sama dengan versi web: slug otomatis, komponen paket disinkronkan,
+     * barcode dibuat best-effort (kegagalan Drive tidak membatalkan produk).
+     */
+    public function store(ProductRequest $request, Store $store)
+    {
+        $data = $request->validated();
+        $data['store_id'] = $store->id;
+        $data['slug'] = $data['slug'] ?? SlugService::uniqueProductSlug($store->id, $data['name']);
+        $data['is_bundle'] = (bool) ($data['is_bundle'] ?? false);
+        $data['is_hidden_from_catalog'] = $data['is_bundle'] ? false : (bool) ($data['is_hidden_from_catalog'] ?? false);
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $this->storeImage($store, $request->file('image'));
+        }
+        $bundleItemsData = $data['bundle_items'] ?? null;
+        unset($data['image'], $data['bundle_items']);
+
+        $product = Product::create($data + ['store_id' => $store->id]);
+
+        if ($product->isBundle() && ! empty($bundleItemsData)) {
+            $product->bundleItems()->sync($this->bundleSyncData($bundleItemsData));
+            $product->syncBundleStock();
+        }
+
+        $barcodeNotice = '';
+        try {
+            app(BarcodeService::class)->generateAndUpload($product, $request->user());
+            $barcodeNotice = 'Barcode identitas tersimpan di Google Drive.';
+        } catch (\Throwable $e) {
+            Log::warning('Gagal generate barcode saat buat produk (API): '.$e->getMessage(), ['product_id' => $product->id]);
+            $barcodeNotice = 'Catatan barcode: '.$e->getMessage();
+        }
+
+        AuditLogger::log('product.created', $product, "Produk {$product->name} dibuat.", null, $request->user(), $store->id);
+
+        return response()->json([
+            'message' => 'Produk dibuat.',
+            'barcode_notice' => $barcodeNotice,
+            'product_id' => $product->id,
+        ], 201);
+    }
+
+    /**
+     * Perbarui produk tanpa reload halaman (termasuk paket setelan).
+     */
+    public function update(ProductRequest $request, Store $store, Product $product)
+    {
+        $this->ensureSameStore($store, $product);
+        $data = $request->validated();
+        $data['is_bundle'] = (bool) ($data['is_bundle'] ?? false);
+        $data['is_hidden_from_catalog'] = $data['is_bundle'] ? false : (bool) ($data['is_hidden_from_catalog'] ?? false);
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $this->storeImage($store, $request->file('image'), $product->image_path);
+        }
+        $bundleItemsData = $data['bundle_items'] ?? null;
+        unset($data['image'], $data['store_id'], $data['bundle_items']);
+
+        $product->update($data);
+
+        if ($product->isBundle()) {
+            $product->bundleItems()->sync($this->bundleSyncData($bundleItemsData ?? []));
+            $product->syncBundleStock();
+        } else {
+            $product->bundleItems()->detach();
+        }
+
+        foreach ($product->partOfBundles as $bundle) {
+            $bundle->syncBundleStock();
+        }
+
+        AuditLogger::log('product.updated', $product, "Produk {$product->name} diperbarui.", null, $request->user(), $store->id);
+
+        return response()->json([
+            'message' => 'Produk diperbarui.',
+            'product_id' => $product->id,
+        ]);
+    }
+
+    /**
+     * Generate ulang barcode & simpan ke Google Drive tanpa reload halaman.
+     */
+    public function regenerateBarcode(Request $request, Store $store, Product $product)
+    {
+        $this->ensureSameStore($store, $product);
+        $this->authorize('update', $product);
+
+        try {
+            app(BarcodeService::class)->generateAndUpload($product, $request->user());
+            AuditLogger::log('product.barcode_regenerated', $product, "Barcode identitas produk {$product->name} di-generate ulang.", null, $request->user(), $store->id);
+
+            $product->refresh();
+
+            return response()->json([
+                'message' => 'Barcode dan label produk berhasil di-generate dan disimpan ke Google Drive.',
+                'barcode' => [
+                    'code' => $product->barcode,
+                    'label_url' => $product->barcodeUrl(),
+                    'scan_url' => $product->scanUrl(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Gagal mengunggah barcode ke Google Drive: '.$e->getMessage(),
+            ], 422);
+        }
     }
 
     /**
@@ -136,5 +311,54 @@ class ProductController extends Controller
         if ((int) $product->store_id !== (int) $store->id) {
             abort(404);
         }
+    }
+
+    /**
+     * Pilihan kategori untuk form modal. $activeOnly meniru form web create.
+     */
+    protected function categoryOptions(Store $store, bool $activeOnly)
+    {
+        return Category::forStore($store->id)
+            ->when($activeOnly, fn ($q) => $q->active())
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (Category $category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+            ])->values();
+    }
+
+    /**
+     * Produk satuan yang bisa dipilih sebagai komponen paket setelan.
+     */
+    protected function componentOptions(Store $store, ?int $excludeId = null)
+    {
+        return Product::forStore($store->id)
+            ->where('is_bundle', false)
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->orderBy('name')
+            ->get(['id', 'name', 'sku', 'selling_price', 'stock'])
+            ->map(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'selling_price' => (float) $product->selling_price,
+                'stock' => (int) $product->stock,
+            ])->values();
+    }
+
+    /**
+     * Bentuk data sync komponen paket: [product_id => ['quantity' => n]].
+     */
+    protected function bundleSyncData(array $items): array
+    {
+        $syncData = [];
+        foreach ($items as $item) {
+            if (! empty($item['product_id'])) {
+                $syncData[$item['product_id']] = ['quantity' => max(1, (int) ($item['quantity'] ?? 1))];
+            }
+        }
+
+        return $syncData;
     }
 }

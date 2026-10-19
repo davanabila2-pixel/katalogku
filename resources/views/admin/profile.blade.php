@@ -346,9 +346,11 @@
 </style>
 
 <div class="profile-form-container">
-  <form method="POST" action="{{ route('admin.profile.update', $store) }}" enctype="multipart/form-data" id="store-profile-form">
+  <form method="POST" action="{{ route('admin.profile.update', $store) }}" enctype="multipart/form-data" id="store-profile-form" data-update-url="{{ route('api.profile.update', $store) }}">
     @csrf
     @method('PUT')
+
+    <div class="alert alert-error" id="profile-form-error" hidden style="margin-bottom:16px"></div>
 
     <div class="profile-grid">
       <div class="profile-col">
@@ -556,6 +558,70 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   updateCounters();
+
+  // ---- Simpan profil tanpa reload halaman (endpoint API JSON) ----
+  var form = document.getElementById('store-profile-form');
+  if (!form || !window.AdminApi || !window.AdminUI) return;
+
+  var submitButton = form.querySelector('button[type="submit"]');
+  var submitLabel = submitButton ? submitButton.innerHTML : '';
+  var errorBox = document.getElementById('profile-form-error');
+
+  function showErrors(error) {
+    var messages = [];
+    if (error && error.body && error.body.errors) {
+      Object.keys(error.body.errors).forEach(function (key) {
+        (error.body.errors[key] || []).forEach(function (message) { messages.push(message); });
+      });
+    }
+    if (!messages.length) { messages.push((error && error.message) || 'Gagal menyimpan profil.'); }
+    if (errorBox) {
+      errorBox.innerHTML = messages.map(AdminUI.esc).join('<br>');
+      errorBox.hidden = false;
+      errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      AdminUI.toast(messages[0], 'error');
+    }
+  }
+
+  function updateBranding(store) {
+    if (!store) return;
+
+    document.querySelectorAll('.dash-brand-name').forEach(function (el) { el.textContent = store.name; });
+    document.querySelectorAll('.dash-brand-initial').forEach(function (el) { el.textContent = store.name.charAt(0).toUpperCase(); });
+    if (store.logo_url) {
+      document.querySelectorAll('.dash-brand-logo').forEach(function (img) { img.src = store.logo_url; });
+    }
+
+    var slugInput = document.getElementById('input-store-slug');
+    if (slugInput && store.slug) { slugInput.value = store.slug; }
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (errorBox) errorBox.hidden = true;
+
+    var payload = new FormData(form);
+    payload.append('_method', 'PUT');
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '⏳ Menyimpan…';
+    }
+
+    AdminApi.request(form.getAttribute('data-update-url'), { method: 'POST', body: payload })
+      .then(function (json) {
+        AdminUI.toast(json.message, 'success');
+        updateBranding(json.store);
+      })
+      .catch(showErrors)
+      .then(function () {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerHTML = submitLabel;
+        }
+      });
+  });
 });
 </script>
 @endsection

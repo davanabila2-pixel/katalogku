@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PurchaseBatchRequest;
+use App\Models\Product;
 use App\Models\PurchaseBatch;
 use App\Models\Store;
+use App\Services\BarcodeService;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BatchController extends Controller
 {
@@ -44,5 +49,60 @@ class BatchController extends Controller
                 'to' => $batches->lastItem(),
             ],
         ]);
+    }
+
+    /**
+     * Pilihan produk untuk baris item di modal "Buat Batch".
+     * Sama dengan form web: semua produk toko (termasuk paket setelan).
+     */
+    public function options(Request $request, Store $store)
+    {
+        $products = Product::forStore($store->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'sku', 'stock']);
+
+        return response()->json([
+            'data' => $products->map(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'stock' => (int) $product->stock,
+            ])->values(),
+            'suggested_code' => 'BATCH-'.now()->format('Ymd-His'),
+            'today' => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Buat batch pembelian tanpa reload halaman.
+     * Alur sama dengan versi web: stok masuk lewat InventoryService,
+     * QR code batch dibuat best-effort, lalu UI diarahkan ke halaman
+     * detail batch (untuk cetak label).
+     */
+    public function store(PurchaseBatchRequest $request, Store $store, InventoryService $inventory)
+    {
+        $data = $request->validated();
+
+        $batch = $inventory->createBatch(
+            $data + ['store_id' => $store->id],
+            $data['items'],
+            $request->user()
+        );
+
+        $barcodeNotice = '';
+        try {
+            $updated = app(BarcodeService::class)->generateBatchQrCodes($batch, $request->user());
+            if (count($updated) > 0) {
+                $barcodeNotice = ' QR code identitas produk batch berhasil di-generate.';
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Gagal auto-generate QR batch (API): '.$e->getMessage());
+        }
+
+        return response()->json([
+            'message' => 'Batch dibuat. Total biaya: Rp '.number_format($batch->totalCost(), 0, ',', '.').$barcodeNotice,
+            'batch_id' => $batch->id,
+            'redirect_url' => route('admin.batches.show', [$store, $batch]),
+        ], 201);
     }
 }
