@@ -64,6 +64,7 @@ return [
                     str_contains((string) env('DB_HOST', ''), 'tidbcloud.com')
                         ? collect([
                             '/etc/pki/tls/certs/ca-bundle.crt',
+                            '/etc/ssl/certs/ca-bundle.crt',
                             '/etc/ssl/certs/ca-certificates.crt',
                             '/etc/ssl/cert.pem',
                         ])->first(fn ($path) => is_file($path))
@@ -92,6 +93,7 @@ return [
                     str_contains((string) env('DB_HOST', ''), 'tidbcloud.com')
                         ? collect([
                             '/etc/pki/tls/certs/ca-bundle.crt',
+                            '/etc/ssl/certs/ca-bundle.crt',
                             '/etc/ssl/certs/ca-certificates.crt',
                             '/etc/ssl/cert.pem',
                         ])->first(fn ($path) => is_file($path))

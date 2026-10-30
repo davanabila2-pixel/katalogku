@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 // Pastikan direktori penyimpanan sementara di /tmp tersedia untuk serverless (Vercel)
 foreach ([
     '/tmp/storage/framework/views',
@@ -13,4 +15,3 @@ foreach ([
 }
 
 require __DIR__.'/../public/index.php';
-
