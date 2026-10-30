@@ -14,4 +14,13 @@ foreach ([
     }
 }
 
+// Vercel serverless function di /api/index.php otomatis memotong prefix /api dari URL
+// (contoh: /api/v1/stores/2/products di-pass sebagai /v1/stores/2/products).
+// Kembalikan prefix /api agar cocok dengan routing Laravel.
+foreach (['REQUEST_URI', 'PATH_INFO', 'PHP_SELF', 'REDIRECT_URL'] as $key) {
+    if (isset($_SERVER[$key]) && str_starts_with($_SERVER[$key], '/v1/')) {
+        $_SERVER[$key] = '/api' . $_SERVER[$key];
+    }
+}
+
 require __DIR__.'/../public/index.php';
