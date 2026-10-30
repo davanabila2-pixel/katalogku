@@ -2,15 +2,16 @@
 @section('title', 'Toko')
 @section('subtitle', 'Kelola seluruh toko lintas aplikasi')
 @section('content')
-<div class="toolbar">
-  <form method="GET" id="store-filters" style="display:flex;gap:8px">
-    <input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari toko…" autocomplete="off">
-    <select class="select" style="width:140px" name="status"><option value="">Semua</option><option value="active" {{ request('status')==='active'?'selected':'' }}>Aktif</option><option value="inactive" {{ request('status')==='inactive'?'selected':'' }}>Nonaktif</option></select>
-  </form>
-  <span class="spacer"></span>
-  <span class="category-hierarchy" id="store-count" style="margin-right:8px"></span>
-  <button class="btn btn-primary btn-sm" type="button" id="store-create">+ Buat Toko</button>
-</div>
+<form method="GET" id="store-filters" class="toolbar">
+  <div class="toolbar-left">
+    <select class="select" style="width:140px" name="status"><option value="">Semua status</option><option value="active" {{ request('status')==='active'?'selected':'' }}>Aktif</option><option value="inactive" {{ request('status')==='inactive'?'selected':'' }}>Nonaktif</option></select>
+  </div>
+  <div class="toolbar-right">
+    <x-search-input placeholder="Cari toko…" width="250px" />
+    <span class="category-hierarchy" id="store-count"></span>
+    <button class="btn btn-primary btn-sm" type="button" id="store-create">+ Buat Toko</button>
+  </div>
+</form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
 <table class="table" id="store-table" data-api-url="{{ route('api.superadmin.stores.index') }}" data-store-url="{{ route('api.superadmin.stores.store') }}">
 <thead><tr><th>Nama</th><th>Slug / URL</th><th>Produk</th><th>Kategori</th><th>Batch</th><th>Status</th><th>Aksi</th></tr></thead>

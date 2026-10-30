@@ -4,7 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'superadmin' => \App\Http\Middleware\EnsureSuperadmin::class,
             'store.access' => \App\Http\Middleware\EnsureStoreAccess::class,
@@ -20,3 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+
+if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL']) || str_starts_with(__DIR__, '/var/task')) {
+    $app->useStoragePath('/tmp/storage');
+}
+
+return $app;

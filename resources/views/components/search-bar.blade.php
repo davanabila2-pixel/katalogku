@@ -1,0 +1,1 @@
+<x-search-input {{ $attributes }} />

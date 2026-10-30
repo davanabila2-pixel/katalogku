@@ -80,6 +80,27 @@ class AdminFormApiTest extends TestCase
         ]);
     }
 
+    public function test_admin_dapat_membuat_subkategori_lewat_api(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+
+        $root = Category::create(['store_id' => $store->id, 'name' => 'Fashion', 'slug' => 'fashion', 'is_active' => true]);
+
+        $response = $this->actingAs($admin)->postJson(route('api.categories.store', $store), [
+            'name' => 'Pakaian Pria',
+            'parent_id' => $root->id,
+            'sort_order' => 1,
+        ]);
+
+        $response->assertCreated()->assertJsonPath('message', 'Kategori dibuat.');
+
+        $this->assertDatabaseHas('categories', [
+            'store_id' => $store->id,
+            'name' => 'Pakaian Pria',
+            'parent_id' => $root->id,
+        ]);
+    }
+
     public function test_kategori_validasi_gagal_mengembalikan_422(): void
     {
         [$admin, $store] = $this->makeStoreWithAdmin();

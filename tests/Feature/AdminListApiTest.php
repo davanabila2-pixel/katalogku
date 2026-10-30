@@ -63,6 +63,23 @@ class AdminListApiTest extends TestCase
         $filter->assertOk()->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.name', 'Jaket');
     }
 
+    public function test_admin_mendapat_struktur_pohon_kategori_hirarki(): void
+    {
+        [$admin, $store] = $this->makeStoreWithAdmin();
+
+        $root = Category::create(['store_id' => $store->id, 'name' => 'Fashion', 'slug' => 'fashion', 'is_active' => true]);
+        $sub = Category::create(['store_id' => $store->id, 'name' => 'Pakaian Pria', 'slug' => 'pakaian-pria', 'parent_id' => $root->id, 'is_active' => true]);
+        $subSub = Category::create(['store_id' => $store->id, 'name' => 'Kaos Pria', 'slug' => 'kaos-pria', 'parent_id' => $sub->id, 'is_active' => true]);
+
+        $response = $this->actingAs($admin)->getJson(route('api.categories.tree', $store));
+        $response->assertOk()
+            ->assertJsonPath('meta.total_roots', 1)
+            ->assertJsonPath('meta.total_categories', 3)
+            ->assertJsonPath('data.0.id', $root->id)
+            ->assertJsonPath('data.0.children.0.id', $sub->id)
+            ->assertJsonPath('data.0.children.0.children.0.id', $subSub->id);
+    }
+
     public function test_admin_toko_lain_ditolak_di_api_kategori(): void
     {
         [$admin] = $this->makeStoreWithAdmin();

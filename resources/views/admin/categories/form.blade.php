@@ -7,9 +7,11 @@
 @csrf @if($category->exists)@method('PUT')@endif
   <div class="field"><label>Nama</label><input class="input" type="text" name="name" value="{{ old('name', $category->name) }}" required></div>
   <div class="field"><label>Slug (opsional — otomatis dari nama)</label><input class="input" type="text" name="slug" value="{{ old('slug', $category->slug) }}"></div>
-  <div class="field"><label>Kategori induk (opsional — jadikan subkategori)</label>
-    <select class="select" name="parent_id"><option value="">— Kategori utama —</option>
-    @foreach($parents as $p)<option value="{{ $p->id }}" {{ (string)old('parent_id', $category->parent_id) === (string)$p->id ? 'selected' : '' }}>{{ $p->name }}</option>@endforeach</select></div>
+  <div class="field"><label>Kategori Induk / Tingkat Hirarki</label>
+    <select class="select" name="parent_id"><option value="">— Kategori Utama (Tingkat Teratas / Induk) —</option>
+    @foreach($parents as $p)<option value="{{ $p->id }}" {{ (string)old('parent_id', $category->parent_id) === (string)$p->id ? 'selected' : '' }}>Subkategori di bawah: {{ $p->name }}</option>@endforeach</select>
+    <span class="help" style="font-size:12px;color:#64748b;margin-top:4px;display:block">Pilih "Kategori Utama" jika ini kelompok produk besar. Pilih kategori induk jika ini adalah cabang/subkategori.</span>
+  </div>
   <div class="field"><label>Deskripsi</label><textarea class="textarea" name="description">{{ old('description', $category->description) }}</textarea></div>
   <div class="form-row">
     <div class="field"><label>Urutan tampil</label><input class="input" type="number" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}" min="0"></div>

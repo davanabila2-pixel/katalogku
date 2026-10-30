@@ -1,14 +1,15 @@
 @extends('layouts.dashboard')
 @section('title', 'Kategori Lintas Toko')
 @section('content')
-<div class="toolbar">
-  <form method="GET" id="catalog-category-filters" style="display:flex;gap:8px">
-    <input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari kategori…" autocomplete="off">
+<form method="GET" id="catalog-category-filters" class="toolbar">
+  <div class="toolbar-left">
     <select class="select" style="width:180px" name="store_id"><option value="">Semua toko</option>@foreach($stores as $s)<option value="{{ $s->id }}" {{ (string)request('store_id')===(string)$s->id?'selected':'' }}>{{ $s->name }}</option>@endforeach</select>
-  </form>
-  <span class="spacer"></span>
-  <span class="category-hierarchy" id="catalog-category-count" style="margin-right:8px"></span>
-</div>
+  </div>
+  <div class="toolbar-right">
+    <x-search-input placeholder="Cari kategori…" width="250px" />
+    <span class="category-hierarchy" id="catalog-category-count"></span>
+  </div>
+</form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
 <table class="table" id="catalog-category-table" data-api-url="{{ route('api.superadmin.catalog.categories') }}">
 <thead><tr><th>Nama</th><th>Toko</th><th>Induk</th><th>Sub</th><th>Produk</th><th>Status</th></tr></thead>

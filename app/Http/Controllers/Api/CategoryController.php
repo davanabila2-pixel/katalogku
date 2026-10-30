@@ -27,6 +27,8 @@ class CategoryController extends Controller
             ->when($request->q, fn ($q, $term) => $q->where('name', 'like', "%{$term}%"))
             ->when($request->status === 'active', fn ($q) => $q->where('is_active', true))
             ->when($request->status === 'inactive', fn ($q) => $q->where('is_active', false))
+            ->when($request->parent_id === 'root', fn ($q) => $q->whereNull('parent_id'))
+            ->when(is_numeric($request->parent_id), fn ($q) => $q->where('parent_id', (int) $request->parent_id))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(15);
@@ -59,6 +61,109 @@ class CategoryController extends Controller
     }
 
     /**
+     * Struktur pohon kategori lengkap (berdasarkan hirarki induk & subkategori).
+     * Mengelompokkan kategori utama (roots) bersama seluruh subkategori di bawahnya.
+     */
+    public function tree(Request $request, Store $store)
+    {
+        $status = $request->status;
+        $q = trim((string) $request->q);
+
+        $categories = Category::forStore($store->id)
+            ->withCount('products')
+            ->when($status === 'active', fn ($query) => $query->where('is_active', true))
+            ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $nodes = [];
+        foreach ($categories as $cat) {
+            $nodes[$cat->id] = [
+                'id' => $cat->id,
+                'parent_id' => $cat->parent_id,
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+                'description' => $cat->description,
+                'sort_order' => (int) $cat->sort_order,
+                'is_active' => (bool) $cat->is_active,
+                'products_count' => (int) $cat->products_count,
+                'edit_url' => route('admin.categories.edit', [$store, $cat]),
+                'update_url' => route('api.categories.update', [$store, $cat]),
+                'destroy_url' => route('api.categories.destroy', [$store, $cat]),
+                'matches_search' => $q !== '' && stripos($cat->name, $q) !== false,
+                'children' => [],
+            ];
+        }
+
+        $roots = [];
+        $orphans = [];
+
+        foreach ($nodes as $id => &$node) {
+            if ($node['parent_id'] !== null) {
+                if (isset($nodes[$node['parent_id']])) {
+                    $nodes[$node['parent_id']]['children'][] = &$node;
+                } else {
+                    $orphans[] = &$node;
+                }
+            } else {
+                $roots[] = &$node;
+            }
+        }
+        unset($node);
+
+        if ($q !== '') {
+            $filterMatches = function (&$branch) use (&$filterMatches) {
+                $hasMatch = false;
+                foreach ($branch as $key => &$item) {
+                    $childHasMatch = false;
+                    if (!empty($item['children'])) {
+                        $childHasMatch = $filterMatches($item['children']);
+                    }
+                    if ($item['matches_search'] || $childHasMatch) {
+                        $item['expanded'] = true;
+                        $hasMatch = true;
+                    } else {
+                        unset($branch[$key]);
+                    }
+                }
+                $branch = array_values($branch);
+                return $hasMatch;
+            };
+
+            $filterMatches($roots);
+            $filterMatches($orphans);
+        }
+
+        $enrichTree = function (&$branch, $depth = 1) use (&$enrichTree) {
+            $totalSub = 0;
+            $totalProds = 0;
+            foreach ($branch as &$item) {
+                $item['depth'] = $depth;
+                $item['direct_children_count'] = count($item['children']);
+                $subStats = $enrichTree($item['children'], $depth + 1);
+                $item['total_descendants_count'] = $item['direct_children_count'] + $subStats['subs'];
+                $item['total_products_count'] = $item['products_count'] + $subStats['prods'];
+                $totalSub += $item['total_descendants_count'];
+                $totalProds += $item['total_products_count'];
+            }
+            return ['subs' => $totalSub, 'prods' => $totalProds];
+        };
+
+        $enrichTree($roots);
+        $enrichTree($orphans);
+
+        return response()->json([
+            'data' => $roots,
+            'orphans' => $orphans,
+            'meta' => [
+                'total_roots' => count($roots),
+                'total_categories' => count($nodes),
+            ],
+        ]);
+    }
+
+    /**
      * Pilihan kategori induk untuk form modal.
      * Meniru form web: saat menambah hanya kategori utama (roots) yang
      * ditawarkan; saat mengedit (ada ?exclude={id}) semua kategori toko
@@ -70,15 +175,24 @@ class CategoryController extends Controller
             ->when(
                 $request->filled('exclude'),
                 fn ($q) => $q->where('id', '!=', (int) $request->exclude),
-                fn ($q) => $q->roots()
+                fn ($q) => $request->boolean('all_parents')
+                    ? $q->where(function ($sub) {
+                        $sub->whereNull('parent_id')
+                            ->orWhereIn('parent_id', function ($r) {
+                                $r->select('id')->from('categories')->whereNull('parent_id');
+                            });
+                    })
+                    : $q->roots()
             )
+            ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'parent_id']);
 
         return response()->json([
             'data' => $categories->map(fn (Category $category) => [
                 'id' => $category->id,
                 'name' => $category->name,
+                'parent_id' => $category->parent_id,
             ])->values(),
         ]);
     }

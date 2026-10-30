@@ -186,7 +186,43 @@
       margin-top: 6px;
     }
 
+    .labels-grid.compact {
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 6px;
+    }
+
+    .label-mini {
+      background: #fff;
+      border: 1px solid #000;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .label-mini img {
+      width: 22mm;
+      height: 22mm;
+      display: block;
+    }
+
+    .label-mini span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7px;
+      font-weight: 700;
+      margin-top: 2px;
+      word-break: break-all;
+    }
+
     @media print {
+      .labels-grid.compact {
+        grid-template-columns: repeat(7, 1fr) !important;
+        gap: 3mm !important;
+      }
+
       body {
         background: #fff;
         padding: 0;
@@ -263,8 +299,15 @@
   @endphp
 
   @if(count($labels) > 0)
-    <div class="labels-grid">
+    <div class="labels-grid {{ $mode === 'unique' ? 'compact' : '' }}">
       @foreach($labels as $entry)
+        @if($mode === 'unique')
+          <div class="label-mini">
+            <img src="{{ $entry['product']->qrCodeDataUri() }}" alt="QR {{ $entry['product']->name }}">
+            <span>{{ $entry['product']->barcode ?? 'PROD-'.$entry['product']->id }}</span>
+          </div>
+          @continue
+        @endif
         @php
           $prod = $entry['product'];
         @endphp

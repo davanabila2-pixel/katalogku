@@ -86,30 +86,38 @@ window.AdminTable = (function () {
         function renderPagination(meta) {
             if (!paginationBox) { return; }
 
-            if (!meta || meta.last_page <= 1) {
+            if (!meta || !meta.total || meta.total === 0) {
                 paginationBox.innerHTML = '';
                 return;
             }
 
-            var from = Math.max(1, meta.current_page - 2);
-            var to = Math.min(meta.last_page, meta.current_page + 2);
-            var html = '<ul class="pagination">';
+            var from = meta.from || (meta.total > 0 ? 1 : 0);
+            var to = meta.to || meta.total;
+            var current = meta.current_page || 1;
+            var last = meta.last_page || 1;
+            var total = meta.total || 0;
+            var suffix = options.countSuffix || 'data';
 
-            html += meta.current_page > 1
-                ? '<li><a href="#" data-page="' + (meta.current_page - 1) + '">‹</a></li>'
-                : '<li><span>‹</span></li>';
+            var prevBtn = current > 1
+                ? '<button type="button" class="pagination-nav-btn" data-page="' + (current - 1) + '">&lt; PREV PAGE</button>'
+                : '<button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true">&lt; PREV PAGE</button>';
 
-            for (var i = from; i <= to; i++) {
-                html += i === meta.current_page
-                    ? '<li><span class="current">' + i + '</span></li>'
-                    : '<li><a href="#" data-page="' + i + '">' + i + '</a></li>';
-            }
+            var nextBtn = current < last
+                ? '<button type="button" class="pagination-nav-btn" data-page="' + (current + 1) + '">NEXT PAGE &gt;</button>'
+                : '<button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true">NEXT PAGE &gt;</button>';
 
-            html += meta.current_page < meta.last_page
-                ? '<li><a href="#" data-page="' + (meta.current_page + 1) + '">›</a></li>'
-                : '<li><span>›</span></li>';
-
-            paginationBox.innerHTML = html + '</ul>';
+            paginationBox.innerHTML =
+                '<div class="pagination-container">'
+                + '<div class="pagination-info">Showing ' + from + ' - ' + to + ' of ' + total + ' ' + esc(suffix) + '</div>'
+                + '<div class="pagination-controls">'
+                + prevBtn
+                + '<div class="pagination-page-box">'
+                + '<input type="number" class="pagination-page-input" value="' + current + '" min="1" max="' + last + '" data-current="' + current + '" data-max="' + last + '" aria-label="Nomor halaman">'
+                + '<span class="pagination-total-label">of ' + last + ' pages</span>'
+                + '</div>'
+                + nextBtn
+                + '</div>'
+                + '</div>';
         }
 
         function reload(page) {
@@ -168,10 +176,38 @@ window.AdminTable = (function () {
 
         if (paginationBox) {
             paginationBox.addEventListener('click', function (event) {
-                var link = event.target.closest('a[data-page]');
-                if (!link) { return; }
+                var btn = event.target.closest('[data-page]');
+                if (!btn || btn.disabled || btn.classList.contains('is-disabled')) { return; }
                 event.preventDefault();
-                reload(parseInt(link.getAttribute('data-page'), 10) || 1);
+                var target = parseInt(btn.getAttribute('data-page'), 10);
+                if (target && target !== currentPage) {
+                    reload(target);
+                }
+            });
+
+            function onPageInput(input) {
+                var max = parseInt(input.getAttribute('data-max') || input.getAttribute('max'), 10) || 1;
+                var current = parseInt(input.getAttribute('data-current'), 10) || currentPage;
+                var target = parseInt(input.value, 10);
+                if (isNaN(target) || target < 1) { target = 1; }
+                if (target > max) { target = max; }
+                input.value = target;
+                if (target !== current) {
+                    reload(target);
+                }
+            }
+
+            paginationBox.addEventListener('change', function (event) {
+                if (event.target.classList.contains('pagination-page-input')) {
+                    onPageInput(event.target);
+                }
+            });
+
+            paginationBox.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' && event.target.classList.contains('pagination-page-input')) {
+                    event.preventDefault();
+                    onPageInput(event.target);
+                }
             });
         }
 

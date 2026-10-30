@@ -22,7 +22,7 @@
         @endif
         <span class="dash-brand-text">
             <span class="dash-brand-name">{{ $store->name }}</span>
-            <span class="dash-brand-meta">Admin Toko</span>
+            <span class="dash-brand-meta"><span class="dash-brand-badge-dot"></span>Admin Toko</span>
         </span>
     </a>
 @else
@@ -30,7 +30,7 @@
         <span class="dash-brand-initial dash-brand-initial-app">K</span>
         <span class="dash-brand-text">
             <span class="dash-brand-name">Kata<span class="dash-brand-accent">log</span></span>
-            <span class="dash-brand-meta">{{ $isSuperadmin ? 'Superadmin' : 'Panel' }}</span>
+            <span class="dash-brand-meta"><span class="dash-brand-badge-dot"></span>{{ $isSuperadmin ? 'Superadmin' : 'Panel' }}</span>
         </span>
     </a>
 @endif

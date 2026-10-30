@@ -33,6 +33,7 @@ Route::middleware(['web', 'auth', 'store.access'])
         Route::post('products/{product}/barcode', [ProductController::class, 'regenerateBarcode'])->name('api.products.barcode');
 
         Route::get('categories', [CategoryController::class, 'index'])->name('api.categories.index');
+        Route::get('categories/tree', [CategoryController::class, 'tree'])->name('api.categories.tree');
         Route::get('categories/options', [CategoryController::class, 'options'])->name('api.categories.options');
         Route::post('categories', [CategoryController::class, 'store'])->name('api.categories.store');
         Route::put('categories/{category}', [CategoryController::class, 'update'])->name('api.categories.update');

@@ -52,6 +52,7 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
@@ -74,7 +75,11 @@
     "extra": {
         "laravel": {
             "dont-discover": []
-        }
+        },
+        "google/apiclient-services": [
+            "Drive",
+            "Oauth2"
+        ]
     },
     "config": {
         "optimize-autoloader": true,

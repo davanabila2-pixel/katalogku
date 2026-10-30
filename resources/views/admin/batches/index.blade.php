@@ -2,14 +2,14 @@
 @section('title', 'Batch Pembelian')
 @section('subtitle', $store->name)
 @section('content')
-<div class="toolbar">
-  <form method="GET" id="batch-filters" style="display:flex;gap:8px">
-    <input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari kode/supplier…" autocomplete="off">
-  </form>
-  <span class="spacer"></span>
-  <span class="category-hierarchy" id="batch-count" style="margin-right:8px"></span>
-  <button class="btn btn-primary btn-sm" type="button" id="batch-create">+ Buat Batch</button>
-</div>
+<form method="GET" id="batch-filters" class="toolbar">
+  <div class="toolbar-left"></div>
+  <div class="toolbar-right">
+    <x-search-input placeholder="Cari kode/supplier…" width="250px" />
+    <span class="category-hierarchy" id="batch-count"></span>
+    <button class="btn btn-primary btn-sm" type="button" id="batch-create">+ Buat Batch</button>
+  </div>
+</form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
 <table class="table" id="batch-table" data-api-url="{{ route('api.batches.index', $store) }}" data-options-url="{{ route('api.batches.options', $store) }}" data-store-url="{{ route('api.batches.store', $store) }}">
 <thead><tr><th>Kode</th><th>Tanggal</th><th>Supplier</th><th>Item</th><th>Status</th><th>Aksi</th></tr></thead>

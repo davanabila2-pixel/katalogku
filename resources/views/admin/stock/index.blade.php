@@ -2,14 +2,15 @@
 @section('title', 'Stok')
 @section('subtitle', $store->name)
 @section('content')
-<div class="toolbar">
-  <form method="GET" id="stock-filters" style="display:flex;gap:8px">
-    <input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari produk…" autocomplete="off">
+<form method="GET" id="stock-filters" class="toolbar">
+  <div class="toolbar-left">
     <select class="select" style="width:150px" name="filter"><option value="">Semua</option><option value="low" {{ request('filter')==='low'?'selected':'' }}>Rendah (≤5)</option><option value="empty" {{ request('filter')==='empty'?'selected':'' }}>Habis</option></select>
-  </form>
-  <span class="spacer"></span>
-  <span class="category-hierarchy" id="stock-count" style="margin-right:8px"></span>
-</div>
+  </div>
+  <div class="toolbar-right">
+    <x-search-input placeholder="Cari produk…" width="250px" />
+    <span class="category-hierarchy" id="stock-count"></span>
+  </div>
+</form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
 <table class="table" id="stock-table" data-api-url="{{ route('api.stock.index', $store) }}">
 <thead><tr><th>Produk</th><th>Kategori</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead>

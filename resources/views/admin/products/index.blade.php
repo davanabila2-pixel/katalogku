@@ -2,17 +2,18 @@
 @section('title', 'Produk')
 @section('subtitle', $store->name)
 @section('content')
-<div class="toolbar">
-  <form method="GET" id="product-filters" style="display:flex;gap:8px;flex-wrap:wrap">
-    <input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari produk/SKU…" autocomplete="off">
+<form method="GET" id="product-filters" class="toolbar">
+  <div class="toolbar-left">
     <select class="select" style="width:160px" name="category_id"><option value="">Semua kategori</option>@foreach($categories as $c)<option value="{{ $c->id }}" {{ (string)request('category_id')===(string)$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach</select>
     <select class="select" style="width:130px" name="status"><option value="">Semua status</option><option value="draft" {{ request('status')==='draft'?'selected':'' }}>Draft</option><option value="active" {{ request('status')==='active'?'selected':'' }}>Aktif</option><option value="inactive" {{ request('status')==='inactive'?'selected':'' }}>Nonaktif</option></select>
     <select class="select" style="width:160px" name="visibility"><option value="">Semua visibilitas</option><option value="visible" {{ request('visibility')==='visible'?'selected':'' }}>Tampil di katalog</option><option value="hidden" {{ request('visibility')==='hidden'?'selected':'' }}>Tersembunyi</option></select>
-  </form>
-  <span class="spacer"></span>
-  <span class="category-hierarchy" id="product-count" style="margin-right:8px"></span>
-  <button class="btn btn-primary btn-sm" type="button" id="product-create">+ Tambah Produk</button>
-</div>
+  </div>
+  <div class="toolbar-right">
+    <x-search-input placeholder="Cari produk/SKU…" width="250px" />
+    <span class="category-hierarchy" id="product-count"></span>
+    <button class="btn btn-primary btn-sm" type="button" id="product-create">+ Tambah Produk</button>
+  </div>
+</form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
 <table class="table" id="product-table" data-api-url="{{ route('api.products.index', $store) }}" data-form-data-url="{{ route('api.products.form_data', $store) }}" data-store-url="{{ route('api.products.store', $store) }}">
 <thead><tr><th>Produk</th><th>Kategori</th><th>Harga Jual</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead>

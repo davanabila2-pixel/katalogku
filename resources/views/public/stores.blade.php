@@ -1,8 +1,12 @@
 @extends('layouts.app')
 @section('content')
-<h2 class="section-title">Semua toko</h2>
-<p class="section-sub">Setiap toko punya katalog publik sendiri.</p>
-<form method="GET" class="filter-bar"><input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari toko…"><button class="btn btn-primary btn-sm" type="submit">Cari</button></form>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:24px 0">
+  <div>
+    <h2 class="section-title" style="margin:0 0 6px">Semua toko</h2>
+    <p class="section-sub" style="margin:0">Setiap toko punya katalog publik sendiri.</p>
+  </div>
+  <x-search-form placeholder="Cari toko…" button-text="Cari" width="300px" />
+</div>
 <x-paged :items="$stores" empty="Tidak ada toko yang cocok.">
 <div class="grid grid-4">
   @foreach($stores as $store)

@@ -26,17 +26,21 @@
 @endif
 
 <form method="GET" class="filter-bar">
-  <input class="search-pill" type="search" name="q" value="{{ request('q') }}" placeholder="Cari produk…">
-  <input class="input" style="width:140px" type="number" name="min_price" value="{{ request('min_price') }}" placeholder="Min Rp" min="0">
-  <input class="input" style="width:140px" type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Max Rp" min="0">
-  <label style="font-size:14px"><input type="checkbox" name="in_stock" value="1" {{ request('in_stock') ? 'checked' : '' }}> Stok tersedia</label>
-  <select class="select" style="width:170px" name="sort">
-    <option value="">Terbaru</option>
-    <option value="price_asc" {{ request('sort')==='price_asc'?'selected':'' }}>Termurah</option>
-    <option value="price_desc" {{ request('sort')==='price_desc'?'selected':'' }}>Termahal</option>
-    <option value="name" {{ request('sort')==='name'?'selected':'' }}>Nama A–Z</option>
-  </select>
-  <button class="btn btn-primary btn-sm" type="submit">Terapkan</button>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <input class="input" style="width:130px;height:40px;padding:0 12px;font-size:14px" type="number" name="min_price" value="{{ request('min_price') }}" placeholder="Min Rp" min="0">
+    <input class="input" style="width:130px;height:40px;padding:0 12px;font-size:14px" type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Max Rp" min="0">
+    <label style="font-size:14px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" name="in_stock" value="1" {{ request('in_stock') ? 'checked' : '' }}> Stok tersedia</label>
+    <select class="select" style="width:150px;height:40px;padding:0 12px;font-size:14px" name="sort">
+      <option value="">Terbaru</option>
+      <option value="price_asc" {{ request('sort')==='price_asc'?'selected':'' }}>Termurah</option>
+      <option value="price_desc" {{ request('sort')==='price_desc'?'selected':'' }}>Termahal</option>
+      <option value="name" {{ request('sort')==='name'?'selected':'' }}>Nama A–Z</option>
+    </select>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap">
+    <x-search-input placeholder="Cari produk…" width="240px" />
+    <button class="btn btn-primary btn-sm" type="submit">Terapkan</button>
+  </div>
 </form>
 
 <x-paged :items="$products" empty="Tidak ada produk pada filter ini.">

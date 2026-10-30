@@ -10,70 +10,74 @@
 
 @section('content')
 <style>
-  .profile-form-container {
+  .profile-container {
     width: 100%;
   }
 
-  /* Layout dua kolom: identitas toko di kiri, pengaturan katalog di kanan */
-  .profile-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 24px;
-    align-items: start;
-  }
-
-  .profile-col {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    min-width: 0;
-  }
-
-  /* Form Section Cards */
-  .aesthetic-card {
+  .profile-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: var(--r-xl);
-    padding: 24px 28px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
-  .aesthetic-card:hover {
-    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06);
-    border-color: #cbd5e1;
-  }
-
-  .card-header-styled {
+  /* Integrated Card Tabs */
+  .profile-tabs {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
+    gap: 0;
+    background: #fafbfc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+
+  .profile-tab {
+    appearance: none;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 13px 18px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .profile-tab:hover {
+    color: #0f172a;
+  }
+
+  .profile-tab:focus-visible {
+    outline: 2px solid #ff4d61;
+    outline-offset: -2px;
+  }
+
+  .profile-tab[aria-selected="true"] {
+    color: #ff4d61;
+    border-bottom-color: #ff4d61;
+    background: #ffffff;
+  }
+
+  /* Card Body & Panels */
+  .profile-card-body {
+    padding: 28px 28px 24px;
+  }
+
+  .tab-panel[hidden] {
+    display: none;
+  }
+
+  .section-intro {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
     border-bottom: 1px solid #f1f5f9;
   }
 
-  .card-title-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .card-icon-badge {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: #f0f7ff;
-    color: #0064e0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    border: 1px solid #e0f2fe;
-    flex-shrink: 0;
-  }
-
-  .card-title-group h3 {
+  .section-intro h3 {
     margin: 0;
     font-size: 16px;
     font-weight: 700;
@@ -81,125 +85,139 @@
     letter-spacing: -0.2px;
   }
 
-  .card-title-group p {
-    margin: 2px 0 0;
+  .section-intro p {
+    margin: 4px 0 0;
     font-size: 13px;
     color: #64748b;
+    line-height: 1.4;
   }
 
-  /* Logo Upload Dropzone */
-  .logo-upload-box {
-    display: grid;
-    grid-template-columns: 96px 1fr;
-    gap: 20px;
+  /* Logo Row */
+  .logo-uploader-row {
+    display: flex;
     align-items: center;
-    padding: 18px;
+    gap: 18px;
+    padding: 14px;
     background: #f8fafc;
-    border: 1.5px dashed #cbd5e1;
-    border-radius: var(--r-lg);
-    transition: all 0.2s ease;
-  }
-
-  .logo-upload-box:hover {
-    border-color: #0064e0;
-    background: #f0f7ff;
-  }
-
-  .logo-preview-current {
-    width: 90px;
-    height: 90px;
-    border-radius: 16px;
-    object-fit: cover;
-    background: #fff;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+
+  .logo-preview-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
-  .logo-preview-current img {
+  .logo-preview-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
 
-  .logo-preview-current .logo-placeholder-icon {
-    font-size: 32px;
+  .logo-placeholder-char {
+    font-size: 24px;
+    font-weight: 700;
     color: #94a3b8;
   }
 
-  .logo-upload-controls {
+  .logo-upload-meta {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+    min-width: 0;
   }
 
-  .logo-upload-button-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .custom-file-input-btn {
+  .file-picker-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    padding: 7px 14px;
     background: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     color: #0f172a;
     cursor: pointer;
-    transition: all 0.15s ease;
+    width: fit-content;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
 
-  .custom-file-input-btn:hover {
+  .file-picker-btn:hover {
     background: #f8fafc;
     border-color: #94a3b8;
   }
 
-  .custom-file-input-btn input[type="file"] {
+  .file-picker-btn input[type="file"] {
     display: none;
   }
 
-  .logo-upload-hint {
+  .logo-hint-text {
     font-size: 12px;
     color: #64748b;
     line-height: 1.4;
   }
 
-  .gdrive-badge-pill {
-    display: inline-flex;
+  /* Form Elements */
+  .field-label-group {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 5px;
-    padding: 3px 8px;
-    background: #e0f2fe;
-    color: #0369a1;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
   }
 
-  /* Slug Custom Input Group */
+  .field-hint-text {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 5px;
+  }
+
+  .input-styled, .textarea-styled {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .input-styled:focus, .textarea-styled:focus {
+    outline: none;
+    border-color: #ff4d61;
+    box-shadow: 0 0 0 3px rgba(255, 77, 97, 0.12);
+  }
+
+  /* Slug Input */
   .slug-input-group {
     display: flex;
     align-items: stretch;
     border: 1px solid #cbd5e1;
-    border-radius: var(--r-lg);
-    background: #fff;
+    border-radius: 8px;
+    background: #ffffff;
     overflow: hidden;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
   .slug-input-group:focus-within {
-    border-color: #0064e0;
-    box-shadow: 0 0 0 3px rgba(0, 100, 224, 0.12);
+    border-color: #ff4d61;
+    box-shadow: 0 0 0 3px rgba(255, 77, 97, 0.12);
   }
 
   .slug-domain-prefix {
@@ -220,72 +238,45 @@
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
-    padding: 12px 14px !important;
-    font-size: 15px !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
     font-weight: 600 !important;
     color: #0f172a !important;
     flex: 1;
     width: auto !important;
   }
 
-  /* Form Label Enhancements */
-  .field-label-styled {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .info-callout {
+    margin-top: 14px;
+    background: #fff5f7;
+    border: 1px solid #fecdd6;
+    border-radius: 8px;
+    padding: 12px 14px;
     font-size: 13px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 6px;
+    color: #9f1239;
+    line-height: 1.5;
   }
 
-  .field-hint-styled {
-    font-size: 12px;
-    color: #64748b;
-    margin-top: 5px;
-  }
-
-  .input-styled, .textarea-styled {
-    width: 100%;
-    padding: 11px 14px;
-    font-size: 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: var(--r-lg);
-    background: #ffffff;
-    color: #0f172a;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    font-family: inherit;
-    box-sizing: border-box;
-  }
-
-  .input-styled:focus, .textarea-styled:focus {
-    outline: none;
-    border-color: #0064e0;
-    box-shadow: 0 0 0 3px rgba(0, 100, 224, 0.12);
-  }
-
-  /* Feature Toggle Card */
-  .feature-toggle-card {
+  /* Feature Toggle */
+  .feature-toggle-row {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: var(--r-lg);
-    padding: 16px 18px;
+    border-radius: 8px;
+    padding: 16px;
     display: flex;
     align-items: flex-start;
     gap: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
   }
 
-  .feature-toggle-card:hover {
+  .feature-toggle-row:hover {
     background: #f1f5f9;
-    border-color: #cbd5e1;
   }
 
   .custom-switch {
     position: relative;
-    width: 44px;
-    height: 24px;
+    width: 40px;
+    height: 22px;
     flex-shrink: 0;
     margin-top: 2px;
   }
@@ -301,145 +292,191 @@
     cursor: pointer;
     top: 0; left: 0; right: 0; bottom: 0;
     background-color: #cbd5e1;
-    transition: .25s;
-    border-radius: 24px;
+    transition: .2s;
+    border-radius: 22px;
   }
 
   .switch-slider:before {
     position: absolute;
     content: "";
-    height: 18px;
-    width: 18px;
+    height: 16px;
+    width: 16px;
     left: 3px;
     bottom: 3px;
     background-color: white;
-    transition: .25s;
+    transition: .2s;
     border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   }
 
   .custom-switch input:checked + .switch-slider {
-    background-color: #0064e0;
+    background-color: #ff4d61;
   }
 
   .custom-switch input:checked + .switch-slider:before {
-    transform: translateX(20px);
+    transform: translateX(18px);
   }
 
-  /* Form Action Toolbar */
-  .form-actions-toolbar {
+  /* Card Footer Actions */
+  .profile-card-footer {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 0 40px;
-    margin-top: 24px;
+    gap: 10px;
+    padding: 14px 28px;
+    background: #fafbfc;
+    border-top: 1px solid #e2e8f0;
   }
 
-  @media (max-width: 1279px) {
-    .profile-col .form-row { grid-template-columns: minmax(0, 1fr); }
+  .btn-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    background: #ff4d61;
+    border: 1px solid #e03254;
+    border-radius: 8px;
+    cursor: pointer;
+    line-height: 1.4;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .btn-save:hover {
+    background: #e63950;
+    border-color: #c4263f;
+  }
+
+  .btn-save:focus-visible {
+    outline: 2px solid #ff4d61;
+    outline-offset: 2px;
+  }
+
+  .btn-save:disabled {
+    background: #94a3b8;
+    border-color: #94a3b8;
+    cursor: not-allowed;
+  }
+
+  .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    text-decoration: none;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-cancel:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+
+  .btn-cancel:focus-visible {
+    outline: 2px solid #ff4d61;
+    outline-offset: 2px;
   }
 
   @media (max-width: 767px) {
-    .profile-grid { grid-template-columns: minmax(0, 1fr); }
-    .profile-grid, .profile-col { gap: 16px; }
+    .profile-card-body { padding: 20px 16px; }
+    .profile-card-footer { padding: 14px 16px; }
+    .logo-uploader-row { flex-direction: column; align-items: flex-start; }
   }
 </style>
 
-<div class="profile-form-container">
+<div class="profile-container">
   <form method="POST" action="{{ route('admin.profile.update', $store) }}" enctype="multipart/form-data" id="store-profile-form" data-update-url="{{ route('api.profile.update', $store) }}">
     @csrf
     @method('PUT')
 
     <div class="alert alert-error" id="profile-form-error" hidden style="margin-bottom:16px"></div>
 
-    <div class="profile-grid">
-      <div class="profile-col">
-        <!-- Card 1: Identitas & Logo Toko -->
-        <div class="aesthetic-card">
-          <div class="card-header-styled">
-            <div class="card-title-group">
-              <div class="card-icon-badge">✨</div>
-              <div>
-                <h3>Identitas & Branding Toko</h3>
-                <p>Atur nama, logo brand, dan deskripsi singkat toko Anda.</p>
-              </div>
-            </div>
-            <span class="gdrive-badge-pill">☁️ Google Drive Storage</span>
+    <div class="profile-card">
+      <!-- Tabs Header -->
+      <div class="profile-tabs" role="tablist" aria-label="Bagian profil toko">
+        <button type="button" class="profile-tab" role="tab" id="tab-identitas" aria-controls="panel-identitas" aria-selected="true">Identitas</button>
+        <button type="button" class="profile-tab" role="tab" id="tab-url" aria-controls="panel-url" aria-selected="false" tabindex="-1">Alamat URL</button>
+        <button type="button" class="profile-tab" role="tab" id="tab-kontak" aria-controls="panel-kontak" aria-selected="false" tabindex="-1">Kontak</button>
+        <button type="button" class="profile-tab" role="tab" id="tab-katalog" aria-controls="panel-katalog" aria-selected="false" tabindex="-1">Katalog</button>
+      </div>
+
+      <!-- Card Body: Tab Panels -->
+      <div class="profile-card-body">
+        <!-- Panel 1: Identitas -->
+        <div class="tab-panel" role="tabpanel" id="panel-identitas" aria-labelledby="tab-identitas">
+          <div class="section-intro">
+            <h3>Identitas & Branding Toko</h3>
+            <p>Atur nama resmi, logo brand, dan deskripsi singkat toko Anda.</p>
           </div>
 
-          <!-- Logo Upload Dropzone -->
           <div class="field">
-            <div class="field-label-styled">
-              <span>Logo Toko</span>
-              <small style="color:#64748b">Format: PNG, JPG, WebP (Maks. 5 MB)</small>
+            <div class="field-label-group">
+              <label>Logo Toko</label>
+              <span id="selected-file-name" style="font-size:12px;color:#64748b;font-weight:normal">
+                {{ $store->logo_path ? 'Logo aktif' : 'Belum ada logo' }}
+              </span>
             </div>
 
-            <div class="logo-upload-box">
-              <div class="logo-preview-current" id="logo-preview-box">
+            <div class="logo-uploader-row">
+              <div class="logo-preview-thumb" id="logo-preview-box">
                 @if($store->logoUrl())
                   <img src="{{ $store->logoUrl() }}" alt="{{ $store->name }}" id="logo-preview-img">
                 @else
-                  <div class="logo-placeholder-icon" id="logo-preview-placeholder">🏪</div>
+                  <span class="logo-placeholder-char" id="logo-preview-placeholder">{{ strtoupper(substr($store->name, 0, 1)) }}</span>
                 @endif
               </div>
 
-              <div class="logo-upload-controls">
-                <div class="logo-upload-button-wrap">
-                  <label class="custom-file-input-btn">
-                    📁 Pilih Gambar Logo
-                    <input type="file" name="logo" id="logo-file-input" accept="image/png,image/jpeg,image/webp,image/gif">
-                  </label>
-                  <span id="selected-file-name" style="font-size:12px;color:#64748b">
-                    {{ $store->logo_path ? 'Logo saat ini aktif' : 'Belum ada logo dipilih' }}
-                  </span>
-                </div>
-                <div class="logo-upload-hint">
-                  Logo akan otomatis diunggah langsung ke folder Google Drive toko dan ditampilkan di seluruh katalog publik.
+              <div class="logo-upload-meta">
+                <label class="file-picker-btn">
+                  Pilih Gambar Logo
+                  <input type="file" name="logo" id="logo-file-input" accept="image/png,image/jpeg,image/webp,image/gif">
+                </label>
+                <div class="logo-hint-text">
+                  Format didukung: PNG, JPG, WebP (Maks. 5 MB). Diunggah otomatis ke Google Drive Storage toko.
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Nama Toko -->
           <div class="field" style="margin-top:20px">
-            <div class="field-label-styled">
+            <div class="field-label-group">
               <label for="input-store-name">Nama Resmi Toko <span style="color:var(--critical)">*</span></label>
-              <small style="color:#64748b" id="name-counter">0 / 100</small>
+              <small style="color:#64748b;font-weight:normal" id="name-counter">0 / 100</small>
             </div>
             <input class="input-styled" type="text" id="input-store-name" name="name" value="{{ old('name', $store->name) }}" required maxlength="100" placeholder="cth: Kemeja Vintage Official">
-            <div class="field-hint-styled">Nama toko akan tampil pada navbar, header katalog, dan label barcode retail.</div>
+            <div class="field-hint-text">Nama toko tampil pada navbar, header katalog, dan label barcode.</div>
           </div>
 
-          <!-- Deskripsi Toko -->
           <div class="field" style="margin-top:20px;margin-bottom:0">
-            <div class="field-label-styled">
+            <div class="field-label-group">
               <label for="input-store-desc">Deskripsi & Slogan Toko</label>
-              <small style="color:#64748b" id="desc-counter">0 / 2000</small>
+              <small style="color:#64748b;font-weight:normal" id="desc-counter">0 / 2000</small>
             </div>
             <textarea class="textarea-styled" id="input-store-desc" name="description" rows="3" maxlength="2000" placeholder="Jelaskan jenis produk dan keunggulan toko Anda...">{{ old('description', $store->description) }}</textarea>
-            <div class="field-hint-styled">Deskripsi ini membantu pelanggan mengenali tokomu dan digunakan sebagai informasi pengenal toko di Google.</div>
+            <div class="field-hint-text">Deskripsi membantu pelanggan mengenali tokomu di halaman katalog.</div>
           </div>
         </div>
-      </div>
 
-      <div class="profile-col">
-        <!-- Card 2: Alamat URL & Domain Katalog -->
-        <div class="aesthetic-card">
-          <div class="card-header-styled">
-            <div class="card-title-group">
-              <div class="card-icon-badge">🔗</div>
-              <div>
-                <h3>Alamat URL & Slug Katalog</h3>
-                <p>Tautan unik untuk mengakses etalase katalog online tokomu.</p>
-              </div>
-            </div>
-            <span class="badge badge-neutral" style="font-size:11px">SEO Ready</span>
+        <!-- Panel 2: Alamat URL -->
+        <div class="tab-panel" role="tabpanel" id="panel-url" aria-labelledby="tab-url" hidden>
+          <div class="section-intro">
+            <h3>Alamat URL & Slug Katalog</h3>
+            <p>Tautan unik untuk mengakses etalase katalog online toko Anda.</p>
           </div>
 
-          <div class="field">
-            <div class="field-label-styled">
+          <div class="field" style="margin-bottom:0">
+            <div class="field-label-group">
               <label for="input-store-slug">Slug URL Toko</label>
-              <span style="font-size:11px;color:#0284c7;font-weight:600">301 Auto-Redirect</span>
+              <span style="font-size:12px;color:#ff4d61;font-weight:600">301 Auto-Redirect</span>
             </div>
 
             <div class="slug-input-group">
@@ -447,56 +484,44 @@
               <input class="input-styled slug-input-field" type="text" id="input-store-slug" name="slug" value="{{ old('slug', $store->slug) }}" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="{{ $store->slug }}">
             </div>
 
-            <div style="margin-top:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 14px;font-size:12px;color:#0369a1;line-height:1.5">
-              💡 <strong>Info Penting SEO:</strong> Jika slug diubah, URL lama toko secara otomatis dialihkan (301 Permanent Redirect) ke URL baru. Pelanggan yang membuka tautan lama tidak akan menemui halaman error 404.
+            <div class="info-callout">
+              <strong>Info Pengalihan (Redirect):</strong> Jika slug diubah, URL lama toko secara otomatis dialihkan (301 Permanent Redirect) ke URL baru sehingga tautan lama tetap bisa diakses tanpa error 404.
             </div>
           </div>
         </div>
 
-        <!-- Card 3: Kontak & Lokasi Fisik -->
-        <div class="aesthetic-card">
-          <div class="card-header-styled">
-            <div class="card-title-group">
-              <div class="card-icon-badge">📍</div>
-              <div>
-                <h3>Kontak & Lokasi Toko</h3>
-                <p>Informasi layanan pelanggan dan alamat fisik gerai toko.</p>
-              </div>
-            </div>
+        <!-- Panel 3: Kontak & Lokasi -->
+        <div class="tab-panel" role="tabpanel" id="panel-kontak" aria-labelledby="tab-kontak" hidden>
+          <div class="section-intro">
+            <h3>Kontak & Lokasi Toko</h3>
+            <p>Informasi layanan pelanggan dan alamat fisik gerai toko.</p>
           </div>
 
-          <div class="form-row">
-            <div class="field">
-              <div class="field-label-styled">
-                <label for="input-store-contact">Kontak CS / WhatsApp</label>
-              </div>
-              <input class="input-styled" type="text" id="input-store-contact" name="contact_information" value="{{ old('contact_information', $store->contact_information) }}" placeholder="cth: 0812-3456-7890 / cs@tokomu.com">
-              <div class="field-hint-styled">Nomor WhatsApp atau email untuk pertanyaan calon pembeli.</div>
+          <div class="field">
+            <div class="field-label-group">
+              <label for="input-store-contact">Kontak CS / WhatsApp</label>
             </div>
+            <input class="input-styled" type="text" id="input-store-contact" name="contact_information" value="{{ old('contact_information', $store->contact_information) }}" placeholder="cth: 0812-3456-7890 / cs@tokomu.com">
+            <div class="field-hint-text">Nomor WhatsApp atau email untuk pertanyaan calon pembeli.</div>
+          </div>
 
-            <div class="field">
-              <div class="field-label-styled">
-                <label for="input-store-address">Alamat Fisik Toko</label>
-              </div>
-              <textarea class="textarea-styled" id="input-store-address" name="address" rows="2" style="min-height:44px" placeholder="cth: Jl. Malioboro No. 45, Yogyakarta">{{ old('address', $store->address) }}</textarea>
-              <div class="field-hint-styled">Alamat gerai atau gudang pengambilan barang.</div>
+          <div class="field" style="margin-top:20px;margin-bottom:0">
+            <div class="field-label-group">
+              <label for="input-store-address">Alamat Fisik Toko</label>
             </div>
+            <textarea class="textarea-styled" id="input-store-address" name="address" rows="3" placeholder="cth: Jl. Malioboro No. 45, Yogyakarta">{{ old('address', $store->address) }}</textarea>
+            <div class="field-hint-text">Alamat gerai atau gudang pengambilan barang.</div>
           </div>
         </div>
 
-        <!-- Card 4: Pengaturan Katalog & Visibilitas -->
-        <div class="aesthetic-card">
-          <div class="card-header-styled">
-            <div class="card-title-group">
-              <div class="card-icon-badge">⚙️</div>
-              <div>
-                <h3>Pengaturan Katalog & Visibilitas</h3>
-                <p>Atur preferensi tampilan produk paket setelan (bundle) pada katalog toko.</p>
-              </div>
-            </div>
+        <!-- Panel 4: Katalog & Visibilitas -->
+        <div class="tab-panel" role="tabpanel" id="panel-katalog" aria-labelledby="tab-katalog" hidden>
+          <div class="section-intro">
+            <h3>Pengaturan Katalog & Visibilitas</h3>
+            <p>Atur preferensi tampilan produk pada etalase katalog toko.</p>
           </div>
 
-          <label class="feature-toggle-card">
+          <label class="feature-toggle-row">
             <div class="custom-switch">
               <input type="checkbox" name="hide_component_products" value="1" {{ old('hide_component_products', $store->hide_component_products) ? 'checked' : '' }}>
               <span class="switch-slider"></span>
@@ -504,22 +529,22 @@
             <div>
               <strong style="font-size:14px;color:#0f172a;display:block">Sembunyikan Otomatis Produk Satuan Komponen Setelan</strong>
               <p style="font-size:13px;color:#64748b;margin:4px 0 0;line-height:1.5">
-                Jika diaktifkan, semua produk tunggal yang telah digabungkan ke dalam Paket Setelan (Bundle) akan disembunyikan otomatis dari katalog umum agar etalase toko terlihat lebih rapi dan fokus pada paket set.
+                Jika diaktifkan, produk tunggal yang telah digabungkan ke dalam Paket Setelan (Bundle) akan disembunyikan otomatis dari katalog umum agar etalase toko lebih fokus pada paket set.
               </p>
             </div>
           </label>
         </div>
       </div>
-    </div>
 
-    <!-- Form Actions Toolbar -->
-    <div class="form-actions-toolbar">
-      <button class="btn btn-buy" type="submit" style="padding:14px 36px;font-size:15px;box-shadow:0 4px 14px rgba(0, 100, 224, 0.3)">
-        💾 Simpan Perubahan Profil
-      </button>
-      <a class="btn btn-ghost" href="{{ route('admin.dashboard', $store) }}" style="padding:12px 24px">
-        Batal
-      </a>
+      <!-- Integrated Card Footer -->
+      <div class="profile-card-footer">
+        <button class="btn-save" type="submit">
+          Simpan Perubahan
+        </button>
+        <a class="btn-cancel" href="{{ route('admin.dashboard', $store) }}">
+          Batal
+        </a>
+      </div>
     </div>
   </form>
 </div>
@@ -558,6 +583,38 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   updateCounters();
+
+  // ---- Tab ----
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.profile-tab'));
+  function selectTab(tab, focus) {
+    tabs.forEach(function (t) {
+      var active = t === tab;
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+      t.tabIndex = active ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !active;
+    });
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function (tab, i) {
+    tab.addEventListener('click', function () { selectTab(tab, false); });
+    tab.addEventListener('keydown', function (e) {
+      var next = null;
+      if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+      if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+      if (e.key === 'Home') next = tabs[0];
+      if (e.key === 'End') next = tabs[tabs.length - 1];
+      if (next) { e.preventDefault(); selectTab(next, true); }
+    });
+  });
+  var profileForm = document.getElementById('store-profile-form');
+  if (profileForm) {
+    profileForm.addEventListener('invalid', function (e) {
+      var panel = e.target.closest('.tab-panel');
+      if (panel && panel.hidden) {
+        selectTab(document.getElementById(panel.getAttribute('aria-labelledby')), false);
+      }
+    }, true);
+  }
 
   // ---- Simpan profil tanpa reload halaman (endpoint API JSON) ----
   var form = document.getElementById('store-profile-form');
@@ -606,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.innerHTML = '⏳ Menyimpan…';
+      submitButton.innerHTML = 'Menyimpan…';
     }
 
     AdminApi.request(form.getAttribute('data-update-url'), { method: 'POST', body: payload })

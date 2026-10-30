@@ -2,14 +2,15 @@
 @section('title', 'Audit Log')
 @section('subtitle', 'Perubahan penting tercatat di sini (tanpa password/token)')
 @section('content')
-<div class="toolbar">
-  <form method="GET" id="catalog-audit-filters" style="display:flex;gap:8px">
-    <input class="search-pill" type="search" name="action" value="{{ request('action') }}" placeholder="Filter aksi…" autocomplete="off">
+<form method="GET" id="catalog-audit-filters" class="toolbar">
+  <div class="toolbar-left">
     <select class="select" style="width:180px" name="store_id"><option value="">Semua toko</option>@foreach($stores as $s)<option value="{{ $s->id }}" {{ (string)request('store_id')===(string)$s->id?'selected':'' }}>{{ $s->name }}</option>@endforeach</select>
-  </form>
-  <span class="spacer"></span>
-  <span class="category-hierarchy" id="catalog-audit-count" style="margin-right:8px"></span>
-</div>
+  </div>
+  <div class="toolbar-right">
+    <x-search-input name="action" placeholder="Filter aksi…" width="250px" />
+    <span class="category-hierarchy" id="catalog-audit-count"></span>
+  </div>
+</form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
 <table class="table" id="catalog-audit-table" data-api-url="{{ route('api.superadmin.catalog.audit') }}">
 <thead><tr><th>Waktu</th><th>Aksi</th><th>Deskripsi</th><th>Toko</th><th>Oleh</th></tr></thead>
