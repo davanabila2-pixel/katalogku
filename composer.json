@@ -52,6 +52,10 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "vercel": [
+            "Google\\Task\\Composer::cleanup",
+            "@composer dump-autoload -o"
+        ],
         "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
