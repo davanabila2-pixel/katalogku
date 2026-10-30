@@ -14,13 +14,11 @@ foreach ([
     }
 }
 
-// Vercel serverless function di /api/index.php otomatis memotong prefix /api dari URL
-// (contoh: /api/v1/stores/2/products di-pass sebagai /v1/stores/2/products).
-// Kembalikan prefix /api agar cocok dengan routing Laravel.
-foreach (['REQUEST_URI', 'PATH_INFO', 'PHP_SELF', 'REDIRECT_URL'] as $key) {
-    if (isset($_SERVER[$key]) && str_starts_with($_SERVER[$key], '/v1/')) {
-        $_SERVER[$key] = '/api' . $_SERVER[$key];
-    }
-}
+// Beritahu Symfony/Laravel bahwa entry point aplikasi ada di root (/index.php),
+// bukan di subdirektori /api/. Tanpa ini, Symfony menganggap /api adalah base folder
+// dan memotong awalan /api dari route API (sehingga /api/v1/stores/... dipotong menjadi /v1/stores/...).
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['PHP_SELF'] = '/index.php';
+$_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
 
 require __DIR__.'/../public/index.php';
