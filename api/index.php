@@ -1,5 +1,7 @@
 <?php
 
+header('X-Katalog-Commit: 3201579');
+
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 // Pastikan direktori penyimpanan sementara di /tmp tersedia untuk serverless (Vercel)
