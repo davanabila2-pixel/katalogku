@@ -14,14 +14,9 @@
   </div>
   <div class="card-photo-body">
     <h3 style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $product->name }}</h3>
-    <div class="price" style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
-      <span>Rp {{ number_format($product->selling_price, 0, ',', '.') }}</span>
-      @if($product->isBundle() && $product->bundleSavings() > 0)
-        <span style="font-size:11px;color:var(--steel);text-decoration:line-through;font-weight:normal">Rp {{ number_format($product->bundleOriginalPrice(), 0, ',', '.') }}</span>
-        <span style="font-size:11px;color:var(--success);font-weight:700">Hemat Rp {{ number_format($product->bundleSavings(), 0, ',', '.') }}</span>
-      @endif
-    </div>
-    <div class="card-footer-action">
+
+    {{-- Baris Meta: Status Stok & Tanya Penjual WhatsApp --}}
+    <div class="card-meta-row">
       <div class="card-stock-status">
         @if($product->stock <= 0)
           <span class="badge badge-critical">Habis</span>
@@ -31,25 +26,37 @@
           <span class="badge badge-success">Tersedia</span>
         @endif
       </div>
-      <div class="card-btn-group">
-        <button type="button" class="btn-card-ask-wa" onclick="event.preventDefault(); event.stopPropagation(); openProductChat({
-            id: {{ $product->id }},
-            name: @js($product->name),
-            price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
-            rawPrice: {{ (float) $product->selling_price }},
-            description: @js(Str::limit(strip_tags($product->description ?? ''), 150)),
-            imageUrl: @js($product->imageUrl()),
-            url: @js($productUrl),
-            storeName: @js($storeObj->name ?? ''),
-            storePhone: @js($storePhone)
-        })" title="Tanya ketersediaan produk via WhatsApp">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
-          <span>Tanya</span>
-        </button>
+      <button type="button" class="btn-card-ask-wa" onclick="event.preventDefault(); event.stopPropagation(); openProductChat({
+          id: {{ $product->id }},
+          name: @js($product->name),
+          price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
+          rawPrice: {{ (float) $product->selling_price }},
+          description: @js(Str::limit(strip_tags($product->description ?? ''), 150)),
+          imageUrl: @js($product->imageUrl()),
+          url: @js($productUrl),
+          storeName: @js($storeObj->name ?? ''),
+          storePhone: @js($storePhone)
+      })" title="Tanya ketersediaan produk via WhatsApp">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+        <span>Tanya</span>
+      </button>
+    </div>
+
+    {{-- Bagian Bawah: Harga, Keranjang, dan Beli --}}
+    <div class="card-bottom-section">
+      <div class="price" style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+        <span>Rp {{ number_format($product->selling_price, 0, ',', '.') }}</span>
+        @if($product->isBundle() && $product->bundleSavings() > 0)
+          <span style="font-size:11px;color:var(--steel);text-decoration:line-through;font-weight:normal">Rp {{ number_format($product->bundleOriginalPrice(), 0, ',', '.') }}</span>
+          <span style="font-size:11px;color:var(--success);font-weight:700">Hemat Rp {{ number_format($product->bundleSavings(), 0, ',', '.') }}</span>
+        @endif
+      </div>
+
+      <div class="card-purchase-row">
         @if($product->stock > 0)
           <button type="button" class="btn-card-cart" onclick="event.preventDefault(); event.stopPropagation(); addToCart({{ $product->id }})" title="Tambah ke keranjang belanja">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            <span>+ Keranjang</span>
+            <span>Keranjang</span>
           </button>
           <button type="button" class="btn-card-buy" onclick="event.preventDefault(); event.stopPropagation(); openProductBuy({
               id: {{ $product->id }},
