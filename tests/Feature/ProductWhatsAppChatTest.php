@@ -135,7 +135,8 @@ class ProductWhatsAppChatTest extends TestCase
         $response->assertSee('productBuyModal', false);
         $response->assertSee('store-footer-inner', false);
         $response->assertSeeText('Layanan & Kontak', false);
-        $response->assertSeeText('Metode Transaksi', false);
+        $response->assertDontSeeText('Metode Transaksi', false);
+        $response->assertDontSeeText('Pemesanan via WhatsApp', false);
         $response->assertSee($store->name);
         $response->assertDontSee('Katalog multi-toko — satu domain, satu database');
     }

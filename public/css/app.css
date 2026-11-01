@@ -436,7 +436,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .default-footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .default-footer-inner a { color: var(--primary); text-decoration: none; font-weight: 600; }
 
-.store-footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 36px; }
+.store-footer-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; }
 .store-footer-col { display: flex; flex-direction: column; }
 .store-footer-desc { font-size: 13.5px; color: var(--steel); margin: 12px 0 0; line-height: 1.6; max-width: 380px; }
 .store-footer-heading { font-size: 13px; font-weight: 700; color: var(--ink-deep); margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.6px; }
@@ -818,7 +818,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
 @media (max-width: 767px) {
   .hero-facts { display: block; }
   .hero-facts li, .hero-facts li + li { position: relative; padding-left: 16px; }
-  .hero-facts li::before, .hero-facts li + li::before { content: ""; position: absolute; left: 0; top: .58em; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .hero-facts li::before, .hero-facts li + li::before { content: ""; position: absolute; left: 0; top: .58em; width: 5px; height: 5px; border-radius: 50%; background: currentColor; margin: 0; }
 }
 
 /* Dua kolom asimetris: penjelasan di kiri, daftar di kanan. */
