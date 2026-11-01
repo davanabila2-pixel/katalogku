@@ -95,15 +95,28 @@ body {
 .grid { display: grid; gap: 24px; }
 .grid-4 { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
 .grid-3 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
-@media (max-width: 767px) { .grid-4, .grid-3 { grid-template-columns: 1fr; } }
 .card { background: var(--canvas); border: 1px solid var(--hairline-soft); border-radius: var(--r-xxxl); padding: 32px; }
-.card-photo { border-radius: var(--r-xxxl); overflow: hidden; background: var(--surface-soft); text-decoration: none; display: block; }
-.card-photo img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
-.card-photo-body { padding: 20px 20px 24px; }
-.card-photo-body h3 { margin: 0 0 4px; font-size: 18px; }
-.price { font-weight: 700; font-size: 16px; }
-.store-name { color: var(--steel); font-size: 14px; }
+.card-photo { border-radius: var(--r-xxxl); overflow: hidden; background: var(--canvas); border: 1px solid var(--hairline-soft); text-decoration: none; display: flex; flex-direction: column; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.card-photo:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+.card-photo img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; background: var(--surface-soft); }
+.card-photo-body { padding: 18px 20px 22px; display: flex; flex-direction: column; flex: 1; }
+.card-photo-body h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; color: var(--ink-deep); }
+.price { font-weight: 700; font-size: 16px; color: var(--ink-deep); }
+.store-name { color: var(--steel); font-size: 13px; }
 .tile { background: var(--canvas); border: 1px solid var(--hairline-soft); border-radius: var(--r-xl); padding: 24px; }
+
+@media (max-width: 767px) {
+  .grid { gap: 12px; }
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: 1fr; }
+  .card-photo { border-radius: var(--r-xl); }
+  .card-photo-body { padding: 10px 10px 12px; }
+  .card-photo-body h3 { font-size: 13.5px; line-height: 1.35; min-height: 36px; margin-bottom: 4px; }
+  .price { font-size: 13.5px; gap: 4px !important; }
+  .price span { font-size: 13.5px; }
+  .store-name { font-size: 11px; margin-top: 4px !important; }
+  .badge { padding: 2px 7px; font-size: 10.5px; }
+}
 
 /* Badges */
 .badge { display: inline-block; border-radius: var(--r-full); padding: 4px 10px; font-size: 12px; font-weight: 700; }
@@ -545,6 +558,8 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 /* Indikator fokus seragam: outline utama memakai cobalt, di hero gelap diganti putih supaya tetap terlihat. */
 a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .hero a:focus-visible { outline-color: var(--canvas); }
+/* Tombol topbar memakai padding kecil; di layar sentuh tingginya dinaikkan agar mencapai target ketuk 44px. */
+@media (max-width: 767px) { .topbar-right .btn-sm { min-height: 44px; } }
 
 /* ---- Beranda: landing page project ---- */
 
@@ -598,6 +613,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
 /* overflow-x di dalam pre menahan baris panjang, bukan di halaman. */
 .lp-code { margin: 0; padding: 28px 32px; background: var(--ink-deep); color: #e8eef4; border-radius: var(--r-xxxl); overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; line-height: 2; }
 .lp-code code { font-family: inherit; }
+/* Di layar sempit kode diputar, bukan digeser, supaya tidak ada baris yang tersembunyi di balik scroll. */
+@media (max-width: 767px) { .lp-code { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: visible; } }
 .lp-notes p { margin: 0 0 16px; font-size: 15px; color: var(--charcoal); }
 .lp-notes p:last-child { margin-bottom: 0; }
 .lp-notes strong { color: var(--ink-deep); }
