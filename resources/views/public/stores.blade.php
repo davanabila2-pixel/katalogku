@@ -7,7 +7,7 @@
   </div>
   <x-search-form placeholder="Cari toko…" button-text="Cari" width="300px" />
 </div>
-<x-paged :items="$stores" empty="Tidak ada toko yang cocok.">
+<x-paged :items="$stores" countSuffix="toko" empty="Tidak ada toko yang cocok.">
 <div class="grid grid-4">
   @foreach($stores as $store)
   <a class="card-photo" href="{{ $store->url() }}">
