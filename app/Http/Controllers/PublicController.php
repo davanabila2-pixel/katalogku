@@ -15,8 +15,8 @@ class PublicController extends Controller
         // Halaman / kini landing page project, bukan katalog gabungan, jadi tidak ada query data toko.
         return view('public.home', [
             'seo' => [
-                'title' => 'Katalog: sistem katalog penjualan multi-toko',
-                'description' => 'Satu aplikasi Laravel, satu domain, banyak toko. Kategori bertingkat, produk, batch pembelian, dan stok atomik dengan HPP rata-rata tertimbang.',
+                'title' => 'Katalog: buat katalog toko Anda dalam satu tautan',
+                'description' => 'Masukkan barang, harga, dan stok toko ke Katalog. Pelanggan tinggal membuka tautannya, tanpa instal aplikasi dan tanpa membuat akun.',
             ],
         ]);
     }

@@ -572,50 +572,43 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
 .lp-split .section-title { margin-top: 0; }
 @media (max-width: 1023px) { .lp-split { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
 
-.lp-route { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 10px 28px; padding: 20px 0; border-top: 1px solid var(--hairline-soft); }
-.lp-route:last-child { border-bottom: 1px solid var(--hairline-soft); }
-.lp-route code { display: inline-block; justify-self: start; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; font-weight: 600; color: var(--ink-deep); background: var(--surface-soft); border-radius: var(--r-lg); padding: 8px 12px; overflow-wrap: anywhere; }
-.lp-route p { margin: 0; font-size: 15px; color: var(--charcoal); }
-@media (max-width: 767px) { .lp-route { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 18px 0; } }
+/* Baris manfaat: kunci di kiri, penjelasan di kanan, dipisah hairline. */
+.lp-row { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 10px 28px; padding: 20px 0; border-top: 1px solid var(--hairline-soft); }
+.lp-row:last-child { border-bottom: 1px solid var(--hairline-soft); }
+.lp-row-key { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.lp-row code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; font-weight: 600; color: var(--ink-deep); background: var(--surface-soft); border-radius: var(--r-lg); padding: 8px 12px; overflow-wrap: anywhere; }
+.lp-row-label { font-size: 15px; font-weight: 700; letter-spacing: -.14px; color: var(--ink-deep); }
+.lp-row-note { font-size: 12.5px; color: var(--steel); }
+.lp-row p { margin: 0; font-size: 15px; color: var(--charcoal); }
+@media (max-width: 767px) { .lp-row { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 18px 0; } }
 
 /* Pita surface-soft selebar layar. Margin negatif harus mengikuti padding .container di tiap breakpoint. */
-.lp-roles { background: var(--surface-soft); margin: 80px -40px 0; padding: 56px 40px 40px; }
-.lp-roles .section-title { margin-top: 0; }
-@media (max-width: 1023px) { .lp-roles { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; } }
-@media (max-width: 767px) { .lp-roles { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; } }
+.lp-menu-band { background: var(--surface-soft); margin: 80px -40px 0; padding: 56px 40px 48px; }
+.lp-menu-band .section-title { margin-top: 0; }
+.lp-menu-head { max-width: 720px; }
+@media (max-width: 1023px) { .lp-menu-band { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; } }
+@media (max-width: 767px) { .lp-menu-band { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; } }
 
-.lp-role { display: grid; grid-template-columns: minmax(0, 32%) minmax(0, 1fr); gap: 4px 32px; padding: 28px 0; border-top: 1px solid var(--hairline); }
-.lp-role:last-child { border-bottom: 1px solid var(--hairline); }
-.lp-role-head h3 { margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -.4px; }
-/* Cobalt di sini menandai lingkup kewenangan, mengikuti pemakaian warna yang sama untuk status aktif di seluruh aplikasi. */
-.lp-role-scope { display: inline-block; margin-top: 6px; font-size: 13px; font-weight: 700; letter-spacing: -.14px; color: var(--primary); }
-.lp-role > p { margin: 0; max-width: 62ch; font-size: 16px; color: var(--charcoal); }
-@media (max-width: 767px) { .lp-role { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 24px 0; } }
+/* Dua kolom, bukan kartu: menu memang daftar, jadi dibaca sebagai daftar. */
+.lp-menu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; margin-top: 8px; border-bottom: 1px solid var(--hairline); }
+.lp-menu-item { padding: 20px 0; border-top: 1px solid var(--hairline); }
+.lp-menu-item h3 { margin: 0 0 4px; font-size: 15.5px; font-weight: 700; letter-spacing: -.14px; }
+.lp-menu-item p { margin: 0; font-size: 15px; color: var(--charcoal); }
+@media (max-width: 767px) { .lp-menu { grid-template-columns: minmax(0, 1fr); gap: 0; } .lp-menu-item { padding: 16px 0; } }
 
-/* Lembar spesifikasi: label kiri, isi kanan, dipisah hairline. */
-.lp-spec-group { margin-top: 40px; }
-.lp-spec-group:first-of-type { margin-top: 24px; }
-.lp-spec-group h3 { margin: 0 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -.2px; }
-.lp-spec { margin: 0; }
-.lp-spec-row { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 4px 32px; padding: 15px 0; border-top: 1px solid var(--hairline-soft); }
-.lp-spec-row dt { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -.14px; }
-.lp-spec-row dd { margin: 0; font-size: 15px; color: var(--charcoal); }
-@media (max-width: 767px) { .lp-spec-row { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 14px 0; } }
-
-/* Instalasi: judul lebar penuh, lalu blok perintah gelap berdampingan dengan catatan. */
-.lp-install { margin-top: 80px; }
-.lp-install-head { max-width: 720px; }
-.lp-install-head .section-title { margin-top: 0; }
-.lp-install-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start; margin-top: 28px; }
-@media (max-width: 1023px) { .lp-install-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
-/* overflow-x di dalam pre menahan baris panjang, bukan di halaman. */
-.lp-code { margin: 0; padding: 28px 32px; background: var(--ink-deep); color: #e8eef4; border-radius: var(--r-xxxl); overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; line-height: 2; }
-.lp-code code { font-family: inherit; }
-/* Di layar sempit kode diputar, bukan digeser, supaya tidak ada baris yang tersembunyi di balik scroll. */
-@media (max-width: 767px) { .lp-code { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: visible; } }
-.lp-notes p { margin: 0 0 16px; font-size: 15px; color: var(--charcoal); }
-.lp-notes p:last-child { margin-bottom: 0; }
-.lp-notes strong { color: var(--ink-deep); }
+/* Tiga kolom berpemisah vertikal: komposisi sengaja berbeda dari dua seksi di atasnya. */
+.lp-trust-wrap { margin-top: 80px; }
+.lp-trust { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 4px; }
+.lp-trust-item { padding: 4px 32px; border-left: 1px solid var(--hairline-soft); }
+.lp-trust-item:first-child { padding-left: 0; border-left: none; }
+.lp-trust-item:last-child { padding-right: 0; }
+.lp-trust-item h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; letter-spacing: -.2px; }
+.lp-trust-item p { margin: 0; font-size: 15px; color: var(--charcoal); }
+@media (max-width: 767px) {
+  .lp-trust { grid-template-columns: minmax(0, 1fr); }
+  .lp-trust-item { padding: 18px 0; border-left: none; border-top: 1px solid var(--hairline-soft); }
+  .lp-trust-item:first-child { padding-top: 4px; border-top: none; }
+}
 
 /* Penutup: kartu bergaris tipis, sengaja tetap terang supaya CTA hitam tetap terbaca. */
 .lp-close { margin: 80px 0 16px; }
@@ -626,3 +619,399 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
 .lp-close-note { margin: 22px 0 0; font-size: 14px; color: var(--steel); }
 .lp-close-note a { color: var(--primary); font-weight: 700; }
 @media (max-width: 767px) { .lp-close-card { padding: 28px 24px; } .lp-close-card h2 { font-size: 28px; } }
+
+/* ==========================================================================
+   Mekanisme Tanya Produk / WhatsApp Chat Modal
+   ========================================================================== */
+.btn-wa-chat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25D366;
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px 28px;
+  border-radius: var(--r-full);
+  border: none;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+  text-decoration: none;
+}
+.btn-wa-chat:hover {
+  background: #20ba59;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+}
+.btn-wa-chat:active {
+  transform: translateY(0);
+}
+
+.pdp-action-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* Card Button & Action */
+.card-footer-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.card-stock-status {
+  font-size: 12px;
+  color: var(--steel);
+}
+.btn-card-ask-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(37, 211, 102, 0.12);
+  color: #128C7E;
+  border: 1px solid rgba(37, 211, 102, 0.3);
+  border-radius: var(--r-full);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.btn-card-ask-wa:hover {
+  background: #25D366;
+  color: #ffffff;
+  border-color: #25D366;
+  transform: scale(1.04);
+}
+
+/* Chat Overlay & Dialog */
+.product-chat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.product-chat-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 19, 23, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: chatFadeIn .2s ease;
+}
+.product-chat-dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: chatScaleUp .22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes chatFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes chatScaleUp {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Chat Header */
+.product-chat-header {
+  background: linear-gradient(135deg, #075E54 0%, #128C7E 100%);
+  color: #ffffff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.product-chat-header-store {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.product-chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.product-chat-header-title {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.product-chat-header-status {
+  font-size: 12px;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.status-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #25D366;
+  box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.4);
+  animation: waPulse 1.8s infinite;
+}
+@keyframes waPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(37, 211, 102, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+.product-chat-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.product-chat-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Chat Body */
+.product-chat-body {
+  background: #efeae2;
+  background-image: radial-gradient(#dfd8cc 1px, transparent 1px);
+  background-size: 16px 16px;
+  padding: 16px 14px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.product-chat-date-pill {
+  align-self: center;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #667781;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 4px;
+}
+.product-chat-bubble {
+  max-width: 86%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.bubble-incoming {
+  align-self: flex-start;
+  background: #ffffff;
+  color: #111b21;
+  border-top-left-radius: 2px;
+}
+.bubble-outgoing {
+  align-self: flex-end;
+  background: #d9fdd3;
+  color: #111b21;
+  border-top-right-radius: 2px;
+}
+.bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 11px;
+  color: #667781;
+  margin-top: 4px;
+}
+
+/* Preview Card inside Outgoing Bubble */
+.chat-product-preview-card {
+  display: flex;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px;
+  border-radius: 8px;
+  border-left: 4px solid #25D366;
+  margin-bottom: 8px;
+}
+.chat-product-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.chat-product-info {
+  min-width: 0;
+  flex: 1;
+}
+.chat-product-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #111b21;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-product-price {
+  font-weight: 700;
+  font-size: 12px;
+  color: #128C7E;
+  margin-top: 2px;
+}
+.chat-product-desc {
+  font-size: 11px;
+  color: #667781;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Chips Section */
+.product-chat-chips-section {
+  background: #ffffff;
+  border-top: 1px solid var(--hairline-soft);
+  padding: 10px 14px 6px;
+  flex-shrink: 0;
+}
+.product-chat-chips-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--steel);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.product-chat-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.product-chat-chips::-webkit-scrollbar {
+  display: none;
+}
+.chat-chip {
+  background: var(--surface-soft);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-full);
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s ease;
+  flex-shrink: 0;
+}
+.chat-chip:hover {
+  background: #e6f6ea;
+  border-color: rgba(37, 211, 102, 0.4);
+  color: #128C7E;
+}
+.chat-chip.active {
+  background: #128C7E;
+  color: #ffffff;
+  border-color: #128C7E;
+}
+
+/* Composer / Footer */
+.product-chat-footer {
+  background: #f0f2f5;
+  border-top: 1px solid var(--hairline-soft);
+  padding: 12px 14px 16px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chat-phone-warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.chat-composer-row {
+  display: flex;
+  gap: 8px;
+}
+.chat-composer-input {
+  width: 100%;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: #111b21;
+  resize: none;
+  background: #ffffff;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color .15s ease;
+}
+.chat-composer-input:focus {
+  border-color: #128C7E;
+}
+.btn-chat-send-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #25D366;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 18px;
+  border-radius: var(--r-full);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
+  transition: all .15s ease;
+}
+.btn-chat-send-wa:hover {
+  background: #20ba59;
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.45);
+}

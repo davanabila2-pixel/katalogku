@@ -47,7 +47,22 @@
       @endif
     </div>
 
-    <a class="btn btn-buy" href="{{ $store->url() }}">← Kembali ke katalog</a>
+    <div class="pdp-action-group">
+      <button type="button" class="btn btn-wa-chat" onclick="openProductChat({
+          id: {{ $product->id }},
+          name: @js($product->name),
+          price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
+          description: @js(Str::limit(strip_tags($product->description ?? ''), 250)),
+          imageUrl: @js($product->imageUrl()),
+          url: @js($product->url($store)),
+          storeName: @js($store->name),
+          storePhone: @js($store->cleanPhoneNumber())
+      })">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+        <span>Tanya Barang via WhatsApp</span>
+      </button>
+      <a class="btn btn-secondary" href="{{ $store->url() }}">← Kembali ke katalog</a>
+    </div>
 
     @if($product->isBundle() && $product->bundleItems->count() > 0)
       <div style="margin-top:24px;padding:16px;background:var(--surface-soft);border:1px solid var(--hairline-soft);border-radius:var(--r-xl)">

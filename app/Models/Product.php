@@ -212,4 +212,46 @@ class Product extends Model
     {
         return app(\App\Services\BarcodeService::class)->generateQrCodeDataUri($this);
     }
+
+    public function url(?Store $store = null): string
+    {
+        $targetStore = $store ?? $this->store;
+        if (! $targetStore) {
+            return url('/');
+        }
+
+        return route('store.product', [$targetStore->slug, $this->slug]);
+    }
+
+    public function buildWhatsAppMessage(?Store $store = null, ?string $userQuery = null): string
+    {
+        $targetStore = $store ?? $this->store;
+        $storeName = $targetStore ? $targetStore->name : 'Toko';
+        $price = 'Rp '.number_format((float) $this->selling_price, 0, ',', '.');
+        $desc = $this->description ? trim(strip_tags($this->description)) : '-';
+        if (mb_strlen($desc) > 150) {
+            $desc = mb_substr($desc, 0, 147).'...';
+        }
+        $url = $this->url($targetStore);
+        $query = $userQuery ?: 'Apakah produk ini masih tersedia?';
+
+        return "Halo {$storeName}, saya tertarik dengan produk ini:\n\n"
+            ."📦 *{$this->name}*\n"
+            ."💰 *Harga*: {$price}\n"
+            ."📝 *Deskripsi*: {$desc}\n"
+            ."🔗 *Link*: {$url}\n\n"
+            ."{$query}";
+    }
+
+    public function whatsappUrl(?Store $store = null, ?string $userQuery = null): ?string
+    {
+        $targetStore = $store ?? $this->store;
+        if (! $targetStore) {
+            return null;
+        }
+
+        $message = $this->buildWhatsAppMessage($targetStore, $userQuery);
+
+        return $targetStore->whatsappUrl($message);
+    }
 }

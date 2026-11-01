@@ -23,8 +23,12 @@ class DemoSeeder extends Seeder
             $store = Store::firstOrCreate(['slug' => str($name)->slug()->toString()], [
                 'name' => $name,
                 'description' => "Katalog demo {$name}.",
+                'contact_information' => '081234567890',
                 'status' => 'active',
             ]);
+            if (empty($store->contact_information)) {
+                $store->update(['contact_information' => '081234567890']);
+            }
 
             $admin = User::firstOrCreate(['email' => str($name)->slug().'@example.com'], [
                 'name' => "Admin {$name}",

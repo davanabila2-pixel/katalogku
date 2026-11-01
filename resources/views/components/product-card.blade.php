@@ -1,5 +1,11 @@
 @props(['product'])
-<a class="card-photo" href="{{ route('store.product', [$product->store->slug ?? $product->store_id, $product->slug]) }}">
+@php
+  $storeObj = $product->store;
+  $storeSlug = $storeObj->slug ?? $product->store_id;
+  $storePhone = $storeObj ? $storeObj->cleanPhoneNumber() : null;
+  $productUrl = route('store.product', [$storeSlug, $product->slug]);
+@endphp
+<a class="card-photo" href="{{ $productUrl }}">
   <div style="position:relative">
     <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" loading="lazy">
     @if($product->isBundle())
@@ -15,6 +21,29 @@
         <span style="font-size:11px;color:var(--success);font-weight:700">Hemat Rp {{ number_format($product->bundleSavings(), 0, ',', '.') }}</span>
       @endif
     </div>
-    <div class="store-name" style="margin-top:auto;padding-top:4px">{{ $product->store->name ?? '' }}@if($product->stock <= 0) · <span class="badge badge-critical">Habis</span>@elseif($product->stock <= 5) · <span class="badge badge-warning">Sisa {{ $product->stock }}</span>@else · <span class="badge badge-success">Tersedia</span>@endif</div>
+    <div class="card-footer-action">
+      <div class="card-stock-status">
+        @if($product->stock <= 0)
+          <span class="badge badge-critical">Habis</span>
+        @elseif($product->stock <= 5)
+          <span class="badge badge-warning">Sisa {{ $product->stock }}</span>
+        @else
+          <span class="badge badge-success">Tersedia</span>
+        @endif
+      </div>
+      <button type="button" class="btn-card-ask-wa" onclick="event.preventDefault(); event.stopPropagation(); openProductChat({
+          id: {{ $product->id }},
+          name: @js($product->name),
+          price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
+          description: @js(Str::limit(strip_tags($product->description ?? ''), 150)),
+          imageUrl: @js($product->imageUrl()),
+          url: @js($productUrl),
+          storeName: @js($storeObj->name ?? ''),
+          storePhone: @js($storePhone)
+      })" title="Tanya ketersediaan produk via WhatsApp">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+        <span>Tanya</span>
+      </button>
+    </div>
   </div>
 </a>

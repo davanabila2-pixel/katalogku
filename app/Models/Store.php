@@ -118,4 +118,34 @@ class Store extends Model
 
         return null;
     }
+
+    public function cleanPhoneNumber(): ?string
+    {
+        if (empty($this->contact_information)) {
+            return null;
+        }
+
+        $clean = preg_replace('/[^0-9]/', '', $this->contact_information);
+        if (str_starts_with($clean, '0')) {
+            $clean = '62'.substr($clean, 1);
+        } elseif (str_starts_with($clean, '8')) {
+            $clean = '62'.$clean;
+        }
+
+        return strlen($clean) >= 9 ? $clean : null;
+    }
+
+    public function whatsappUrl(?string $message = null): ?string
+    {
+        $phone = $this->cleanPhoneNumber();
+        if (! $phone) {
+            return null;
+        }
+
+        if (empty($message)) {
+            return "https://wa.me/{$phone}";
+        }
+
+        return "https://wa.me/{$phone}?text=".urlencode($message);
+    }
 }
