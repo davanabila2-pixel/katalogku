@@ -17,30 +17,14 @@
   <div class="container topbar-inner">
     @if(isset($store) && $store)
       {{-- Topbar Khusus Toko --}}
-      <div class="topbar-store-left">
-        <a class="topbar-back-pill" href="{{ route('stores.index') }}" title="Lihat semua toko">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>Semua Toko</span>
-        </a>
-        <div class="topbar-divider"></div>
-        <a class="brand store-brand-link" href="{{ $store->url() }}">
-          @if($store->logoUrl())
-            <img class="store-topbar-logo" src="{{ $store->logoUrl() }}" alt="{{ $store->name }}">
-          @else
-            <div class="store-topbar-initial">{{ mb_substr($store->name, 0, 1) }}</div>
-          @endif
-          <span class="store-brand-name">{{ $store->name }}</span>
-        </a>
-      </div>
-
-      <nav class="pillnav">
-        <a class="pill-tab {{ !isset($activeCategory) && !request('q') && !request()->routeIs('store.product') ? 'active' : '' }}" href="{{ $store->url() }}">Semua Produk</a>
-        @if(isset($rootCategories) && count($rootCategories) > 0)
-          @foreach($rootCategories->take(3) as $cat)
-            <a class="pill-tab {{ isset($activeCategory) && ($activeCategory->id === $cat->id || $activeCategory->parent_id === $cat->id) ? 'active' : '' }}" href="{{ route('store.category', [$store->slug, $cat->slug]) }}">{{ $cat->name }}</a>
-          @endforeach
+      <a class="brand store-brand-link" href="{{ $store->url() }}">
+        @if($store->logoUrl())
+          <img class="store-topbar-logo" src="{{ $store->logoUrl() }}" alt="{{ $store->name }}">
+        @else
+          <div class="store-topbar-initial">{{ mb_substr($store->name, 0, 1) }}</div>
         @endif
-      </nav>
+        <span class="store-brand-name">{{ $store->name }}</span>
+      </a>
 
       <div class="topbar-right">
         @if($store->contact_information)

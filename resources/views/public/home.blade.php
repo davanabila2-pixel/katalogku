@@ -157,7 +157,8 @@ cp .env.example .env
 php artisan key:generate
 php artisan migrate --force
 php artisan storage:link
-SUPERADMIN_EMAIL=admin@example.com SUPERADMIN_PASSWORD=rahasia php artisan db:seed --force
+SUPERADMIN_EMAIL=admin@example.com SUPERADMIN_PASSWORD=rahasia \
+  php artisan db:seed --force
 php artisan serve</code></pre>
     <div class="lp-notes">
       <p>Database dibuat dulu dengan karakter set utf8mb4, lalu nilai di .env disesuaikan sebelum migrate dijalankan.</p>
