@@ -93,6 +93,11 @@ class Store extends Model
         return $this->hasMany(StoreSlugHistory::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class)->latest();
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

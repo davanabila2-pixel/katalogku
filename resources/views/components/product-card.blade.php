@@ -55,6 +55,7 @@
               stock: {{ (int) $product->stock }},
               imageUrl: @js($product->imageUrl()),
               url: @js($productUrl),
+              storeSlug: @js($storeObj->slug ?? ''),
               storeName: @js($storeObj->name ?? ''),
               storePhone: @js($storePhone),
               storeQrUrl: @js($storeObj ? $storeObj->qrImageUrl() : null),

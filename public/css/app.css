@@ -1554,3 +1554,261 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
   background: #20ba59;
   box-shadow: 0 6px 18px rgba(37, 211, 102, 0.45);
 }
+
+/* Buy Form Auto Address & Payment Proof */
+.buy-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.btn-auto-gps {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(0, 102, 255, 0.08);
+  border: 1px solid rgba(0, 102, 255, 0.22);
+  border-radius: var(--r-full);
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: all .15s ease;
+  font-family: inherit;
+}
+.btn-auto-gps:hover:not(:disabled) {
+  background: rgba(0, 102, 255, 0.16);
+  border-color: var(--primary);
+}
+.btn-auto-gps:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.gps-status-hint {
+  font-size: 11px;
+  margin-top: 5px;
+  border-radius: 6px;
+  padding: 4px 8px;
+  line-height: 1.4;
+}
+.gps-status-hint.info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.gps-status-hint.success {
+  background: #ecfdf5;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.gps-status-hint.warning {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.badge-optional {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: auto;
+}
+.proof-upload-area {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all .15s ease;
+  text-align: center;
+}
+.proof-upload-area:hover {
+  border-color: var(--primary);
+  background: #f0f7ff;
+}
+.proof-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.proof-icon-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+.proof-text-primary {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.proof-text-muted {
+  font-size: 11px;
+  color: #64748b;
+}
+.proof-preview-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+.proof-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+.proof-info {
+  flex: 1;
+  min-width: 0;
+}
+.proof-filename {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.proof-status-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+  margin-top: 2px;
+}
+.btn-remove-proof {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+  display: inline-block;
+}
+.btn-remove-proof:hover {
+  text-decoration: underline;
+}
+.buy-error-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Buy Success Modal State */
+.buy-success-body {
+  background: #ffffff;
+}
+.buy-success-card {
+  text-align: center;
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.success-icon-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.success-heading {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+.success-desc {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0 0 16px;
+  max-width: 360px;
+}
+.order-code-box {
+  background: #f8fafc;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  width: 100%;
+  max-width: 320px;
+}
+.order-code-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.order-code-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 3px;
+}
+.success-summary-box {
+  width: 100%;
+  max-width: 320px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+}
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #475569;
+  padding: 4px 0;
+}
+.proof-badge-success {
+  color: #16a34a;
+  font-weight: 700;
+}
+.proof-badge-pending {
+  color: #d97706;
+  font-weight: 700;
+}
+.btn-secondary-close {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--r-full);
+  padding: 11px 20px;
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: all .15s ease;
+  font-family: inherit;
+}
+.btn-secondary-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}

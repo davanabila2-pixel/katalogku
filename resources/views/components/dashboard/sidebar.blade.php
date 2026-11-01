@@ -17,6 +17,9 @@
             <p class="sidebar-label">Ringkasan Toko</p>
             <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard', $store) }}" title="Dashboard Utama"><x-dashboard.nav-icon name="home" /><span class="nav-label">Dashboard Utama</span></a>
 
+            <p class="sidebar-label">Transaksi & Pesanan</p>
+            <a class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index', $store) }}" title="Pesanan Masuk"><x-dashboard.nav-icon name="shopping-bag" /><span class="nav-label">Pesanan Masuk</span></a>
+
             <p class="sidebar-label">Setup & Konfigurasi</p>
             <a class="{{ request()->routeIs('admin.profile.*') ? 'active' : '' }}" href="{{ route('admin.profile.edit', $store) }}" title="Profil Toko"><x-dashboard.nav-icon name="store" /><span class="nav-label">Profil Toko</span></a>
 

@@ -3,12 +3,14 @@
 use App\Http\Controllers\Admin\BatchController as AdminBatchController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController as AdminStockController;
 use App\Http\Controllers\Admin\StoreProfileController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BarcodeScanController;
 use App\Http\Controllers\GoogleOAuthController;
+use App\Http\Controllers\OrderSubmissionController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Superadmin\CatalogController as SuperadminCatalogController;
 use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardController;
@@ -83,10 +85,17 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('stok', [AdminStockController::class, 'index'])->name('stock.index');
         Route::get('stok/riwayat', [AdminStockController::class, 'history'])->name('stock.history');
         Route::get('aktivitas', [AdminStockController::class, 'activity'])->name('activity');
+
+        Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
+        Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
     });
 });
 
 // ---- Katalog publik per toko (PALING AKHIR agar tidak menelan route sistem) ----
+Route::post('/{storeSlug}/orders', [OrderSubmissionController::class, 'store'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
+    ->name('store.orders.store');
+
 Route::get('/{slug}', [PublicController::class, 'storeShow'])
     ->where('slug', '[a-z0-9][a-z0-9-]*')->name('store.show');
 Route::get('/{storeSlug}/kategori/{categorySlug}/{subSlug?}', [PublicController::class, 'categoryShow'])

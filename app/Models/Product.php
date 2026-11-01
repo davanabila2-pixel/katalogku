@@ -60,6 +60,11 @@ class Product extends Model
         return $this->hasMany(StockMovement::class)->orderByDesc('created_at')->orderByDesc('id');
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class)->latest();
+    }
+
     public function bundleItems(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'product_bundles', 'bundle_id', 'item_product_id')

@@ -57,6 +57,7 @@
             stock: {{ (int) $product->stock }},
             imageUrl: @js($product->imageUrl()),
             url: @js($product->url($store)),
+            storeSlug: @js($store->slug),
             storeName: @js($store->name),
             storePhone: @js($store->cleanPhoneNumber()),
             storeQrUrl: @js($store->qrImageUrl()),
