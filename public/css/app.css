@@ -442,6 +442,196 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 }
 .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0; align-items: center; }
 .category-hierarchy { font-size: 13px; color: var(--steel); font-weight: 500; }
+
+/* Category & Subcategory Slider */
+.category-slider-container {
+  position: relative;
+  margin: 16px 0 10px;
+  width: 100%;
+}
+.category-slider-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px 2px 8px;
+}
+.category-slider-track::-webkit-scrollbar {
+  display: none;
+}
+.category-slider-track .pill-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 13.5px;
+  padding: 8px 18px;
+  border-radius: var(--r-full);
+}
+.subcategory-slider-container {
+  margin: -4px 0 16px;
+}
+.subcategory-slider-track .pill-tab {
+  font-size: 12.5px;
+  padding: 6px 14px;
+  background: var(--surface-soft);
+  border-color: var(--hairline-soft);
+}
+.subcategory-slider-track .pill-tab.active {
+  background: var(--ink-deep);
+  color: #ffffff;
+  border-color: var(--ink-deep);
+}
+
+/* Store Filter & Search Form */
+.store-filter-form {
+  margin: 16px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.store-search-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.store-search-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.store-search-input-wrap .search-box {
+  width: 100% !important;
+  height: 42px;
+  border-radius: var(--r-full);
+}
+.btn-filter-submit {
+  height: 42px;
+  padding: 0 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-radius: var(--r-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.store-filter-options-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.filter-price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-input-price {
+  width: 110px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+}
+.filter-price-dash {
+  color: var(--steel);
+  font-weight: 600;
+  font-size: 14px;
+}
+.filter-secondary-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.filter-select-sort {
+  width: 130px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  color: var(--ink-deep);
+}
+.filter-stock-toggle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.filter-reset-link {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--critical);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  background: rgba(255, 77, 97, 0.08);
+  transition: background .15s ease;
+}
+.filter-reset-link:hover {
+  background: rgba(255, 77, 97, 0.16);
+}
+
+/* Responsiveness on Mobile & Desktop */
+@media (max-width: 767px) {
+  .store-filter-options-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .filter-price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .filter-input-price {
+    flex: 1;
+    width: 100%;
+  }
+  .filter-secondary-inputs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+  .filter-select-sort {
+    flex: 1;
+    width: auto;
+  }
+}
+@media (min-width: 768px) {
+  .store-filter-form {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .store-search-action-row {
+    order: 2;
+    width: auto;
+    margin-left: auto;
+  }
+  .store-search-input-wrap {
+    width: 240px;
+  }
+  .store-filter-options-row {
+    order: 1;
+  }
+}
 @media (max-width: 767px) {
   .toolbar { gap: 12px; }
   .toolbar-left { width: 100%; }
