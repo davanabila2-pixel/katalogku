@@ -9,24 +9,21 @@
   <div style="position:relative">
     <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" loading="lazy">
     @if($product->isBundle())
-      <span class="badge badge-bundle" style="position:absolute;top:8px;left:8px;box-shadow:0 2px 6px rgba(0,0,0,0.12)">Paket Set</span>
+      <span class="badge badge-bundle" style="position:absolute;top:8px;left:8px;box-shadow:0 2px 6px rgba(0,0,0,0.12);z-index:2">Paket Set</span>
     @endif
+    {{-- Badge Total Stok di atas Gambar Produk --}}
+    <div class="card-image-stock-badge">
+      @if($product->stock <= 0)
+        <span class="badge badge-critical">Habis</span>
+      @elseif($product->stock <= 5)
+        <span class="badge badge-warning">Stok {{ $product->stock }}</span>
+      @else
+        <span class="badge badge-success">Stok {{ $product->stock }}</span>
+      @endif
+    </div>
   </div>
   <div class="card-photo-body">
     <h3 style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $product->name }}</h3>
-
-    {{-- Baris Meta: Total Stok --}}
-    <div class="card-meta-row">
-      <div class="card-stock-status">
-        @if($product->stock <= 0)
-          <span class="badge badge-critical">Habis</span>
-        @elseif($product->stock <= 5)
-          <span class="badge badge-warning">Stok {{ $product->stock }}</span>
-        @else
-          <span class="badge badge-success">Stok {{ $product->stock }}</span>
-        @endif
-      </div>
-    </div>
 
     {{-- Bagian Bawah: Harga, Keranjang, Beli, dan Tombol Tanya di bawah sendiri --}}
     <div class="card-bottom-section">

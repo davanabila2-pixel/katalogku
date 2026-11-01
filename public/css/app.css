@@ -243,6 +243,8 @@ body {
   .card-photo { border-radius: var(--r-xl); }
   .card-photo-body { padding: 10px 10px 12px; }
   .card-photo-body h3 { font-size: 13.5px; line-height: 1.35; min-height: 36px; margin-bottom: 4px; }
+  .card-image-stock-badge { top: 6px; right: 6px; }
+  .card-image-stock-badge .badge { font-size: 10px; padding: 2px 7px; }
   .card-meta-row { margin-top: 2px; margin-bottom: 6px; }
   .card-bottom-section { padding-top: 8px; gap: 6px; }
   .card-purchase-row { gap: 5px; }
@@ -1177,6 +1179,22 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
 }
 
 /* Card Button & Action */
+.card-image-stock-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  pointer-events: none;
+}
+.card-image-stock-badge .badge {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--r-full);
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+}
 .card-meta-row {
   display: flex;
   align-items: center;
