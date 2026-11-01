@@ -61,90 +61,47 @@ body {
 .topbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
 /* Topbar Toko */
-body.is-store-page {
-  background: #f8fafc;
-}
 .topbar.topbar-store {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.16);
-  transition: background-color 0.2s ease;
-}
-.topbar.topbar-store::before {
-  content: "";
-  display: block;
-  height: 3px;
-  width: 100%;
-  background: linear-gradient(90deg, #0066ff 0%, #00d2ff 45%, #25D366 100%);
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 .topbar-store-left { display: flex; align-items: center; gap: 12px; }
 .topbar-back-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--r-full); background: var(--surface-soft); font-size: 13px; font-weight: 600; color: var(--steel); text-decoration: none; transition: background .15s ease, color .15s ease; }
 .topbar-back-pill:hover { background: var(--hairline-soft); color: var(--ink-deep); }
-.topbar-divider { width: 1px; height: 24px; background: var(--hairline-soft); }
+.topbar-divider { width: 1px; height: 24px; background: #e2e8f0; }
 .store-brand-link { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.store-topbar-logo { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; border: 1px solid var(--hairline-soft); }
+.store-topbar-logo { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; border: 1px solid #e2e8f0; }
 .store-topbar-initial { width: 34px; height: 34px; border-radius: 8px; background: var(--primary); color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-.store-brand-name { font-weight: 700; font-size: 18px; color: var(--ink-deep); letter-spacing: -0.3px; }
-.store-contact-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--success) !important; border-color: rgba(49,162,76,.3) !important; }
-.store-contact-btn:hover { background: #e6f6ea !important; }
-
-/* Styling Elemen Topbar Toko Elegan */
-.topbar-store .store-brand-name {
-  color: #ffffff;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+.store-brand-name { font-weight: 700; font-size: 18px; color: #0f172a; letter-spacing: -0.3px; }
+.store-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+  border-radius: var(--r-full);
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all .15s ease;
 }
-.topbar-store .store-topbar-logo {
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-.topbar-store .store-topbar-initial {
-  box-shadow: 0 2px 10px rgba(0, 102, 255, 0.45);
+.store-contact-btn:hover {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
 }
 .topbar-store .btn-cart-nav {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
 }
 .topbar-store .btn-cart-nav:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #ffffff;
-  transform: scale(1.05);
-}
-.topbar-store .store-contact-btn {
-  background: rgba(37, 211, 102, 0.16) !important;
-  color: #25D366 !important;
-  border-color: rgba(37, 211, 102, 0.4) !important;
-  box-shadow: 0 2px 10px rgba(37, 211, 102, 0.15);
-}
-.topbar-store .store-contact-btn:hover {
-  background: #25D366 !important;
-  color: #ffffff !important;
-  border-color: #25D366 !important;
-  transform: scale(1.03);
-}
-.topbar-store .btn-primary {
   background: #ffffff;
-  color: #0f172a;
-  border: none;
-  font-weight: 700;
-}
-.topbar-store .btn-primary:hover {
-  background: #f1f5f9;
-  color: #000000;
-}
-.topbar-store .btn-ghost {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-}
-.topbar-store .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 @media (max-width: 767px) {
@@ -604,90 +561,71 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .default-footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .default-footer-inner a { color: var(--primary); text-decoration: none; font-weight: 600; }
 
-/* Footer Toko Mewah & Kaya Warna */
+/* Footer Toko Bersih & Berkarakter */
 .footer.footer-store {
-  background: #090e17;
-  color: #94a3b8;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 56px 0 36px;
+  background: #f8fafc;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+  padding: 52px 0 32px;
   margin-top: 64px;
-  position: relative;
-}
-.footer.footer-store::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #25D366 0%, #0066ff 50%, #8b5cf6 100%);
 }
 .footer-store .store-brand-name {
-  color: #ffffff;
-  font-size: 20px;
+  color: #0f172a;
+  font-size: 19px;
+  font-weight: 700;
   letter-spacing: -0.3px;
 }
 .footer-store .store-topbar-logo {
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #cbd5e1;
 }
 .footer-store .store-footer-desc {
-  color: #94a3b8;
-  font-size: 14px;
+  color: #64748b;
+  font-size: 13.5px;
   line-height: 1.6;
 }
 .footer-store .store-footer-heading {
-  color: #ffffff;
-  font-size: 13.5px;
-  letter-spacing: 0.8px;
-  position: relative;
-  padding-bottom: 8px;
-  margin-bottom: 16px;
-}
-.footer-store .store-footer-heading::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 28px;
-  height: 2px;
-  background: var(--primary);
-  border-radius: var(--r-full);
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
 }
 .footer-store .store-footer-list {
-  color: #cbd5e1;
-  font-size: 14px;
-  gap: 14px;
+  color: #334155;
+  font-size: 13.5px;
+  gap: 12px;
 }
 .footer-store .store-footer-list li svg {
-  color: #38bdf8;
+  color: #64748b;
   flex-shrink: 0;
 }
 .footer-store .store-footer-list a {
-  color: #25D366 !important;
+  color: #16a34a !important;
   font-weight: 600;
   text-decoration: none;
   transition: color 0.15s ease;
 }
 .footer-store .store-footer-list a:hover {
-  color: #48f58b !important;
+  color: #15803d !important;
   text-decoration: underline;
 }
 .footer-store .store-footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #e2e8f0;
   color: #64748b;
   font-size: 13px;
-  margin-top: 40px;
-  padding-top: 24px;
+  margin-top: 36px;
+  padding-top: 20px;
 }
 .footer-store .store-footer-bottom strong {
-  color: #e2e8f0;
+  color: #0f172a;
 }
 .footer-store .store-footer-credit a {
-  color: #38bdf8;
+  color: var(--primary);
   font-weight: 700;
+  text-decoration: none;
 }
 .footer-store .store-footer-credit a:hover {
-  color: #60a5fa;
   text-decoration: underline;
 }
 
