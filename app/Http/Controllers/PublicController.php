@@ -24,10 +24,15 @@ class PublicController extends Controller
 
     public function stores(Request $request)
     {
+        $perPage = (int) $request->input('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
+
         $stores = Store::active()
             ->when($request->q, fn ($q, $term) => $q->where('name', 'like', "%{$term}%"))
             ->orderBy('name')
-            ->paginate(12)
+            ->paginate($perPage)
             ->withQueryString();
 
         return view('public.stores', compact('stores'));
@@ -101,6 +106,11 @@ class PublicController extends Controller
             $categoryIds = array_merge([$category->id], $category->descendantIds());
         }
 
+        $perPage = (int) $request->input('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
+
         $products = Product::forStore($store->id)
             ->publiclyVisible()
             ->when($store->hide_component_products, fn ($q) => $q->where(function ($qq) {
@@ -121,7 +131,7 @@ class PublicController extends Controller
             ->when($request->sort === 'price_desc', fn ($q) => $q->orderByDesc('selling_price'))
             ->when($request->sort === 'name', fn ($q) => $q->orderBy('name'))
             ->when(! in_array($request->sort, ['price_asc', 'price_desc', 'name']), fn ($q) => $q->latest())
-            ->paginate(12)
+            ->paginate($perPage)
             ->withQueryString();
 
         $seo = [
@@ -151,12 +161,17 @@ class PublicController extends Controller
         }
         $store = $found;
 
+        $perPage = (int) $request->input('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
+
         $soldOrders = Order::where('store_id', $store->id)
             ->where('status', 'completed')
             ->with(['product', 'items.product'])
             ->latest('reviewed_at')
             ->latest()
-            ->paginate(12)
+            ->paginate($perPage)
             ->withQueryString();
 
         $seo = [

@@ -105,6 +105,10 @@
           <span>Stok tersedia</span>
         </label>
 
+        @if(request('per_page'))
+          <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+        @endif
+
         @if(request('q') || request('min_price') || request('max_price') || request('in_stock') || request('sort'))
           <a href="{{ $activeCategory ? route('store.category', [$store->slug, $activeCategory->slug]) : $store->url() }}" class="filter-reset-link" title="Hapus filter">
             ✕ Reset

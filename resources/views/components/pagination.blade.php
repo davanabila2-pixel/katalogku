@@ -1,6 +1,7 @@
 @props([
     'paginator' => null,
     'countSuffix' => 'produk',
+    'perPageOptions' => [10, 25, 50, 100],
 ])
 
 @if($paginator && method_exists($paginator, 'total') && $paginator->total() > 0)
@@ -13,13 +14,44 @@
     $prevUrl = $paginator->previousPageUrl();
     $nextUrl = $paginator->nextPageUrl();
     $urlTemplate = $paginator->url(999999);
+    $currentPerPage = (int) request('per_page', $paginator->perPage());
+    if (! in_array($currentPerPage, $perPageOptions, true)) {
+        $currentPerPage = $paginator->perPage();
+    }
 @endphp
 <div class="pagination-container" data-pagination-component>
-  <div class="pagination-info">
-    <span>Menampilkan</span>
-    <span class="pagination-info-range">{{ $from }}–{{ $to }}</span>
-    <span>dari</span>
-    <span class="pagination-info-total">{{ number_format($total, 0, ',', '.') }} {{ $countSuffix }}</span>
+  <div class="pagination-meta">
+    <div class="pagination-info">
+      <span>Menampilkan</span>
+      <span class="pagination-info-range">{{ $from }}–{{ $to }}</span>
+      <span>dari</span>
+      <span class="pagination-info-total">{{ number_format($total, 0, ',', '.') }} {{ $countSuffix }}</span>
+    </div>
+
+    {{-- Dropdown Pilihan Tampilkan 10, 25, 50, 100 --}}
+    <div class="pagination-per-page-wrap">
+      <label for="pagination-per-page-select-{{ $paginator->getPageName() }}" class="pagination-per-page-label">Tampilkan:</label>
+      <div class="pagination-select-pill">
+        <select
+          id="pagination-per-page-select-{{ $paginator->getPageName() }}"
+          class="pagination-per-page-select"
+          aria-label="Pilih jumlah data per halaman"
+          onchange="window.location.href=this.value"
+        >
+          @foreach($perPageOptions as $size)
+            <option
+              value="{{ request()->fullUrlWithQuery(['per_page' => $size, 'page' => 1]) }}"
+              {{ $currentPerPage === $size ? 'selected' : '' }}
+            >
+              {{ $size }}
+            </option>
+          @endforeach
+        </select>
+        <svg class="pagination-select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+    </div>
   </div>
 
   <nav class="pagination-controls" aria-label="Navigasi Halaman">

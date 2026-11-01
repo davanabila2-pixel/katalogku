@@ -399,6 +399,13 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
   flex-wrap: wrap;
 }
 
+.pagination-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .pagination-info {
   display: inline-flex;
   align-items: center;
@@ -412,6 +419,65 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .pagination-info-total {
   color: #0f172a;
   font-weight: 700;
+}
+
+.pagination-per-page-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-per-page-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  user-select: none;
+}
+
+.pagination-select-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--r-full);
+  padding: 0 10px 0 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pagination-select-pill:focus-within {
+  border-color: var(--primary, #0064e0);
+  box-shadow: 0 0 0 3px rgba(0, 100, 224, 0.12);
+}
+
+.pagination-per-page-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 0 20px 0 2px;
+  cursor: pointer;
+  height: 100%;
+}
+
+.pagination-select-arrow {
+  position: absolute;
+  right: 8px;
+  pointer-events: none;
+  color: #64748b;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.pagination-select-pill:hover .pagination-select-arrow {
+  color: #0f172a;
 }
 
 .pagination-controls {
@@ -542,6 +608,15 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
     justify-content: center;
     gap: 14px;
     padding: 20px 0 8px;
+  }
+  .pagination-meta {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+  .pagination-select-pill {
+    height: 35px;
   }
   .pagination-controls {
     width: 100%;
