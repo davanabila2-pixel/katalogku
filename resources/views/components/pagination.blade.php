@@ -12,36 +12,7 @@
     $lastPage = $paginator->lastPage();
     $prevUrl = $paginator->previousPageUrl();
     $nextUrl = $paginator->nextPageUrl();
-
-    // Sliding window algorithm for aesthetic page numbers
-    $pageElements = [];
-    if ($lastPage <= 7) {
-        for ($i = 1; $i <= $lastPage; $i++) {
-            $pageElements[] = $i;
-        }
-    } else {
-        if ($currentPage <= 4) {
-            for ($i = 1; $i <= 5; $i++) {
-                $pageElements[] = $i;
-            }
-            $pageElements[] = '...';
-            $pageElements[] = $lastPage;
-        } elseif ($currentPage >= $lastPage - 3) {
-            $pageElements[] = 1;
-            $pageElements[] = '...';
-            for ($i = $lastPage - 4; $i <= $lastPage; $i++) {
-                $pageElements[] = $i;
-            }
-        } else {
-            $pageElements[] = 1;
-            $pageElements[] = '...';
-            $pageElements[] = $currentPage - 1;
-            $pageElements[] = $currentPage;
-            $pageElements[] = $currentPage + 1;
-            $pageElements[] = '...';
-            $pageElements[] = $lastPage;
-        }
-    }
+    $urlTemplate = $paginator->url(999999);
 @endphp
 <div class="pagination-container" data-pagination-component>
   <div class="pagination-info">
@@ -54,42 +25,83 @@
   <nav class="pagination-controls" aria-label="Navigasi Halaman">
     {{-- Tombol Sebelumnya --}}
     @if($paginator->onFirstPage())
-      <span class="pagination-action-btn is-disabled" aria-disabled="true" title="Halaman pertama">
+      <button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true" title="Halaman pertama">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         <span>Sebelumnya</span>
-      </span>
+      </button>
     @else
-      <a href="{{ $prevUrl }}" class="pagination-action-btn" aria-label="Ke halaman sebelumnya" title="Halaman sebelumnya">
+      <a href="{{ $prevUrl }}" class="pagination-nav-btn" data-page="{{ $currentPage - 1 }}" aria-label="Halaman sebelumnya" title="Ke halaman sebelumnya">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         <span>Sebelumnya</span>
       </a>
     @endif
 
-    {{-- Deretan Tombol Angka Halaman --}}
-    <div class="pagination-pages-list">
-      @foreach($pageElements as $el)
-        @if($el === '...')
-          <span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>
-        @elseif($el === $currentPage)
-          <span class="pagination-page-item is-active" aria-current="page">{{ $el }}</span>
-        @else
-          <a href="{{ $paginator->url($el) }}" class="pagination-page-item" aria-label="Halaman {{ $el }}">{{ $el }}</a>
-        @endif
-      @endforeach
+    {{-- Kapsul Input Halaman Interaktif --}}
+    <div class="pagination-page-capsule" title="Ketik nomor halaman dan tekan Enter untuk berpindah">
+      <span class="pagination-capsule-label">Hal.</span>
+      <input
+        type="number"
+        class="pagination-page-input"
+        value="{{ $currentPage }}"
+        min="1"
+        max="{{ $lastPage }}"
+        aria-label="Ketik nomor halaman"
+        data-current="{{ $currentPage }}"
+        data-max="{{ $lastPage }}"
+        data-url-template="{{ $urlTemplate }}"
+      >
+      <span class="pagination-capsule-divider">/</span>
+      <span class="pagination-capsule-total">{{ $lastPage }}</span>
     </div>
 
     {{-- Tombol Berikutnya --}}
     @if($paginator->hasMorePages())
-      <a href="{{ $nextUrl }}" class="pagination-action-btn" aria-label="Ke halaman berikutnya" title="Halaman berikutnya">
+      <a href="{{ $nextUrl }}" class="pagination-nav-btn" data-page="{{ $currentPage + 1 }}" aria-label="Halaman berikutnya" title="Ke halaman berikutnya">
         <span>Berikutnya</span>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </a>
     @else
-      <span class="pagination-action-btn is-disabled" aria-disabled="true" title="Halaman terakhir">
+      <button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true" title="Halaman terakhir">
         <span>Berikutnya</span>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </span>
+      </button>
     @endif
   </nav>
 </div>
+
+<script>
+(function() {
+  if (window.__paginationComponentInitialized) return;
+  window.__paginationComponentInitialized = true;
+
+  function jumpPage(input) {
+    var max = parseInt(input.getAttribute('data-max') || input.getAttribute('max'), 10) || 1;
+    var current = parseInt(input.getAttribute('data-current'), 10) || 1;
+    var target = parseInt(input.value, 10);
+    if (isNaN(target) || target < 1) target = 1;
+    if (target > max) target = max;
+    input.value = target;
+
+    if (target !== current) {
+      var template = input.getAttribute('data-url-template');
+      if (template) {
+        window.location.href = template.replace('999999', target).replace('page=999999', 'page=' + target);
+      }
+    }
+  }
+
+  document.addEventListener('change', function(e) {
+    if (e.target.matches('.pagination-page-input[data-url-template]')) {
+      jumpPage(e.target);
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.matches('.pagination-page-input[data-url-template]')) {
+      e.preventDefault();
+      jumpPage(e.target);
+    }
+  });
+})();
+</script>
 @endif

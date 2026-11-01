@@ -99,21 +99,31 @@ window.AdminTable = (function () {
             var suffix = options.countSuffix || 'data';
 
             var prevBtn = current > 1
-                ? '<button type="button" class="pagination-nav-btn" data-page="' + (current - 1) + '">&lt; PREV PAGE</button>'
-                : '<button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true">&lt; PREV PAGE</button>';
+                ? '<button type="button" class="pagination-nav-btn" data-page="' + (current - 1) + '" aria-label="Halaman sebelumnya" title="Ke halaman sebelumnya">'
+                  + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
+                  + '<span>Sebelumnya</span></button>'
+                : '<button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true" title="Halaman pertama">'
+                  + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
+                  + '<span>Sebelumnya</span></button>';
 
             var nextBtn = current < last
-                ? '<button type="button" class="pagination-nav-btn" data-page="' + (current + 1) + '">NEXT PAGE &gt;</button>'
-                : '<button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true">NEXT PAGE &gt;</button>';
+                ? '<button type="button" class="pagination-nav-btn" data-page="' + (current + 1) + '" aria-label="Halaman berikutnya" title="Ke halaman berikutnya">'
+                  + '<span>Berikutnya</span>'
+                  + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>'
+                : '<button type="button" class="pagination-nav-btn is-disabled" disabled aria-disabled="true" title="Halaman terakhir">'
+                  + '<span>Berikutnya</span>'
+                  + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>';
 
             paginationBox.innerHTML =
                 '<div class="pagination-container">'
-                + '<div class="pagination-info">Showing ' + from + ' - ' + to + ' of ' + total + ' ' + esc(suffix) + '</div>'
+                + '<div class="pagination-info">Menampilkan <span class="pagination-info-range">' + from + '–' + to + '</span> dari <span class="pagination-info-total">' + total + '</span> ' + esc(suffix) + '</div>'
                 + '<div class="pagination-controls">'
                 + prevBtn
-                + '<div class="pagination-page-box">'
+                + '<div class="pagination-page-capsule" title="Ketik nomor halaman dan tekan Enter untuk berpindah">'
+                + '<span class="pagination-capsule-label">Hal.</span>'
                 + '<input type="number" class="pagination-page-input" value="' + current + '" min="1" max="' + last + '" data-current="' + current + '" data-max="' + last + '" aria-label="Nomor halaman">'
-                + '<span class="pagination-total-label">of ' + last + ' pages</span>'
+                + '<span class="pagination-capsule-divider">/</span>'
+                + '<span class="pagination-capsule-total">' + last + '</span>'
                 + '</div>'
                 + nextBtn
                 + '</div>'
