@@ -24,10 +24,9 @@ class ProductSeeder extends Seeder
         }
 
         // Tentukan toko yang akan diisi produk
-        // Utamakan 'Toko 1' (slug: toko-1), jika tidak ada gunakan toko pertama yang ada
-        $stores = Store::whereIn('slug', ['toko-1', 'toko-utama'])->get();
+        $stores = Store::whereIn('slug', ['byvii', 'toko-1', 'toko-utama'])->get();
         if ($stores->isEmpty()) {
-            $stores = Store::take(1)->get();
+            $stores = Store::take(2)->get();
         }
 
         if ($stores->isEmpty()) {
@@ -181,13 +180,163 @@ class ProductSeeder extends Seeder
                     'https://images.unsplash.com/photo-1508296695146-257a814070b4?w=800&auto=format&fit=crop&q=80',
                 ],
             ],
+            [
+                'name' => 'Jam Tangan Pria Chronograph Leather Strap',
+                'category_name' => 'Aksesoris',
+                'parent_category_name' => null,
+                'sku' => 'WAT-CHR-11',
+                'selling_price' => 389000,
+                'unit_purchase_price' => 180000,
+                'quantity' => 25,
+                'description' => 'Jam tangan analog pria dengan fungsi chronograph aktif dan strap genuine leather cokelat tua. Water resistant hingga 3 ATM dengan kaca mineral glass anti-gores.',
+                'image_path' => 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Sweater Crewneck Knit Minimalist Warm',
+                'category_name' => 'Atasan',
+                'parent_category_name' => 'Pakaian Pria',
+                'sku' => 'SWT-CRW-12',
+                'selling_price' => 185000,
+                'unit_purchase_price' => 90000,
+                'quantity' => 30,
+                'description' => 'Sweater rajut kerah bulat bahan katun knit lembut dan tebal. Nyaman digunakan untuk cuaca dingin maupun layering outfit kasual harian.',
+                'image_path' => 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Celana Pendek Cargo Tactical Ripstop',
+                'category_name' => 'Bawahan Pria',
+                'parent_category_name' => 'Pakaian Pria',
+                'sku' => 'PNT-CRG-13',
+                'selling_price' => 129000,
+                'unit_purchase_price' => 65000,
+                'quantity' => 40,
+                'description' => 'Celana pendek kasual bermotif outdoor berbahan katun ripstop kuat dan tidak mudah robek. Dilengkapi 6 kantong fungsional dengan kancing kokoh.',
+                'image_path' => 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Sandal Slide Pria Anti-Slip Ergonomis',
+                'category_name' => 'Sepatu & Sandal',
+                'parent_category_name' => null,
+                'sku' => 'SHO-SLD-14',
+                'selling_price' => 95000,
+                'unit_purchase_price' => 45000,
+                'quantity' => 45,
+                'description' => 'Sandal slide kasual berbahan Phylon ultra empuk dengan bantalan footbed ergonomis. Anti-slip di permukaan licin, cepat kering, dan sangat ringan.',
+                'image_path' => 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Jaket Parka Outdoor Windbreaker Waterproof',
+                'category_name' => 'Atasan',
+                'parent_category_name' => 'Pakaian Pria',
+                'sku' => 'JKT-PRK-15',
+                'selling_price' => 275000,
+                'unit_purchase_price' => 140000,
+                'quantity' => 20,
+                'description' => 'Jaket parka outdoor dengan lapisan tahan air dan penahan angin (water repellent & windproof). Dilengkapi hoodie yang dapat disesuaikan dan kantong dalam.',
+                'image_path' => 'https://images.unsplash.com/photo-1544441893-675973e31985?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Tas Selempang Sling Bag Compact Cordura',
+                'category_name' => 'Tas & Ransel',
+                'parent_category_name' => null,
+                'sku' => 'BAG-SLG-16',
+                'selling_price' => 119000,
+                'unit_purchase_price' => 55000,
+                'quantity' => 35,
+                'description' => 'Sling bag ringkas multifungsi berbahan Cordura 1000D kuat dan tahan percikan air. Dilengkapi kompartemen smartphone, dompet, kunci, dan slot kabel headset.',
+                'image_path' => 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Ikat Pinggang Kulit Asli Automatic Buckle',
+                'category_name' => 'Aksesoris',
+                'parent_category_name' => null,
+                'sku' => 'ACC-BLT-17',
+                'selling_price' => 115000,
+                'unit_purchase_price' => 52000,
+                'quantity' => 40,
+                'description' => 'Ikat pinggang pria kulit sapi asli dengan buckle otomatis berlapis alloy anti karat. Mudah disesuaikan tanpa perlu melubangi sabuk, tampak formal dan elegan.',
+                'image_path' => 'https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1614179689702-355944cd0918?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Polo Shirt Pique Classic Fit Bordir',
+                'category_name' => 'Atasan',
+                'parent_category_name' => 'Pakaian Pria',
+                'sku' => 'TSH-POL-18',
+                'selling_price' => 110000,
+                'unit_purchase_price' => 55000,
+                'quantity' => 50,
+                'description' => 'Polo shirt katun CVC Lacoste pique premium dengan daya serap keringat tinggi. Kerah rajut padat tidak mudah melar, jahitan rapi untuk tampilan smart-casual.',
+                'image_path' => 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Kemeja Polos Katun Oxford Lengan Pendek',
+                'category_name' => 'Atasan',
+                'parent_category_name' => 'Pakaian Pria',
+                'sku' => 'SHR-OXF-19',
+                'selling_price' => 139000,
+                'unit_purchase_price' => 68000,
+                'quantity' => 35,
+                'description' => 'Kemeja pendek bahan katun oxford bertekstur halus, adem, dan tidak transparan. Potongan slim fit modern cocok untuk kuliah, kerja, maupun hangout santai.',
+                'image_path' => 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
+            [
+                'name' => 'Sepatu Loafers Pria Casual Slip On',
+                'category_name' => 'Sepatu & Sandal',
+                'parent_category_name' => null,
+                'sku' => 'SHO-LOF-20',
+                'selling_price' => 349000,
+                'unit_purchase_price' => 165000,
+                'quantity' => 25,
+                'description' => 'Sepatu loafers slip-on pria model penny loafer berbahan synthetic micro-leather halus. Sol karet elastis anti licin dan insole busa empuk tidak bikin lecet kaki.',
+                'image_path' => 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=800&auto=format&fit=crop&q=80',
+                'gallery_images' => [
+                    'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=800&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&auto=format&fit=crop&q=80',
+                ],
+            ],
         ];
 
         $barcodeService = app(BarcodeService::class);
         $inventoryService = app(InventoryService::class);
 
         foreach ($stores as $store) {
-            $this->command->info("Menambahkan 10 produk untuk: {$store->name} (slug: {$store->slug})");
+            $this->command->info("Menambahkan " . count($items) . " produk untuk: {$store->name} (slug: {$store->slug})");
 
             $batchItemsPayload = [];
 
@@ -268,7 +417,7 @@ class ProductSeeder extends Seeder
                     'batch_code' => $batchCode,
                     'purchase_date' => now()->toDateString(),
                     'supplier_name' => 'Supplier Garmen Nusantara',
-                    'notes' => 'Stok awal 10 produk dari seeder',
+                    'notes' => 'Stok awal produk dari seeder',
                     'additional_cost' => 25000,
                 ], $batchItemsPayload, $superadmin);
 
@@ -276,7 +425,7 @@ class ProductSeeder extends Seeder
             }
         }
 
-        $this->command->info('ProductSeeder selesai: 10 produk dengan foto dan stok siap digunakan!');
+        $this->command->info('ProductSeeder selesai: ' . count($items) . ' produk dengan multi-foto dan stok siap digunakan!');
     }
 }
 
