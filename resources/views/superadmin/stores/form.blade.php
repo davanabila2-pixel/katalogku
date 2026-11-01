@@ -8,6 +8,7 @@
   <div class="field"><label>Nama toko</label><input id="storename" class="input" type="text" name="name" value="{{ old('name', $store->name) }}" required></div>
   <div class="field"><label>Slug URL</label><input id="storeslug" class="input" type="text" name="slug" value="{{ old('slug', $store->slug) }}" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="otomatis dari nama">
   <small class="category-hierarchy">Preview URL: {{ url('/') }}/<span id="slugprev">{{ $store->slug ?? 'slug-toko' }}</span>@if($store->exists) · mengubah slug mengalihkan tautan lama (301)@endif</small></div>
+  <div class="field"><label>Slogan / Tagline</label><input class="input" type="text" name="slogan" value="{{ old('slogan', $store->slogan) }}" maxlength="255" placeholder="cth: Secondhand, First Choice."></div>
   <div class="field"><label>Deskripsi</label><textarea class="textarea" name="description">{{ old('description', $store->description) }}</textarea></div>
   <div class="field"><label>Kontak</label><input class="input" type="text" name="contact_information" value="{{ old('contact_information', $store->contact_information) }}"></div>
   <div class="field"><label>Alamat</label><textarea class="textarea" name="address">{{ old('address', $store->address) }}</textarea></div>

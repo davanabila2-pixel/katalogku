@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
             fields: [
                 { name: 'name', label: 'Nama toko', required: true, value: isEdit ? store.name : '', placeholder: 'cth: Kemeja Vintage Official' },
                 { name: 'slug', label: 'Slug URL (opsional)', value: isEdit ? store.slug : '', help: 'Kosongkan agar dibuat otomatis dari nama. Mengubah slug mengalihkan tautan lama (301).' },
+                { name: 'slogan', label: 'Slogan / Tagline (opsional)', value: isEdit ? (store.slogan || '') : '', placeholder: 'cth: Secondhand, First Choice.' },
                 { name: 'status', label: 'Status', type: 'select', options: [{ value: 'active', label: 'Aktif' }, { value: 'inactive', label: 'Nonaktif' }], value: isEdit ? store.status : 'active' },
                 { name: 'description', label: 'Deskripsi', type: 'textarea', value: isEdit ? store.description : '' },
                 { name: 'contact_information', label: 'Kontak', value: isEdit ? store.contact_information : '' },

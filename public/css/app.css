@@ -175,17 +175,26 @@ body {
   font-size: 42px;
   font-weight: 700;
   line-height: 1.15;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   color: #ffffff !important;
   letter-spacing: -0.5px;
 }
+.store-hero-slogan {
+  font-size: 17px;
+  font-weight: 600;
+  color: #f1f5f9 !important;
+  letter-spacing: -0.2px;
+  margin: 0 0 8px;
+  line-height: 1.35;
+  opacity: 0.95;
+}
 .store-hero-desc {
-  font-size: 16px;
+  font-size: 14.5px;
   max-width: 680px;
-  opacity: 0.92;
-  margin: 0 0 6px;
-  line-height: 1.45;
-  color: #ffffff !important;
+  opacity: 0.88;
+  margin: 0 0 8px;
+  line-height: 1.5;
+  color: #cbd5e1 !important;
 }
 .store-hero-contact {
   font-size: 13.5px;
@@ -277,9 +286,14 @@ body {
     font-size: 26px;
     margin-bottom: 4px;
   }
+  .store-hero-slogan {
+    font-size: 14.5px;
+    margin-bottom: 6px;
+    line-height: 1.35;
+  }
   .store-hero-desc {
-    font-size: 13.5px;
-    line-height: 1.4;
+    font-size: 13px;
+    line-height: 1.45;
   }
   .store-hero-contact {
     font-size: 12px;

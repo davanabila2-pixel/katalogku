@@ -61,6 +61,7 @@ class StoreController extends Controller
             'store' => [
                 'id' => $store->id,
                 'name' => $store->name,
+                'slogan' => $store->slogan,
                 'slug' => $store->slug,
                 'description' => $store->description,
                 'contact_information' => $store->contact_information,
@@ -107,6 +108,7 @@ class StoreController extends Controller
             'store' => [
                 'id' => $store->id,
                 'name' => $store->name,
+                'slogan' => $store->slogan,
                 'slug' => $store->slug,
                 'url' => $store->url(),
             ],
@@ -153,6 +155,7 @@ class StoreController extends Controller
             'store' => [
                 'id' => $store->id,
                 'name' => $store->name,
+                'slogan' => $store->slogan,
                 'slug' => $store->slug,
                 'url' => $store->url(),
             ],

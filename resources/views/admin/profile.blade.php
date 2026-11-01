@@ -602,13 +602,22 @@
             <div class="field-hint-text">Nama toko tampil pada navbar, header katalog, dan label barcode.</div>
           </div>
 
+          <div class="field" style="margin-top:20px">
+            <div class="field-label-group">
+              <label for="input-store-slogan">Slogan / Tagline Toko</label>
+              <small style="color:#64748b;font-weight:normal" id="slogan-counter">0 / 255</small>
+            </div>
+            <input class="input-styled" type="text" id="input-store-slogan" name="slogan" value="{{ old('slogan', $store->slogan) }}" maxlength="255" placeholder="cth: Secondhand, First Choice.">
+            <div class="field-hint-text">Slogan atau motto singkat yang tampil di bawah nama toko pada header katalog.</div>
+          </div>
+
           <div class="field" style="margin-top:20px;margin-bottom:0">
             <div class="field-label-group">
-              <label for="input-store-desc">Deskripsi & Slogan Toko</label>
+              <label for="input-store-desc">Deskripsi Lengkap Toko</label>
               <small style="color:#64748b;font-weight:normal" id="desc-counter">0 / 2000</small>
             </div>
             <textarea class="textarea-styled" id="input-store-desc" name="description" rows="3" maxlength="2000" placeholder="Jelaskan jenis produk dan keunggulan toko Anda...">{{ old('description', $store->description) }}</textarea>
-            <div class="field-hint-text">Deskripsi membantu pelanggan mengenali tokomu di halaman katalog.</div>
+            <div class="field-hint-text">Deskripsi lengkap membantu pelanggan mengenali produk, nilai, dan keunggulan tokomu.</div>
           </div>
         </div>
 
@@ -750,17 +759,21 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var nameInput = document.getElementById('input-store-name');
+  var sloganInput = document.getElementById('input-store-slogan');
   var descInput = document.getElementById('input-store-desc');
   var fileInput = document.getElementById('logo-file-input');
   var nameCounter = document.getElementById('name-counter');
+  var sloganCounter = document.getElementById('slogan-counter');
   var descCounter = document.getElementById('desc-counter');
 
   function updateCounters() {
     if (nameInput && nameCounter) nameCounter.innerText = nameInput.value.length + ' / 100';
+    if (sloganInput && sloganCounter) sloganCounter.innerText = sloganInput.value.length + ' / 255';
     if (descInput && descCounter) descCounter.innerText = descInput.value.length + ' / 2000';
   }
 
   if (nameInput) nameInput.addEventListener('input', updateCounters);
+  if (sloganInput) sloganInput.addEventListener('input', updateCounters);
   if (descInput) descInput.addEventListener('input', updateCounters);
 
   // Client-Side Instant Image Preview

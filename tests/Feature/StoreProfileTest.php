@@ -79,6 +79,40 @@ class StoreProfileTest extends TestCase
         $this->assertTrue($store->hide_component_products);
     }
 
+    public function test_slogan_dan_deskripsi_toko_terpisah_di_admin_dan_halaman_publik(): void
+    {
+        [$store, $admin] = $this->createStoreWithAdmin();
+
+        // 1. Simpan profil dengan slogan dan deskripsi terpisah
+        $response = $this->actingAs($admin)->put(route('admin.profile.update', $store), [
+            'name' => 'Byvii Vintage',
+            'slogan' => 'Secondhand, First Choice.',
+            'description' => 'Toko fashion preloved terkurasi dengan kualitas terbaik.',
+        ]);
+
+        $response->assertRedirect(route('admin.profile.edit', $store));
+
+        $store->refresh();
+        $this->assertSame('Secondhand, First Choice.', $store->slogan);
+        $this->assertSame('Toko fashion preloved terkurasi dengan kualitas terbaik.', $store->description);
+
+        // 2. Cek form admin memiliki field slogan dan deskripsi terpisah
+        $editResponse = $this->actingAs($admin)->get(route('admin.profile.edit', $store));
+        $editResponse->assertOk();
+        $editResponse->assertSee('name="slogan"', false);
+        $editResponse->assertSee('name="description"', false);
+        $editResponse->assertSee('Secondhand, First Choice.', false);
+        $editResponse->assertSee('Toko fashion preloved terkurasi dengan kualitas terbaik.', false);
+
+        // 3. Cek halaman publik merender slogan dan deskripsi dalam elemen terpisah
+        $publicResponse = $this->get($store->url());
+        $publicResponse->assertOk();
+        $publicResponse->assertSee('store-hero-slogan', false);
+        $publicResponse->assertSee('store-hero-desc', false);
+        $publicResponse->assertSee('Secondhand, First Choice.', false);
+        $publicResponse->assertSee('Toko fashion preloved terkurasi dengan kualitas terbaik.', false);
+    }
+
     public function test_admin_dapat_mengunggah_dan_menghapus_qr_statis_toko(): void
     {
         \Illuminate\Support\Facades\Storage::fake('public');

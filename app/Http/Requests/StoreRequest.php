@@ -21,6 +21,7 @@ class StoreRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:100'],
+            'slogan' => ['nullable', 'string', 'max:255'],
             'slug' => [
                 'nullable', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 Rule::unique('stores', 'slug')->ignore($storeId),

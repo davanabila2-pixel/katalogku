@@ -10,6 +10,7 @@
 </div>
 <div class="panel">
   <p>Status: <span class="badge {{ $store->status==='active'?'badge-success':'badge-neutral' }}">{{ $store->status }}</span> · Katalog: <a href="{{ $store->url() }}" target="_blank">{{ $store->url() }}</a></p>
+  @if($store->slogan)<p style="font-size:15px;font-weight:600;color:var(--ink-deep);margin-bottom:4px"><em>"{{ $store->slogan }}"</em></p>@endif
   <p style="font-size:14px">{{ $store->description }}</p>
   <a class="btn btn-primary btn-sm" href="{{ route('superadmin.stores.edit', $store) }}">Edit Toko</a>
   <a class="btn btn-ghost btn-sm" href="{{ route('admin.dashboard', $store) }}">Buka sebagai Admin</a>

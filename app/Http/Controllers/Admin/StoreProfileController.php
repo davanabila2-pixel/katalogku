@@ -26,6 +26,7 @@ class StoreProfileController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'slogan' => ['nullable', 'string', 'max:255'],
             'slug' => [
                 'nullable', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 'unique:stores,slug,'.$store->id,

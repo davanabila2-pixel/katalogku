@@ -9,6 +9,7 @@
   <div class="store-hero-content">
     <div class="store-hero-text">
       <h1 class="store-hero-title">{{ $store->name }}</h1>
+      @if($store->slogan)<p class="store-hero-slogan">{{ $store->slogan }}</p>@endif
       @if($store->description)<p class="store-hero-desc">{{ $store->description }}</p>@endif
       @if($store->contact_information)
         <p class="store-hero-contact">
