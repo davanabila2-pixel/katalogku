@@ -110,5 +110,6 @@
     }, 20 * 60 * 1000); // 20 minutes
 </script>
 <x-product-chat-modal />
+<x-product-buy-modal />
 </body>
 </html>

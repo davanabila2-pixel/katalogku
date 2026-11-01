@@ -406,6 +406,7 @@
         <button type="button" class="profile-tab" role="tab" id="tab-identitas" aria-controls="panel-identitas" aria-selected="true">Identitas</button>
         <button type="button" class="profile-tab" role="tab" id="tab-url" aria-controls="panel-url" aria-selected="false" tabindex="-1">Alamat URL</button>
         <button type="button" class="profile-tab" role="tab" id="tab-kontak" aria-controls="panel-kontak" aria-selected="false" tabindex="-1">Kontak</button>
+        <button type="button" class="profile-tab" role="tab" id="tab-pembayaran" aria-controls="panel-pembayaran" aria-selected="false" tabindex="-1">Pembayaran / QR</button>
         <button type="button" class="profile-tab" role="tab" id="tab-katalog" aria-controls="panel-katalog" aria-selected="false" tabindex="-1">Katalog</button>
       </div>
 
@@ -514,7 +515,59 @@
           </div>
         </div>
 
-        <!-- Panel 4: Katalog & Visibilitas -->
+        <!-- Panel 4: Pembayaran & QR Statis -->
+        <div class="tab-panel" role="tabpanel" id="panel-pembayaran" aria-labelledby="tab-pembayaran" hidden>
+          <div class="section-intro">
+            <h3>QRIS & Pembayaran Statis Toko</h3>
+            <p>Unggah gambar QRIS atau QR pembayaran statis toko Anda untuk mekanisme beli langsung oleh pelanggan.</p>
+          </div>
+
+          <div class="field">
+            <div class="field-label-group">
+              <label>Gambar QRIS / QR Pembayaran</label>
+              <span id="selected-qr-file-name" style="font-size:12px;color:#64748b;font-weight:normal">
+                {{ $store->qr_image_path ? 'QR aktif' : 'Belum ada QR' }}
+              </span>
+            </div>
+
+            <div class="logo-uploader-row">
+              <div class="logo-preview-thumb" id="qr-preview-box" style="border-radius:12px;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden">
+                @if($store->qrImageUrl())
+                  <img src="{{ $store->qrImageUrl() }}" alt="QR Toko" id="qr-preview-img" style="width:100%;height:100%;object-fit:contain">
+                @else
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M10 7H7v3M17 7h-3v3M10 17H7v-3M17 17h-3v-3"/></svg>
+                @endif
+              </div>
+
+              <div class="logo-upload-meta">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <label class="file-picker-btn">
+                    Pilih Gambar QR
+                    <input type="file" name="qr_image" id="qr-file-input" accept="image/png,image/jpeg,image/webp,image/gif">
+                  </label>
+                  @if($store->qr_image_path)
+                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--critical);cursor:pointer;margin-left:8px">
+                      <input type="checkbox" name="remove_qr" value="1"> Hapus QR
+                    </label>
+                  @endif
+                </div>
+                <div class="logo-hint-text">
+                  Format didukung: PNG, JPG, WebP (Maks. 5 MB). Pastikan gambar QR kontras dan jelas agar mudah discan oleh aplikasi e-wallet / mobile banking pembeli.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:20px;margin-bottom:0">
+            <div class="field-label-group">
+              <label for="input-store-qr-name">Nama Merchant / Rekening QRIS (Opsional)</label>
+            </div>
+            <input class="input-styled" type="text" id="input-store-qr-name" name="qr_account_name" value="{{ old('qr_account_name', $store->qr_account_name) }}" placeholder="cth: QRIS Toko Byvii / BCA 1234567890 a/n Byvii Official">
+            <div class="field-hint-text">Ditampilkan di atas QR code pada saat pelanggan melakukan checkout agar mereka dapat memverifikasi nama penerima transfer.</div>
+          </div>
+        </div>
+
+        <!-- Panel 5: Katalog & Visibilitas -->
         <div class="tab-panel" role="tabpanel" id="panel-katalog" aria-labelledby="tab-katalog" hidden>
           <div class="section-intro">
             <h3>Pengaturan Katalog & Visibilitas</h3>
@@ -578,6 +631,24 @@ document.addEventListener('DOMContentLoaded', function () {
       var previewBox = document.getElementById('logo-preview-box');
       if (previewBox) {
         previewBox.innerHTML = '<img src="' + objectUrl + '" style="width:100%;height:100%;object-fit:cover">';
+      }
+    });
+  }
+
+  // QR Preview
+  var qrFileInput = document.getElementById('qr-file-input');
+  if (qrFileInput) {
+    qrFileInput.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      var qrFileNameEl = document.getElementById('selected-qr-file-name');
+      if (qrFileNameEl) qrFileNameEl.innerText = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+
+      var objectUrl = URL.createObjectURL(file);
+      var qrPreviewBox = document.getElementById('qr-preview-box');
+      if (qrPreviewBox) {
+        qrPreviewBox.innerHTML = '<img src="' + objectUrl + '" style="width:100%;height:100%;object-fit:contain">';
       }
     });
   }

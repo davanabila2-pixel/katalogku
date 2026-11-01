@@ -48,6 +48,24 @@
     </div>
 
     <div class="pdp-action-group">
+      @if($product->stock > 0)
+        <button type="button" class="btn btn-buy-now" onclick="openProductBuy({
+            id: {{ $product->id }},
+            name: @js($product->name),
+            price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
+            rawPrice: {{ (float) $product->selling_price }},
+            stock: {{ (int) $product->stock }},
+            imageUrl: @js($product->imageUrl()),
+            url: @js($product->url($store)),
+            storeName: @js($store->name),
+            storePhone: @js($store->cleanPhoneNumber()),
+            storeQrUrl: @js($store->qrImageUrl()),
+            storeQrName: @js($store->qr_account_name)
+        })">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span>Beli Sekarang via QR</span>
+        </button>
+      @endif
       <button type="button" class="btn btn-wa-chat" onclick="openProductChat({
           id: {{ $product->id }},
           name: @js($product->name),
@@ -59,9 +77,9 @@
           storePhone: @js($store->cleanPhoneNumber())
       })">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
-        <span>Tanya Barang via WhatsApp</span>
+        <span>Tanya Penjual</span>
       </button>
-      <a class="btn btn-secondary" href="{{ $store->url() }}">← Kembali ke katalog</a>
+      <a class="btn btn-secondary" href="{{ $store->url() }}">← Kembali</a>
     </div>
 
     @if($product->isBundle() && $product->bundleItems->count() > 0)

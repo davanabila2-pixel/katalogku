@@ -32,10 +32,14 @@ class StoreController extends Controller
         $data = $request->validated();
         $data['slug'] = $data['slug'] ?? SlugService::uniqueStoreSlug($data['name']);
 
-        $store = Store::create(collect($data)->except(['logo', 'admin_email', 'admin_name'])->toArray());
+        $store = Store::create(collect($data)->except(['logo', 'qr_image', 'admin_email', 'admin_name'])->toArray());
 
         if ($request->hasFile('logo')) {
             $store->update(['logo_path' => $this->storeImage($store, $request->file('logo'))]);
+        }
+
+        if ($request->hasFile('qr_image')) {
+            $store->update(['qr_image_path' => $this->storeImage($store, $request->file('qr_image'))]);
         }
 
         if (! empty($data['admin_email'])) {
@@ -77,6 +81,11 @@ class StoreController extends Controller
             $data['logo_path'] = $this->storeImage($store, $request->file('logo'), $store->logo_path);
         }
         unset($data['logo']);
+
+        if ($request->hasFile('qr_image')) {
+            $data['qr_image_path'] = $this->storeImage($store, $request->file('qr_image'), $store->qr_image_path);
+        }
+        unset($data['qr_image']);
 
         $slugChanged = isset($data['slug']) && $data['slug'] !== $store->slug;
         $store->update(collect($data)->except(['admin_email', 'admin_name'])->toArray());

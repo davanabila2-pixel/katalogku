@@ -34,6 +34,9 @@ class StoreProfileController extends Controller
             'contact_information' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'qr_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'qr_account_name' => ['nullable', 'string', 'max:255'],
+            'remove_qr' => ['nullable', 'boolean'],
             'hide_component_products' => ['nullable', 'boolean'],
         ]);
 
@@ -54,6 +57,16 @@ class StoreProfileController extends Controller
             $data['logo_path'] = $this->storeImage($store, $request->file('logo'), $store->logo_path);
         }
         unset($data['logo']);
+
+        if ($request->boolean('remove_qr')) {
+            if ($store->qr_image_path) {
+                $this->deleteImage($store, $store->qr_image_path);
+            }
+            $data['qr_image_path'] = null;
+        } elseif ($request->hasFile('qr_image')) {
+            $data['qr_image_path'] = $this->storeImage($store, $request->file('qr_image'), $store->qr_image_path);
+        }
+        unset($data['qr_image'], $data['remove_qr']);
 
         $slugChanged = isset($data['slug']) && $data['slug'] !== $store->slug;
         $store->update($data);

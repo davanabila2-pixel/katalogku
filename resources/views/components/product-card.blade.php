@@ -31,19 +31,40 @@
           <span class="badge badge-success">Tersedia</span>
         @endif
       </div>
-      <button type="button" class="btn-card-ask-wa" onclick="event.preventDefault(); event.stopPropagation(); openProductChat({
-          id: {{ $product->id }},
-          name: @js($product->name),
-          price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
-          description: @js(Str::limit(strip_tags($product->description ?? ''), 150)),
-          imageUrl: @js($product->imageUrl()),
-          url: @js($productUrl),
-          storeName: @js($storeObj->name ?? ''),
-          storePhone: @js($storePhone)
-      })" title="Tanya ketersediaan produk via WhatsApp">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
-        <span>Tanya</span>
-      </button>
+      <div class="card-btn-group">
+        <button type="button" class="btn-card-ask-wa" onclick="event.preventDefault(); event.stopPropagation(); openProductChat({
+            id: {{ $product->id }},
+            name: @js($product->name),
+            price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
+            rawPrice: {{ (float) $product->selling_price }},
+            description: @js(Str::limit(strip_tags($product->description ?? ''), 150)),
+            imageUrl: @js($product->imageUrl()),
+            url: @js($productUrl),
+            storeName: @js($storeObj->name ?? ''),
+            storePhone: @js($storePhone)
+        })" title="Tanya ketersediaan produk via WhatsApp">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+          <span>Tanya</span>
+        </button>
+        @if($product->stock > 0)
+          <button type="button" class="btn-card-buy" onclick="event.preventDefault(); event.stopPropagation(); openProductBuy({
+              id: {{ $product->id }},
+              name: @js($product->name),
+              price: 'Rp {{ number_format($product->selling_price, 0, ',', '.') }}',
+              rawPrice: {{ (float) $product->selling_price }},
+              stock: {{ (int) $product->stock }},
+              imageUrl: @js($product->imageUrl()),
+              url: @js($productUrl),
+              storeName: @js($storeObj->name ?? ''),
+              storePhone: @js($storePhone),
+              storeQrUrl: @js($storeObj ? $storeObj->qrImageUrl() : null),
+              storeQrName: @js($storeObj->qr_account_name ?? '')
+          })" title="Beli sekarang via QR Toko">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Beli</span>
+          </button>
+        @endif
+      </div>
     </div>
   </div>
 </a>

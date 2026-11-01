@@ -96,12 +96,16 @@ class ProductWhatsAppChatTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('btn-wa-chat', false);
-        $response->assertSee('Tanya Barang via WhatsApp');
+        $response->assertSee('Tanya Penjual');
+        $response->assertSee('btn-buy-now', false);
+        $response->assertSee('Beli Sekarang via QR');
         $response->assertSee('productChatModal', false);
+        $response->assertSee('productBuyModal', false);
         $response->assertSee('openProductChat', false);
+        $response->assertSee('openProductBuy', false);
     }
 
-    public function test_store_catalog_page_renders_ask_button_on_product_cards(): void
+    public function test_store_catalog_page_renders_ask_and_buy_buttons_on_product_cards(): void
     {
         $store = Store::create([
             'name' => 'Toko Sepatu',
@@ -124,7 +128,10 @@ class ProductWhatsAppChatTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('btn-card-ask-wa', false);
+        $response->assertSee('btn-card-buy', false);
         $response->assertSee('Tanya');
+        $response->assertSee('Beli');
         $response->assertSee('productChatModal', false);
+        $response->assertSee('productBuyModal', false);
     }
 }

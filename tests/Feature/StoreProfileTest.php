@@ -45,6 +45,7 @@ class StoreProfileTest extends TestCase
         $response->assertSeeText('Identitas & Branding Toko', false);
         $response->assertSeeText('Alamat URL & Slug Katalog', false);
         $response->assertSeeText('Kontak & Lokasi Toko', false);
+        $response->assertSeeText('QRIS & Pembayaran Statis Toko', false);
         $response->assertSeeText('Pengaturan Katalog & Visibilitas', false);
         $response->assertSeeText('Google Drive Storage', false);
         $response->assertSeeText($store->name, false);
@@ -76,5 +77,39 @@ class StoreProfileTest extends TestCase
         $this->assertSame('0899999999', $store->contact_information);
         $this->assertSame('Bandung, Jawa Barat', $store->address);
         $this->assertTrue($store->hide_component_products);
+    }
+
+    public function test_admin_dapat_mengunggah_dan_menghapus_qr_statis_toko(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        [$store, $admin] = $this->createStoreWithAdmin();
+
+        $qrFile = \Illuminate\Http\UploadedFile::fake()->image('qris-toko.png', 400, 400);
+
+        $response = $this->actingAs($admin)->put(route('admin.profile.update', $store), [
+            'name' => $store->name,
+            'qr_image' => $qrFile,
+            'qr_account_name' => 'QRIS Toko Busana',
+        ]);
+
+        $response->assertRedirect(route('admin.profile.edit', $store));
+
+        $store->refresh();
+        $this->assertNotNull($store->qr_image_path);
+        $this->assertSame('QRIS Toko Busana', $store->qr_account_name);
+        $this->assertTrue($store->hasStaticQr());
+        $this->assertNotNull($store->qrImageUrl());
+
+        // Test hapus QR
+        $responseRemove = $this->actingAs($admin)->put(route('admin.profile.update', $store), [
+            'name' => $store->name,
+            'remove_qr' => '1',
+        ]);
+
+        $responseRemove->assertRedirect(route('admin.profile.edit', $store));
+
+        $store->refresh();
+        $this->assertNull($store->qr_image_path);
+        $this->assertFalse($store->hasStaticQr());
     }
 }

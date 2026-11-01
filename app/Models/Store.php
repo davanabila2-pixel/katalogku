@@ -17,6 +17,8 @@ class Store extends Model
         'slug',
         'description',
         'logo_path',
+        'qr_image_path',
+        'qr_account_name',
         'contact_information',
         'address',
         'status',
@@ -117,6 +119,24 @@ class Store extends Model
         }
 
         return null;
+    }
+
+    public function qrImageUrl(): ?string
+    {
+        if (! $this->qr_image_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->qr_image_path, 'http://') || str_starts_with($this->qr_image_path, 'https://')) {
+            return $this->qr_image_path;
+        }
+
+        return null;
+    }
+
+    public function hasStaticQr(): bool
+    {
+        return ! empty($this->qr_image_path);
     }
 
     public function cleanPhoneNumber(): ?string
