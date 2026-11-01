@@ -82,7 +82,94 @@
   @yield('content')
 </main>
 <footer class="footer">
-  <div class="container">Katalog multi-toko — satu domain, satu database. &copy; {{ date('Y') }}</div>
+  @if(isset($store) && $store)
+    {{-- Footer Khusus Toko --}}
+    <div class="container store-footer-inner">
+      <div class="store-footer-grid">
+        {{-- Kolom 1: Profil Toko --}}
+        <div class="store-footer-col store-footer-brand-col">
+          <a class="brand store-brand-link" href="{{ $store->url() }}">
+            @if($store->logoUrl())
+              <img class="store-topbar-logo" src="{{ $store->logoUrl() }}" alt="{{ $store->name }}">
+            @else
+              <div class="store-topbar-initial">{{ mb_substr($store->name, 0, 1) }}</div>
+            @endif
+            <span class="store-brand-name">{{ $store->name }}</span>
+          </a>
+          @if($store->description)
+            <p class="store-footer-desc">{{ $store->description }}</p>
+          @else
+            <p class="store-footer-desc">Katalog produk dan penjualan resmi {{ $store->name }}.</p>
+          @endif
+        </div>
+
+        {{-- Kolom 2: Kontak & Layanan --}}
+        <div class="store-footer-col">
+          <h4 class="store-footer-heading">Layanan & Kontak</h4>
+          <ul class="store-footer-list">
+            @if($store->contact_information)
+              <li>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                @if($store->cleanPhoneNumber())
+                  <a href="{{ $store->whatsappUrl('Halo ' . $store->name . ', saya ingin bertanya mengenai produk di katalog Anda.') }}" target="_blank" rel="noopener" style="color:var(--success);font-weight:600;text-decoration:none">
+                    {{ $store->contact_information }} (WhatsApp)
+                  </a>
+                @else
+                  <span>{{ $store->contact_information }}</span>
+                @endif
+              </li>
+            @endif
+
+            @if($store->address)
+              <li style="align-items:flex-start">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-top:2px;flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>{{ $store->address }}</span>
+              </li>
+            @endif
+
+            <li>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>Order Online 24 Jam via WhatsApp</span>
+            </li>
+          </ul>
+        </div>
+
+        {{-- Kolom 3: Metode Transaksi --}}
+        <div class="store-footer-col">
+          <h4 class="store-footer-heading">Metode Transaksi</h4>
+          <div class="store-footer-badges">
+            @if($store->hasStaticQr())
+              <span class="store-payment-badge badge-qris">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                QRIS Toko Aktif
+              </span>
+            @endif
+            @if($store->cleanPhoneNumber())
+              <span class="store-payment-badge badge-wa">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+                Pemesanan via WhatsApp
+              </span>
+            @endif
+          </div>
+          <p style="font-size:12px;color:var(--steel);margin-top:10px;line-height:1.5">
+            Pesan langsung dengan scan QR toko atau chat penjual via WhatsApp. Mudah, cepat, dan tanpa ribet instal aplikasi.
+          </p>
+        </div>
+      </div>
+
+      {{-- Baris Bawah / Copyright --}}
+      <div class="store-footer-bottom">
+        <div>&copy; {{ date('Y') }} <strong>{{ $store->name }}</strong>. Hak cipta dilindungi.</div>
+        <div class="store-footer-credit">Didukung oleh <a href="{{ route('home') }}">Katalog</a></div>
+      </div>
+    </div>
+  @else
+    {{-- Footer Default Platform --}}
+    <div class="container default-footer-inner">
+      <div>Katalog — platform katalog toko online dalam satu tautan. &copy; {{ date('Y') }}</div>
+      <div><a href="{{ route('stores.index') }}">Lihat Semua Toko</a></div>
+    </div>
+  @endif
 </footer>
 <script>
     // Refresh CSRF token every 20 minutes (before default 120-minute expiry)

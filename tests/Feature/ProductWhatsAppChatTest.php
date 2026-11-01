@@ -133,5 +133,19 @@ class ProductWhatsAppChatTest extends TestCase
         $response->assertSee('Beli');
         $response->assertSee('productChatModal', false);
         $response->assertSee('productBuyModal', false);
+        $response->assertSee('store-footer-inner', false);
+        $response->assertSeeText('Layanan & Kontak', false);
+        $response->assertSeeText('Metode Transaksi', false);
+        $response->assertSee($store->name);
+        $response->assertDontSee('Katalog multi-toko — satu domain, satu database');
+    }
+
+    public function test_default_homepage_renders_default_platform_footer(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertStatus(200);
+        $response->assertSee('default-footer-inner', false);
+        $response->assertDontSee('store-footer-inner', false);
     }
 }
