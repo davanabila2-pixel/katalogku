@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('content')
 
-{{-- Satu-satunya permukaan gelap di halaman ini: fokus tunggal untuk ajakan mendaftar. --}}
-<div class="hero">
-  <h1>Toko Anda punya katalog sendiri. Cukup satu tautan.</h1>
+{{-- Satu-satunya bidang warna pekat di halaman ini: fokus tunggal untuk ajakan mendaftar. --}}
+<div class="hero hero-accent">
+  <h1>Toko Anda punya katalog sendiri. <span class="lp-light">Cukup satu tautan.</span></h1>
   <p>Masukkan barang, harga, dan stoknya ke Katalog. Pelanggan tinggal membuka tautannya, tanpa menginstal aplikasi dan tanpa membuat akun.</p>
   <div class="hero-cta">
     <a class="btn btn-primary" href="{{ route('register') }}">Daftar dan buka katalog saya</a>
@@ -19,8 +19,8 @@
 
 <section class="lp-split" aria-labelledby="lp-dapat">
   <div class="lp-split-aside">
-    <h2 class="section-title" id="lp-dapat">Yang langsung Anda dapat</h2>
-    <p class="section-sub">Pilih Toko saat mendaftar, isi nama toko, dan katalognya sudah hidup. Isinya menyusul dari satu halaman yang sama.</p>
+    <h2 class="lp-title" id="lp-dapat">Yang langsung Anda dapat</h2>
+    <p class="lp-lead">Pilih Toko saat mendaftar, isi nama toko, dan katalognya sudah hidup. Isinya menyusul dari satu halaman yang sama.</p>
   </div>
   <div class="lp-split-main">
     <div class="lp-row">
@@ -48,8 +48,8 @@
 {{-- Pita surface-soft selebar layar: satu-satunya perubahan latar, supaya isi halaman tidak monoton. --}}
 <section class="lp-menu-band" aria-labelledby="lp-halaman">
   <div class="lp-menu-head">
-    <h2 class="section-title" id="lp-halaman">Semua urusan toko di satu halaman</h2>
-    <p class="section-sub">Masuk lewat email atau akun Google, lalu kerjakan semuanya dari browser. Tidak ada yang perlu diinstal, bisa dari laptop maupun HP.</p>
+    <h2 class="lp-title" id="lp-halaman">Semua urusan toko di satu halaman</h2>
+    <p class="lp-lead">Masuk lewat email atau akun Google, lalu kerjakan semuanya dari browser. Tidak ada yang perlu diinstal, bisa dari laptop maupun HP.</p>
   </div>
   <div class="lp-menu">
     <div class="lp-menu-item">
@@ -88,8 +88,8 @@
 </section>
 
 <section class="lp-trust-wrap" aria-labelledby="lp-aman">
-  <h2 class="section-title" id="lp-aman">Aman dipegang lebih dari satu orang</h2>
-  <p class="section-sub">Toko Anda tidak bergantung pada satu akun.</p>
+  <h2 class="lp-title" id="lp-aman">Aman dipegang lebih dari satu orang</h2>
+  <p class="lp-lead">Toko Anda tidak bergantung pada satu akun.</p>
   <div class="lp-trust">
     <div class="lp-trust-item">
       <h3>Hanya tokonya</h3>

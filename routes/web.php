@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\StockController as AdminStockController;
 use App\Http\Controllers\Admin\StoreProfileController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BarcodeScanController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\GoogleOAuthController;
 use App\Http\Controllers\OrderSubmissionController;
 use App\Http\Controllers\PublicController;
@@ -91,7 +92,19 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     });
 });
 
-// ---- Katalog publik per toko (PALING AKHIR agar tidak menelan route sistem) ----
+// ---- Keranjang Pintar Publik (Per-Akun / Sesi) ----
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add', [CartController::class, 'add'])->name('add');
+    Route::patch('/items/{id}', [CartController::class, 'update'])->name('update');
+    Route::delete('/items/{id}', [CartController::class, 'remove'])->name('remove');
+});
+
+// ---- Checkout Keranjang per Toko & Pesanan Langsung ----
+Route::post('/{storeSlug}/cart/checkout', [CartController::class, 'checkout'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
+    ->name('cart.checkout');
+
 Route::post('/{storeSlug}/orders', [OrderSubmissionController::class, 'store'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
     ->name('store.orders.store');

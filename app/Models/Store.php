@@ -98,6 +98,11 @@ class Store extends Model
         return $this->hasMany(Order::class)->latest();
     }
 
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

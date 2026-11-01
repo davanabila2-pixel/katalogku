@@ -27,6 +27,13 @@
       </a>
 
       <div class="topbar-right">
+        <button type="button" class="btn-cart-nav" onclick="openCartDrawer()" title="Keranjang Belanja" aria-label="Buka Keranjang Belanja">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="cart-pill-badge" data-cart-count style="display:none;">0</span>
+        </button>
+
         @if($store->contact_information)
           @php
             $cleanPhone = preg_replace('/[^0-9]/', '', $store->contact_information);
@@ -61,6 +68,13 @@
         <a class="pill-tab {{ request()->routeIs('stores.*') ? 'active' : '' }}" href="{{ route('stores.index') }}">Toko</a>
       </nav>
       <div class="topbar-right">
+        <button type="button" class="btn-cart-nav" onclick="openCartDrawer()" title="Keranjang Belanja" aria-label="Buka Keranjang Belanja">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="cart-pill-badge" data-cart-count style="display:none;">0</span>
+        </button>
+
         @auth
           @if(auth()->user()->isSuperadmin())
             <a class="btn btn-ghost btn-sm" href="{{ route('superadmin.dashboard') }}">Superadmin</a>
@@ -198,5 +212,6 @@
 </script>
 <x-product-chat-modal />
 <x-product-buy-modal />
+<x-cart-drawer />
 </body>
 </html>

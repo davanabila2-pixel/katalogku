@@ -274,12 +274,29 @@
     document.getElementById('buyModalProductName').textContent = data.name || '-';
     document.getElementById('buyModalProductPrice').textContent = data.price || 'Rp 0';
 
-    const stock = Number(data.stock) || 1;
-    document.getElementById('buyModalStockHint').textContent = 'Stok tersedia: ' + stock + ' unit';
-
+    const stock = Number(data.stock) || 0;
     const qtyInput = document.getElementById('buyModalQty');
-    qtyInput.value = 1;
-    qtyInput.max = stock;
+    const submitBtn = document.getElementById('buyModalSubmitBtn');
+    const submitText = document.getElementById('buyModalSubmitText');
+
+    if (stock <= 0) {
+      document.getElementById('buyModalStockHint').innerHTML = '<span style="color:#dc2626;font-weight:700">⛔ Stok Habis — Tidak Dapat Dibayar</span>';
+      qtyInput.value = 0;
+      qtyInput.disabled = true;
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.6';
+      submitBtn.style.cursor = 'not-allowed';
+      submitText.textContent = '⛔ Stok Habis — Tidak Dapat Dibayar';
+    } else {
+      document.getElementById('buyModalStockHint').textContent = 'Stok tersedia: ' + stock + ' unit';
+      qtyInput.value = 1;
+      qtyInput.max = stock;
+      qtyInput.disabled = false;
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+      submitText.textContent = 'Kirim Pesanan & Konfirmasi via WA';
+    }
 
     updateBuyTotal();
 
@@ -493,6 +510,11 @@
     if (!activeBuyProduct || isSubmitting) return;
 
     hideError();
+
+    if ((Number(activeBuyProduct.stock) || 0) <= 0) {
+      showError('Maaf, stok produk ini sudah habis dan tidak dapat dibayar.');
+      return;
+    }
 
     const buyerName = (document.getElementById('buyBuyerName').value || '').trim();
     const buyerPhone = (document.getElementById('buyBuyerPhone').value || '').trim();

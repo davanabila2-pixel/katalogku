@@ -32,6 +32,22 @@ class OrderSubmissionController extends Controller
             ->firstOrFail();
 
         $qty = (int) $data['quantity'];
+
+        // Proteksi stok habis: tidak dapat dibeli / dibayar jika stok kosong
+        if ($product->stock <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Maaf, stok produk '{$product->name}' sudah habis dan tidak dapat dibayar.",
+            ], 422);
+        }
+
+        if ($qty > $product->stock) {
+            return response()->json([
+                'success' => false,
+                'message' => "Jumlah pembelian ({$qty}) melebihi stok yang tersedia ({$product->stock} unit).",
+            ], 422);
+        }
+
         $unitPrice = (float) $product->selling_price;
         $totalPrice = $unitPrice * $qty;
 
@@ -59,6 +75,21 @@ class OrderSubmissionController extends Controller
             'payment_proof_path' => $paymentProofPath,
             'status' => $paymentProofPath ? 'paid' : 'pending',
         ]);
+
+        // Catat rincian order item
+        $order->items()->create([
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'product_price' => $unitPrice,
+            'quantity' => $qty,
+            'subtotal' => $totalPrice,
+        ]);
+
+        // Kurangi stok produk secara otomatis
+        $product->decrement('stock', $qty);
+        foreach ($product->partOfBundles as $bundle) {
+            $bundle->syncBundleStock();
+        }
 
         $storePhone = $store->cleanPhoneNumber();
         $totalFormatted = 'Rp ' . number_format($totalPrice, 0, ',', '.');
