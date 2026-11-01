@@ -1,14 +1,31 @@
 @extends('layouts.app')
 @section('content')
 <nav class="breadcrumb"><a href="{{ route('home') }}">Beranda</a> › <a href="{{ $store->url() }}">{{ $store->name }}</a> › {{ $product->name }}</nav>
+@php
+  $galleryUrls = $product->galleryUrls();
+@endphp
 <div class="pdp">
   <div class="pdp-gallery">
-    <div style="position:relative">
-      <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}">
+    <div class="pdp-main-image-wrap" onclick="openProductGallery(@js($galleryUrls), currentMainImgIndex, @js($product->name))" title="Klik untuk melihat foto layar penuh">
+      <img id="pdpMainImage" src="{{ $galleryUrls[0] }}" alt="{{ $product->name }}" class="pdp-main-img">
       @if($product->isBundle())
         <span class="badge badge-bundle" style="position:absolute;top:16px;left:16px;padding:6px 14px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.15)">Paket Setelan</span>
       @endif
+      <div class="pdp-expand-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        <span>Lihat Galeri Penuh ({{ count($galleryUrls) }})</span>
+      </div>
     </div>
+
+    @if(count($galleryUrls) > 1)
+      <div class="pdp-thumbnails-rail">
+        @foreach($galleryUrls as $idx => $url)
+          <button type="button" class="pdp-thumb-btn {{ $idx === 0 ? 'active' : '' }}" onclick="switchPdpMainImage({{ $idx }}, '{{ $url }}')" aria-label="Foto ke-{{ $idx + 1 }}">
+            <img src="{{ $url }}" alt="Thumb {{ $idx + 1 }}">
+          </button>
+        @endforeach
+      </div>
+    @endif
   </div>
   <div class="pdp-rail">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
@@ -154,5 +171,18 @@
 <h2 class="section-title">Produk terkait</h2>
 <div class="grid grid-4">@foreach($related as $rel)<x-product-card :product="$rel" />@endforeach</div>
 @endif
+
+<script>
+  let currentMainImgIndex = 0;
+  function switchPdpMainImage(index, url) {
+    currentMainImgIndex = index;
+    const mainImg = document.getElementById('pdpMainImage');
+    if (mainImg) mainImg.src = url;
+    document.querySelectorAll('.pdp-thumb-btn').forEach(function(btn, i) {
+      if (i === index) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+  }
+</script>
 @endsection
 

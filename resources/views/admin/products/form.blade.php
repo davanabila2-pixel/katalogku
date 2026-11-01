@@ -183,7 +183,36 @@
     </div>
     <div class="field"><label>Status publikasi</label><select class="select" name="status"><option value="draft" {{ old('status', $product->status) === 'draft' ? 'selected' : '' }}>Draft</option><option value="active" {{ old('status', $product->status) === 'active' ? 'selected' : '' }}>Aktif (tampil publik)</option><option value="inactive" {{ old('status', $product->status) === 'inactive' ? 'selected' : '' }}>Nonaktif</option></select></div>
   </div>
-  <div class="field"><label>Gambar Foto Produk</label><input type="file" name="image" accept="image/*"></div>
+  <div class="field">
+    <label>Foto Utama Produk (Cover)</label>
+    @if($product->image_path)
+      <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <img src="{{ $product->imageUrl() }}" alt="Cover" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--hairline-soft)">
+        <span style="font-size:12px;color:var(--steel)">Foto utama saat ini</span>
+      </div>
+    @endif
+    <input type="file" name="image" accept="image/*">
+    <small style="color:var(--steel);display:block;margin-top:4px">Format: JPG, PNG, WebP (maks. 5MB). Digunakan sebagai tampilan depan katalog.</small>
+  </div>
+
+  <div class="field" style="margin-top:16px">
+    <label>Galeri Foto Tambahan (Bisa Pilih Banyak Foto Sekaligus)</label>
+    @if($product->exists && $product->images->count() > 0)
+      <div style="margin-bottom:12px">
+        <div style="font-size:12.5px;font-weight:600;color:var(--ink-deep);margin-bottom:8px">Foto Galeri Tersimpan ({{ $product->images->count() }}):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px" id="existingGalleryList">
+          @foreach($product->images as $galImg)
+            <div style="position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--hairline-soft)" id="gal-img-{{ $galImg->id }}">
+              <img src="{{ $galImg->imageUrl() }}" alt="Galeri" style="width:100%;height:100%;object-fit:cover">
+              <button type="button" onclick="deleteProductGalleryImage({{ $galImg->id }})" style="position:absolute;top:3px;right:3px;background:rgba(239,68,68,0.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:bold" title="Hapus foto ini">✕</button>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
+    <input type="file" name="gallery_images[]" multiple accept="image/*">
+    <small style="color:var(--steel);display:block;margin-top:4px">Pilih 1 atau lebih foto tambahan untuk galeri produk. Pengunjung dapat melihat seluruh foto dalam mode layar penuh.</small>
+  </div>
   <button class="btn btn-buy" type="submit">Simpan</button>
   <a class="btn btn-ghost" href="{{ route('admin.products.index', $store) }}">Batal</a>
 </form>
@@ -258,5 +287,33 @@ function calculateBundleEstimate() {
 document.addEventListener('DOMContentLoaded', function() {
   calculateBundleEstimate();
 });
+
+function deleteProductGalleryImage(imgId) {
+  if (!confirm('Hapus foto ini dari galeri produk?')) return;
+
+  var token = document.querySelector('input[name="_token"]')?.value || '';
+  var storeId = '{{ $store->id }}';
+  var productId = '{{ $product->id }}';
+
+  fetch('/admin/' + storeId + '/products/' + productId + '/images/' + imgId, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRF-TOKEN': token,
+      'Accept': 'application/json'
+    }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data && data.success) {
+      var el = document.getElementById('gal-img-' + imgId);
+      if (el) el.remove();
+    } else {
+      alert('Gagal menghapus foto.');
+    }
+  })
+  .catch(function() {
+    alert('Terjadi kesalahan jaringan.');
+  });
+}
 </script>
 @endsection

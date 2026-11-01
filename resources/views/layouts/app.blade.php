@@ -213,5 +213,6 @@
 <x-product-chat-modal />
 <x-product-buy-modal />
 <x-cart-drawer />
+<x-product-gallery-modal />
 </body>
 </html>

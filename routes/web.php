@@ -74,6 +74,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::resource('products', AdminProductController::class)->except(['show']);
         Route::post('products/{product}/adjust', [AdminProductController::class, 'adjust'])->name('products.adjust');
         Route::post('products/{product}/barcode/regenerate', [AdminProductController::class, 'regenerateBarcode'])->name('products.barcode.regenerate');
+        Route::delete('products/{product}/images/{image}', [AdminProductController::class, 'destroyImage'])->name('products.images.destroy');
 
         Route::get('batches', [AdminBatchController::class, 'index'])->name('batches.index');
         Route::get('batches/create', [AdminBatchController::class, 'create'])->name('batches.create');

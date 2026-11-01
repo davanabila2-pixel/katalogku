@@ -70,6 +70,11 @@ class Product extends Model
         return $this->hasMany(CartItem::class);
     }
 
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('position')->orderBy('id');
+    }
+
     public function bundleItems(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'product_bundles', 'bundle_id', 'item_product_id')
@@ -202,6 +207,38 @@ class Product extends Model
         }
 
         return asset('images/product-fallback.svg');
+    }
+
+    /**
+     * Dapatkan seluruh daftar URL foto galeri produk (foto utama + foto tambahan).
+     */
+    public function galleryUrls(): array
+    {
+        $urls = [];
+
+        if ($this->image_path && str_starts_with($this->image_path, 'http')) {
+            $urls[] = $this->image_path;
+        }
+
+        // Muat relasi images jika belum dimuat
+        $extraImages = $this->relationLoaded('images') ? $this->images : $this->images()->get();
+        foreach ($extraImages as $img) {
+            $u = $img->imageUrl();
+            if ($u && ! in_array($u, $urls, true) && ! str_contains($u, 'fallback')) {
+                $urls[] = $u;
+            }
+        }
+
+        if (empty($urls)) {
+            $urls[] = asset('images/product-fallback.svg');
+        }
+
+        return $urls;
+    }
+
+    public function hasMultipleImages(): bool
+    {
+        return count($this->galleryUrls()) > 1;
     }
 
     public function barcodeUrl(): ?string

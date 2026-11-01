@@ -3,7 +3,7 @@
 
 {{-- Satu-satunya bidang warna pekat di halaman ini: fokus tunggal untuk ajakan mendaftar. --}}
 <div class="hero hero-accent">
-  <h1>Toko Anda punya katalog sendiri. <span class="lp-light">Cukup satu tautan.</span></h1>
+  <h1>Toko Anda punya katalog sendiri.<br><span class="lp-light">Cukup satu tautan.</span></h1>
   <p>Masukkan barang, harga, dan stoknya ke Katalog. Pelanggan tinggal membuka tautannya, tanpa menginstal aplikasi dan tanpa membuat akun.</p>
   <div class="hero-cta">
     <a class="btn btn-primary" href="{{ route('register') }}">Daftar dan buka katalog saya</a>

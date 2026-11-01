@@ -67,6 +67,8 @@ class ProductRequest extends FormRequest
             'selling_price' => ['required', 'numeric', 'min:0', 'max:999999999999.99'],
             'status' => ['required', Rule::in(['draft', 'active', 'inactive'])],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'gallery_images' => ['nullable', 'array', 'max:10'],
+            'gallery_images.*' => ['image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
             'is_bundle' => ['nullable', 'boolean'],
             'is_hidden_from_catalog' => ['nullable', 'boolean'],
             'bundle_items' => [

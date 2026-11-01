@@ -8,6 +8,7 @@ use App\Http\Requests\ProductRequest;
 use App\Http\Requests\StockAdjustRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Store;
 use App\Services\AuditLogger;
 use App\Services\BarcodeService;
@@ -51,9 +52,21 @@ class ProductController extends Controller
             $data['image_path'] = $this->storeImage($store, $request->file('image'));
         }
         $bundleItemsData = $data['bundle_items'] ?? null;
-        unset($data['image'], $data['bundle_items']);
+        unset($data['image'], $data['gallery_images'], $data['bundle_items']);
 
         $product = Product::create($data + ['store_id' => $store->id]);
+
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $idx => $imgFile) {
+                $imgPath = $this->storeImage($store, $imgFile);
+                if ($imgPath) {
+                    $product->images()->create([
+                        'image_path' => $imgPath,
+                        'position' => $idx + 1,
+                    ]);
+                }
+            }
+        }
 
         if ($product->isBundle() && ! empty($bundleItemsData)) {
             $syncData = [];
@@ -108,9 +121,22 @@ class ProductController extends Controller
             $data['image_path'] = $this->storeImage($store, $request->file('image'), $product->image_path);
         }
         $bundleItemsData = $data['bundle_items'] ?? null;
-        unset($data['image'], $data['store_id'], $data['bundle_items']);
+        unset($data['image'], $data['gallery_images'], $data['store_id'], $data['bundle_items']);
 
         $product->update($data);
+
+        if ($request->hasFile('gallery_images')) {
+            $maxPos = (int) $product->images()->max('position');
+            foreach ($request->file('gallery_images') as $idx => $imgFile) {
+                $imgPath = $this->storeImage($store, $imgFile);
+                if ($imgPath) {
+                    $product->images()->create([
+                        'image_path' => $imgPath,
+                        'position' => $maxPos + $idx + 1,
+                    ]);
+                }
+            }
+        }
 
         if ($product->isBundle()) {
             $syncData = [];
@@ -189,6 +215,24 @@ class ProductController extends Controller
         } catch (\Throwable $e) {
             return back()->withErrors(['barcode' => 'Gagal mengunggah barcode ke Google Drive: '.$e->getMessage()]);
         }
+    }
+
+    public function destroyImage(Store $store, Product $product, ProductImage $image)
+    {
+        $this->ensureSameStore($store, $product);
+
+        if ((int) $image->product_id !== (int) $product->id) {
+            abort(404);
+        }
+
+        $this->deleteImage($store, $image->image_path);
+        $image->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('status', 'Foto galeri berhasil dihapus.');
     }
 
     protected function ensureSameStore(Store $store, Product $product): void
