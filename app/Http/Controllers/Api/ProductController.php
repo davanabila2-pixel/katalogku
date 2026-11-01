@@ -42,6 +42,9 @@ class ProductController extends Controller
             ->latest()
             ->paginate(15);
 
+        $adminProdPrefix = route('admin.products.index', $store);
+        $apiProdPrefix = route('api.products.index', $store);
+
         return response()->json([
             'data' => $products->getCollection()->map(fn (Product $product) => [
                 'id' => $product->id,
@@ -58,11 +61,11 @@ class ProductController extends Controller
                 'status' => $product->status,
                 'is_bundle' => $product->isBundle(),
                 'is_hidden' => $product->isHiddenFromCatalog(),
-                'edit_url' => route('admin.products.edit', [$store, $product]),
-                'update_url' => route('api.products.update', [$store, $product]),
-                'form_data_url' => route('api.products.product_form_data', [$store, $product]),
-                'destroy_url' => route('api.products.destroy', [$store, $product]),
-                'adjust_url' => route('api.products.adjust', [$store, $product]),
+                'edit_url' => "{$adminProdPrefix}/{$product->id}/edit",
+                'update_url' => "{$apiProdPrefix}/{$product->id}",
+                'form_data_url' => "{$apiProdPrefix}/{$product->id}/form-data",
+                'destroy_url' => "{$apiProdPrefix}/{$product->id}",
+                'adjust_url' => "{$apiProdPrefix}/{$product->id}/adjust",
             ])->values(),
             'meta' => [
                 'current_page' => $products->currentPage(),

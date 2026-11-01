@@ -33,6 +33,9 @@ class CategoryController extends Controller
             ->orderBy('name')
             ->paginate(15);
 
+        $adminCatPrefix = route('admin.categories.index', $store);
+        $apiCatPrefix = route('api.categories.index', $store);
+
         return response()->json([
             'data' => $categories->getCollection()->map(fn (Category $category) => [
                 'id' => $category->id,
@@ -45,9 +48,9 @@ class CategoryController extends Controller
                 'products_count' => (int) $category->products_count,
                 'sort_order' => (int) $category->sort_order,
                 'is_active' => (bool) $category->is_active,
-                'edit_url' => route('admin.categories.edit', [$store, $category]),
-                'update_url' => route('api.categories.update', [$store, $category]),
-                'destroy_url' => route('api.categories.destroy', [$store, $category]),
+                'edit_url' => "{$adminCatPrefix}/{$category->id}/edit",
+                'update_url' => "{$apiCatPrefix}/{$category->id}",
+                'destroy_url' => "{$apiCatPrefix}/{$category->id}",
             ])->values(),
             'meta' => [
                 'current_page' => $categories->currentPage(),
@@ -78,6 +81,9 @@ class CategoryController extends Controller
             ->get();
 
         $nodes = [];
+        $adminCatPrefix = route('admin.categories.index', $store);
+        $apiCatPrefix = route('api.categories.index', $store);
+
         foreach ($categories as $cat) {
             $nodes[$cat->id] = [
                 'id' => $cat->id,
@@ -88,9 +94,9 @@ class CategoryController extends Controller
                 'sort_order' => (int) $cat->sort_order,
                 'is_active' => (bool) $cat->is_active,
                 'products_count' => (int) $cat->products_count,
-                'edit_url' => route('admin.categories.edit', [$store, $cat]),
-                'update_url' => route('api.categories.update', [$store, $cat]),
-                'destroy_url' => route('api.categories.destroy', [$store, $cat]),
+                'edit_url' => "{$adminCatPrefix}/{$cat->id}/edit",
+                'update_url' => "{$apiCatPrefix}/{$cat->id}",
+                'destroy_url' => "{$apiCatPrefix}/{$cat->id}",
                 'matches_search' => $q !== '' && stripos($cat->name, $q) !== false,
                 'children' => [],
             ];

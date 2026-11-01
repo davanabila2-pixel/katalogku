@@ -12,16 +12,13 @@ class PublicController extends Controller
 {
     public function home()
     {
-        $stores = Store::active()->latest()->take(8)->get();
-        $products = Product::query()
-            ->where('status', 'active')
-            ->whereHas('store', fn ($q) => $q->where('status', 'active'))
-            ->with(['store', 'category', 'bundleItems'])
-            ->latest()
-            ->take(8)
-            ->get();
-
-        return view('public.home', compact('stores', 'products'));
+        // Halaman / kini landing page project, bukan katalog gabungan, jadi tidak ada query data toko.
+        return view('public.home', [
+            'seo' => [
+                'title' => 'Katalog: sistem katalog penjualan multi-toko',
+                'description' => 'Satu aplikasi Laravel, satu domain, banyak toko. Kategori bertingkat, produk, batch pembelian, dan stok atomik dengan HPP rata-rata tertimbang.',
+            ],
+        ]);
     }
 
     public function stores(Request $request)

@@ -541,3 +541,73 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 @media (max-width: 560px) {
   .modal .form-row { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Indikator fokus seragam: outline utama memakai cobalt, di hero gelap diganti putih supaya tetap terlihat. */
+a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.hero a:focus-visible { outline-color: var(--canvas); }
+
+/* ---- Beranda: landing page project ---- */
+
+/* Baris fakta di dasar hero, dipisah titik karena pembatas garis akan rusak saat baris turun di layar sempit. */
+.hero-alt { font-size: 14px; max-width: none; opacity: .7; margin-top: 22px; }
+.hero-alt a { color: var(--canvas); font-weight: 700; }
+.hero-facts { display: flex; flex-wrap: wrap; gap: 6px 0; list-style: none; padding: 18px 0 0; margin: 26px 0 0; border-top: 1px solid rgba(255, 255, 255, .16); font-size: 13px; font-weight: 600; letter-spacing: -.14px; color: rgba(255, 255, 255, .78); }
+.hero-facts li + li::before { content: "\00b7"; margin: 0 14px; color: rgba(255, 255, 255, .45); }
+
+/* Dua kolom asimetris: penjelasan di kiri, daftar di kanan. */
+.lp-split { display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 1fr); gap: 24px 48px; align-items: start; margin-top: 72px; }
+.lp-split .section-title { margin-top: 0; }
+@media (max-width: 1023px) { .lp-split { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+
+.lp-route { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 10px 28px; padding: 20px 0; border-top: 1px solid var(--hairline-soft); }
+.lp-route:last-child { border-bottom: 1px solid var(--hairline-soft); }
+.lp-route code { display: inline-block; justify-self: start; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; font-weight: 600; color: var(--ink-deep); background: var(--surface-soft); border-radius: var(--r-lg); padding: 8px 12px; overflow-wrap: anywhere; }
+.lp-route p { margin: 0; font-size: 15px; color: var(--charcoal); }
+@media (max-width: 767px) { .lp-route { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 18px 0; } }
+
+/* Pita surface-soft selebar layar. Margin negatif harus mengikuti padding .container di tiap breakpoint. */
+.lp-roles { background: var(--surface-soft); margin: 80px -40px 0; padding: 56px 40px 40px; }
+.lp-roles .section-title { margin-top: 0; }
+@media (max-width: 1023px) { .lp-roles { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; } }
+@media (max-width: 767px) { .lp-roles { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; } }
+
+.lp-role { display: grid; grid-template-columns: minmax(0, 32%) minmax(0, 1fr); gap: 4px 32px; padding: 28px 0; border-top: 1px solid var(--hairline); }
+.lp-role:last-child { border-bottom: 1px solid var(--hairline); }
+.lp-role-head h3 { margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -.4px; }
+/* Cobalt di sini menandai lingkup kewenangan, mengikuti pemakaian warna yang sama untuk status aktif di seluruh aplikasi. */
+.lp-role-scope { display: inline-block; margin-top: 6px; font-size: 13px; font-weight: 700; letter-spacing: -.14px; color: var(--primary); }
+.lp-role > p { margin: 0; max-width: 62ch; font-size: 16px; color: var(--charcoal); }
+@media (max-width: 767px) { .lp-role { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 24px 0; } }
+
+/* Lembar spesifikasi: label kiri, isi kanan, dipisah hairline. */
+.lp-spec-group { margin-top: 40px; }
+.lp-spec-group:first-of-type { margin-top: 24px; }
+.lp-spec-group h3 { margin: 0 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -.2px; }
+.lp-spec { margin: 0; }
+.lp-spec-row { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 4px 32px; padding: 15px 0; border-top: 1px solid var(--hairline-soft); }
+.lp-spec-row dt { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -.14px; }
+.lp-spec-row dd { margin: 0; font-size: 15px; color: var(--charcoal); }
+@media (max-width: 767px) { .lp-spec-row { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 14px 0; } }
+
+/* Instalasi: judul lebar penuh, lalu blok perintah gelap berdampingan dengan catatan. */
+.lp-install { margin-top: 80px; }
+.lp-install-head { max-width: 720px; }
+.lp-install-head .section-title { margin-top: 0; }
+.lp-install-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start; margin-top: 28px; }
+@media (max-width: 1023px) { .lp-install-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+/* overflow-x di dalam pre menahan baris panjang, bukan di halaman. */
+.lp-code { margin: 0; padding: 28px 32px; background: var(--ink-deep); color: #e8eef4; border-radius: var(--r-xxxl); overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; line-height: 2; }
+.lp-code code { font-family: inherit; }
+.lp-notes p { margin: 0 0 16px; font-size: 15px; color: var(--charcoal); }
+.lp-notes p:last-child { margin-bottom: 0; }
+.lp-notes strong { color: var(--ink-deep); }
+
+/* Penutup: kartu bergaris tipis, sengaja tetap terang supaya CTA hitam tetap terbaca. */
+.lp-close { margin: 80px 0 16px; }
+.lp-close-card { border: 1px solid var(--hairline-soft); border-radius: var(--r-xxxl); padding: 48px; }
+.lp-close-card h2 { margin: 0 0 12px; max-width: 620px; font-size: 36px; font-weight: 500; line-height: 1.2; letter-spacing: -.6px; }
+.lp-close-body { margin: 0; max-width: 620px; font-size: 17px; color: var(--charcoal); }
+.lp-close-card .hero-cta { margin-top: 28px; }
+.lp-close-note { margin: 22px 0 0; font-size: 14px; color: var(--steel); }
+.lp-close-note a { color: var(--primary); font-weight: 700; }
+@media (max-width: 767px) { .lp-close-card { padding: 28px 24px; } .lp-close-card h2 { font-size: 28px; } }

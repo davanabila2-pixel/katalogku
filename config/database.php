@@ -60,6 +60,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA') ?: (
                     str_contains((string) env('DB_HOST', ''), 'tidbcloud.com')
                         ? collect([
@@ -89,6 +90,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA') ?: (
                     str_contains((string) env('DB_HOST', ''), 'tidbcloud.com')
                         ? collect([
