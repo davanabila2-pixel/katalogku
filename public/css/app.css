@@ -248,6 +248,8 @@ body {
   .card-purchase-row { gap: 5px; }
   .btn-card-cart, .btn-card-buy { padding: 5px 6px; font-size: 10.5px; gap: 3px; }
   .btn-card-cart svg, .btn-card-buy svg { width: 11px; height: 11px; }
+  .btn-card-ask-wa { padding: 5px 6px; font-size: 10.5px; gap: 4px; }
+  .btn-card-ask-wa svg { width: 11px; height: 11px; }
   .price { font-size: 13.5px; gap: 4px !important; }
   .price span { font-size: 13.5px; }
   .store-name { font-size: 11px; margin-top: 4px !important; }
@@ -1178,10 +1180,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
 .card-meta-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 6px;
   margin-top: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .card-bottom-section {
   margin-top: auto;
@@ -1210,25 +1212,30 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
   color: var(--steel);
 }
 .btn-card-ask-wa {
+  width: 100%;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(37, 211, 102, 0.12);
-  color: #128C7E;
-  border: 1px solid rgba(37, 211, 102, 0.3);
+  justify-content: center;
+  gap: 6px;
+  background: rgba(37, 211, 102, 0.08);
+  color: #0d8050;
+  border: 1px solid rgba(37, 211, 102, 0.28);
   border-radius: var(--r-full);
-  padding: 4px 10px;
+  padding: 6px 12px;
   font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
   transition: all .15s ease;
   white-space: nowrap;
+  font-family: inherit;
+  box-sizing: border-box;
 }
 .btn-card-ask-wa:hover {
   background: #25D366;
   color: #ffffff;
   border-color: #25D366;
   transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(37, 211, 102, 0.25);
 }
 
 /* Chat Overlay & Dialog */
