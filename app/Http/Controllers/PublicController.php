@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreSlugHistory;
@@ -132,7 +133,40 @@ class PublicController extends Controller
             'image' => $store->logoUrl(),
         ];
 
-        return view('public.store', compact('store', 'rootCategories', 'activeCategory', 'products', 'seo'));
+        $soldOrders = Order::where('store_id', $store->id)
+            ->where('status', 'completed')
+            ->with(['product', 'items.product'])
+            ->latest('reviewed_at')
+            ->latest()
+            ->get();
+
+        return view('public.store', compact('store', 'rootCategories', 'activeCategory', 'products', 'seo', 'soldOrders'));
+    }
+
+    public function storeSold(Request $request, string $storeSlug)
+    {
+        $found = $this->findStore($storeSlug);
+        if ($found instanceof \Illuminate\Http\RedirectResponse) {
+            return $found;
+        }
+        $store = $found;
+
+        $soldOrders = Order::where('store_id', $store->id)
+            ->where('status', 'completed')
+            ->with(['product', 'items.product'])
+            ->latest('reviewed_at')
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        $seo = [
+            'title' => "Produk Terjual & Ulasan — {$store->name}",
+            'description' => "Daftar produk yang telah berhasil terjual beserta ulasan asli dari pembeli di {$store->name}.",
+            'canonical' => route('store.sold', $store->slug),
+            'image' => $store->bannerUrl() ?? $store->logoUrl(),
+        ];
+
+        return view('public.store-sold', compact('store', 'soldOrders', 'seo'));
     }
 
     public function productShow(string $storeSlug, string $productSlug)

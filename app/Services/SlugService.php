@@ -14,7 +14,7 @@ class SlugService
         'login', 'logout', 'register', 'admin', 'superadmin', 'dashboard',
         'api', 'oauth', 'auth', 'toko', 'kategori', 'produk', 'storage', 'scan', 'barcode',
         'build', 'assets', 'css', 'js', 'images', 'favicon.ico',
-        'password', 'email', 'profil', 'profile', 'cart', 'checkout',
+        'password', 'email', 'profil', 'profile', 'cart', 'checkout', 'terjual',
         'search', 'cari', 'sitemap.xml', 'robots.txt', '.well-known',
     ];
 

@@ -112,6 +112,9 @@ Route::post('/{storeSlug}/orders', [OrderSubmissionController::class, 'store'])
 
 Route::get('/{slug}', [PublicController::class, 'storeShow'])
     ->where('slug', '[a-z0-9][a-z0-9-]*')->name('store.show');
+Route::get('/{storeSlug}/terjual', [PublicController::class, 'storeSold'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
+    ->name('store.sold');
 Route::get('/{storeSlug}/kategori/{categorySlug}/{subSlug?}', [PublicController::class, 'categoryShow'])
     ->where(['storeSlug' => '[a-z0-9][a-z0-9-]*', 'categorySlug' => '[a-z0-9][a-z0-9-]*', 'subSlug' => '[a-z0-9][a-z0-9-]*'])
     ->name('store.category');
