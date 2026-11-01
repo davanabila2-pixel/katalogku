@@ -386,10 +386,72 @@
     outline-offset: 2px;
   }
 
+  /* Banner Uploader */
+  .banner-uploader-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+  .banner-preview-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 1;
+    max-height: 220px;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .banner-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  .banner-preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.4) 60%, rgba(15, 23, 42, 0.15) 100%);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #ffffff;
+    pointer-events: none;
+  }
+  .banner-overlay-title {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .banner-overlay-sub {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+  .banner-placeholder-state {
+    padding: 32px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: #94a3b8;
+  }
+  .banner-upload-controls {
+    padding: 16px;
+    background: #ffffff;
+    border-top: 1px solid #f1f5f9;
+  }
+
   @media (max-width: 767px) {
     .profile-card-body { padding: 20px 16px; }
     .profile-card-footer { padding: 14px 16px; }
     .logo-uploader-row { flex-direction: column; align-items: flex-start; }
+    .banner-preview-box { aspect-ratio: 2.4 / 1; }
+    .banner-preview-overlay { padding: 14px; }
+    .banner-overlay-title { font-size: 17px; }
   }
 </style>
 
@@ -443,6 +505,89 @@
                 </label>
                 <div class="logo-hint-text">
                   Format didukung: PNG, JPG, WebP (Maks. 5 MB). Diunggah otomatis ke Google Drive Storage toko.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{-- Banner Header Toko & Auto-Crop --}}
+          <div class="field" style="margin-top:24px">
+            <div class="field-label-group">
+              <label>Banner Header Toko (Header Katalog)</label>
+              <span id="selected-banner-file-name" style="font-size:12px;color:#64748b;font-weight:normal">
+                {{ $store->banner_path ? 'Banner aktif' : 'Belum ada banner (menggunakan latar default)' }}
+              </span>
+            </div>
+
+            <div class="banner-uploader-card">
+              <div class="banner-preview-box" id="banner-preview-box">
+                @if($store->bannerUrl())
+                  <img src="{{ $store->bannerUrl() }}" alt="Banner Toko" id="banner-preview-img" class="banner-preview-img">
+                  <div class="banner-preview-overlay" id="banner-preview-overlay">
+                    <span class="banner-overlay-title">{{ $store->name }}</span>
+                    <span class="banner-overlay-sub">Pratinjau Header Katalog (Rasio 3:1)</span>
+                  </div>
+                @else
+                  <div class="banner-placeholder-state" id="banner-placeholder">
+                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8">
+                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                    </svg>
+                    <span style="font-weight:600;font-size:13px;color:#64748b;margin-top:6px">Belum ada banner diunggah</span>
+                    <span style="font-size:11.5px;color:#94a3b8">Pilih foto apa saja, sistem akan otomatis melakukan crop ke rasio 3:1 (1200 x 400 px)</span>
+                  </div>
+                @endif
+              </div>
+
+              <div class="banner-upload-controls">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <label class="file-picker-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Pilih Gambar Banner
+                    <input type="file" id="banner-file-input" accept="image/png,image/jpeg,image/webp,image/gif">
+                  </label>
+
+                  {{-- Input file tersembunyi yang berisi hasil crop otomatis untuk form payload --}}
+                  <input type="file" name="banner" id="banner-cropped-input" style="display:none">
+
+                  @if($store->banner_path)
+                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--critical);cursor:pointer">
+                      <input type="checkbox" name="remove_banner" value="1" id="remove-banner-checkbox"> Hapus Banner
+                    </label>
+                  @endif
+
+                  <span class="badge badge-success" id="banner-cropped-badge" style="display:none;font-size:11px">
+                    ✓ Otomatis Dicrop (3:1)
+                  </span>
+                </div>
+
+                {{-- Interactive Auto-Crop Tool / Preview Adjuster --}}
+                <div id="banner-crop-tool-container" style="display:none;margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                    <div>
+                      <strong style="font-size:13px;color:#0f172a;display:block">Alat Pengatur Crop Otomatis</strong>
+                      <span style="font-size:11.5px;color:#64748b">Foto telah otomatis dicrop ke rasio banner 3:1. Geser slider di bawah jika ingin memposisikan fokus gambar.</span>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-reset-crop" style="font-size:11px;padding:4px 8px">Reset Posisi</button>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                    <div style="flex:1;min-width:180px">
+                      <label style="font-size:11.5px;color:#475569;display:block;margin-bottom:4px;font-weight:600">
+                        Posisi Fokus Vertikal: <span id="crop-y-label">Tengah (50%)</span>
+                      </label>
+                      <input type="range" id="crop-y-slider" min="0" max="100" value="50" style="width:100%">
+                    </div>
+                    <div style="flex:1;min-width:180px">
+                      <label style="font-size:11.5px;color:#475569;display:block;margin-bottom:4px;font-weight:600">
+                        Posisi Fokus Horizontal: <span id="crop-x-label">Tengah (50%)</span>
+                      </label>
+                      <input type="range" id="crop-x-slider" min="0" max="100" value="50" style="width:100%">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="logo-hint-text" style="margin-top:8px">
+                  Format didukung: JPG, PNG, WebP (Maks. 10 MB). Resolusi target: 1200 x 400 px. Foto apapun (vertikal / horizontal) akan otomatis dicrop ke format landscape banner toko secara rapi.
                 </div>
               </div>
             </div>
@@ -653,6 +798,147 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // ---- Automatic Banner Cropper & Live Preview ----
+  var bannerFileInput = document.getElementById('banner-file-input');
+  var bannerCroppedInput = document.getElementById('banner-cropped-input');
+  var bannerPreviewBox = document.getElementById('banner-preview-box');
+  var bannerFileNameEl = document.getElementById('selected-banner-file-name');
+  var bannerCropTool = document.getElementById('banner-crop-tool-container');
+  var bannerCroppedBadge = document.getElementById('banner-cropped-badge');
+  var cropYSlider = document.getElementById('crop-y-slider');
+  var cropXSlider = document.getElementById('crop-x-slider');
+  var cropYLabel = document.getElementById('crop-y-label');
+  var cropXLabel = document.getElementById('crop-x-label');
+  var btnResetCrop = document.getElementById('btn-reset-crop');
+
+  var currentRawBannerImg = null;
+
+  function processAutoCrop() {
+    if (!currentRawBannerImg) return;
+
+    var targetW = 1200;
+    var targetH = 400;
+    var targetRatio = targetW / targetH;
+
+    var srcW = currentRawBannerImg.naturalWidth || currentRawBannerImg.width;
+    var srcH = currentRawBannerImg.naturalHeight || currentRawBannerImg.height;
+    var srcRatio = srcW / srcH;
+
+    var cropX = 0;
+    var cropY = 0;
+    var cropW = srcW;
+    var cropH = srcH;
+
+    var posXPercent = parseInt(cropXSlider ? cropXSlider.value : 50, 10) / 100;
+    var posYPercent = parseInt(cropYSlider ? cropYSlider.value : 50, 10) / 100;
+
+    if (srcRatio > targetRatio) {
+      cropH = srcH;
+      cropW = srcH * targetRatio;
+      var maxOffsetX = srcW - cropW;
+      cropX = maxOffsetX * posXPercent;
+      cropY = 0;
+      if (cropXSlider) cropXSlider.parentElement.style.opacity = '1';
+      if (cropYSlider) cropYSlider.parentElement.style.opacity = '0.4';
+    } else {
+      cropW = srcW;
+      cropH = srcW / targetRatio;
+      var maxOffsetY = srcH - cropH;
+      cropX = 0;
+      cropY = maxOffsetY * posYPercent;
+      if (cropXSlider) cropXSlider.parentElement.style.opacity = '0.4';
+      if (cropYSlider) cropYSlider.parentElement.style.opacity = '1';
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = targetW;
+    canvas.height = targetH;
+    var ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.drawImage(
+      currentRawBannerImg,
+      cropX, cropY, cropW, cropH,
+      0, 0, targetW, targetH
+    );
+
+    canvas.toBlob(function (blob) {
+      if (!blob) return;
+
+      if (window.DataTransfer && bannerCroppedInput) {
+        var dt = new DataTransfer();
+        var croppedFile = new File([blob], 'banner_cropped.webp', { type: 'image/webp' });
+        dt.items.add(croppedFile);
+        bannerCroppedInput.files = dt.files;
+      }
+
+      var croppedUrl = URL.createObjectURL(blob);
+      if (bannerPreviewBox) {
+        var storeName = (document.getElementById('input-store-name') || {}).value || '{{ $store->name }}';
+        bannerPreviewBox.innerHTML = 
+          '<img src="' + croppedUrl + '" alt="Banner Toko" class="banner-preview-img">' +
+          '<div class="banner-preview-overlay">' +
+            '<span class="banner-overlay-title">' + (window.AdminUI ? AdminUI.esc(storeName) : storeName) + '</span>' +
+            '<span class="banner-overlay-sub">Pratinjau Otomatis Header Katalog (1200 x 400 px)</span>' +
+          '</div>';
+      }
+
+      if (bannerCroppedBadge) bannerCroppedBadge.style.display = 'inline-block';
+      if (bannerCropTool) bannerCropTool.style.display = 'block';
+    }, 'image/webp', 0.92);
+  }
+
+  if (bannerFileInput) {
+    bannerFileInput.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      if (bannerFileNameEl) {
+        bannerFileNameEl.innerText = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB - Otomatis Dicrop)';
+      }
+
+      var reader = new FileReader();
+      reader.onload = function (evt) {
+        var img = new Image();
+        img.onload = function () {
+          currentRawBannerImg = img;
+          if (cropYSlider) cropYSlider.value = 50;
+          if (cropXSlider) cropXSlider.value = 50;
+          if (cropYLabel) cropYLabel.innerText = 'Tengah (50%)';
+          if (cropXLabel) cropXLabel.innerText = 'Tengah (50%)';
+          processAutoCrop();
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (cropYSlider) {
+    cropYSlider.addEventListener('input', function () {
+      if (cropYLabel) cropYLabel.innerText = cropYSlider.value + '%';
+      processAutoCrop();
+    });
+  }
+
+  if (cropXSlider) {
+    cropXSlider.addEventListener('input', function () {
+      if (cropXLabel) cropXLabel.innerText = cropXSlider.value + '%';
+      processAutoCrop();
+    });
+  }
+
+  if (btnResetCrop) {
+    btnResetCrop.addEventListener('click', function () {
+      if (cropYSlider) cropYSlider.value = 50;
+      if (cropXSlider) cropXSlider.value = 50;
+      if (cropYLabel) cropYLabel.innerText = 'Tengah (50%)';
+      if (cropXLabel) cropXLabel.innerText = 'Tengah (50%)';
+      processAutoCrop();
+    });
+  }
+
   updateCounters();
 
   // ---- Tab ----
@@ -719,6 +1005,12 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.dash-brand-initial').forEach(function (el) { el.textContent = store.name.charAt(0).toUpperCase(); });
     if (store.logo_url) {
       document.querySelectorAll('.dash-brand-logo').forEach(function (img) { img.src = store.logo_url; });
+    }
+    if (store.banner_url) {
+      var bImg = document.getElementById('banner-preview-img');
+      if (bImg) bImg.src = store.banner_url;
+      var bFileName = document.getElementById('selected-banner-file-name');
+      if (bFileName) bFileName.innerText = 'Banner aktif';
     }
 
     var slugInput = document.getElementById('input-store-slug');

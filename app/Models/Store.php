@@ -17,6 +17,7 @@ class Store extends Model
         'slug',
         'description',
         'logo_path',
+        'banner_path',
         'qr_image_path',
         'qr_account_name',
         'contact_information',
@@ -129,6 +130,24 @@ class Store extends Model
         }
 
         return null;
+    }
+
+    public function bannerUrl(): ?string
+    {
+        if (! $this->banner_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->banner_path, 'http://') || str_starts_with($this->banner_path, 'https://')) {
+            return $this->banner_path;
+        }
+
+        return null;
+    }
+
+    public function hasBanner(): bool
+    {
+        return ! empty($this->banner_path);
     }
 
     public function qrImageUrl(): ?string

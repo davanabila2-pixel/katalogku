@@ -34,6 +34,8 @@ class StoreProfileController extends Controller
             'contact_information' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
+            'remove_banner' => ['nullable', 'boolean'],
             'qr_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
             'qr_account_name' => ['nullable', 'string', 'max:255'],
             'remove_qr' => ['nullable', 'boolean'],
@@ -57,6 +59,16 @@ class StoreProfileController extends Controller
             $data['logo_path'] = $this->storeImage($store, $request->file('logo'), $store->logo_path);
         }
         unset($data['logo']);
+
+        if ($request->boolean('remove_banner')) {
+            if ($store->banner_path) {
+                $this->deleteImage($store, $store->banner_path);
+            }
+            $data['banner_path'] = null;
+        } elseif ($request->hasFile('banner')) {
+            $data['banner_path'] = $this->storeBannerImage($store, $request->file('banner'), $store->banner_path);
+        }
+        unset($data['banner'], $data['remove_banner']);
 
         if ($request->boolean('remove_qr')) {
             if ($store->qr_image_path) {

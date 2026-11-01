@@ -112,4 +112,43 @@ class StoreProfileTest extends TestCase
         $this->assertNull($store->qr_image_path);
         $this->assertFalse($store->hasStaticQr());
     }
+
+    public function test_admin_dapat_mengunggah_auto_crop_dan_menghapus_banner_toko(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        [$store, $admin] = $this->createStoreWithAdmin();
+
+        // Buat file gambar vertikal (misal 600x1200) untuk menguji auto-crop
+        $bannerFile = \Illuminate\Http\UploadedFile::fake()->image('banner-toko.jpg', 600, 1200);
+
+        $response = $this->actingAs($admin)->put(route('admin.profile.update', $store), [
+            'name' => $store->name,
+            'banner' => $bannerFile,
+        ]);
+
+        $response->assertRedirect(route('admin.profile.edit', $store));
+
+        $store->refresh();
+        $this->assertNotNull($store->banner_path);
+        $this->assertTrue($store->hasBanner());
+        $this->assertNotNull($store->bannerUrl());
+
+        // Halaman publik menampilkan banner pada hero
+        $publicResponse = $this->get($store->url());
+        $publicResponse->assertOk();
+        $publicResponse->assertSee('has-store-banner', false);
+        $publicResponse->assertSee($store->bannerUrl(), false);
+
+        // Test hapus banner
+        $responseRemove = $this->actingAs($admin)->put(route('admin.profile.update', $store), [
+            'name' => $store->name,
+            'remove_banner' => '1',
+        ]);
+
+        $responseRemove->assertRedirect(route('admin.profile.edit', $store));
+
+        $store->refresh();
+        $this->assertNull($store->banner_path);
+        $this->assertFalse($store->hasBanner());
+    }
 }

@@ -1,10 +1,25 @@
 @extends('layouts.app')
 @section('content')
 <nav class="breadcrumb"><a href="{{ route('home') }}">Beranda</a> › {{ $store->name }}</nav>
-<div class="hero" style="padding:48px">
-  <h1 style="font-size:48px">{{ $store->name }}</h1>
-  @if($store->description)<p>{{ $store->description }}</p>@endif
-  @if($store->contact_information)<p style="font-size:14px">Kontak: {{ $store->contact_information }}</p>@endif
+@php
+  $hasBanner = $store->hasBanner() && $store->bannerUrl();
+@endphp
+<div class="hero store-hero {{ $hasBanner ? 'has-store-banner' : '' }}" style="@if($hasBanner) background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.62) 55%, rgba(15, 23, 42, 0.38) 100%), url('{!! $store->bannerUrl() !!}'); background-size: cover; background-position: center; @endif">
+  <div class="store-hero-content">
+    @if($store->logoUrl())
+      <img src="{{ $store->logoUrl() }}" alt="{{ $store->name }}" class="store-hero-logo">
+    @endif
+    <div class="store-hero-text">
+      <h1 class="store-hero-title">{{ $store->name }}</h1>
+      @if($store->description)<p class="store-hero-desc">{{ $store->description }}</p>@endif
+      @if($store->contact_information)
+        <p class="store-hero-contact">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Kontak: {{ $store->contact_information }}
+        </p>
+      @endif
+    </div>
+  </div>
 </div>
 
 {{-- Slider Kategori Utama --}}
