@@ -61,6 +61,24 @@ body {
 .topbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
 /* Topbar Toko */
+body.is-store-page {
+  background: #f8fafc;
+}
+.topbar.topbar-store {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.16);
+  transition: background-color 0.2s ease;
+}
+.topbar.topbar-store::before {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #0066ff 0%, #00d2ff 45%, #25D366 100%);
+}
 .topbar-store-left { display: flex; align-items: center; gap: 12px; }
 .topbar-back-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--r-full); background: var(--surface-soft); font-size: 13px; font-weight: 600; color: var(--steel); text-decoration: none; transition: background .15s ease, color .15s ease; }
 .topbar-back-pill:hover { background: var(--hairline-soft); color: var(--ink-deep); }
@@ -71,6 +89,63 @@ body {
 .store-brand-name { font-weight: 700; font-size: 18px; color: var(--ink-deep); letter-spacing: -0.3px; }
 .store-contact-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--success) !important; border-color: rgba(49,162,76,.3) !important; }
 .store-contact-btn:hover { background: #e6f6ea !important; }
+
+/* Styling Elemen Topbar Toko Elegan */
+.topbar-store .store-brand-name {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.topbar-store .store-topbar-logo {
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.topbar-store .store-topbar-initial {
+  box-shadow: 0 2px 10px rgba(0, 102, 255, 0.45);
+}
+.topbar-store .btn-cart-nav {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+.topbar-store .btn-cart-nav:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+.topbar-store .store-contact-btn {
+  background: rgba(37, 211, 102, 0.16) !important;
+  color: #25D366 !important;
+  border-color: rgba(37, 211, 102, 0.4) !important;
+  box-shadow: 0 2px 10px rgba(37, 211, 102, 0.15);
+}
+.topbar-store .store-contact-btn:hover {
+  background: #25D366 !important;
+  color: #ffffff !important;
+  border-color: #25D366 !important;
+  transform: scale(1.03);
+}
+.topbar-store .btn-primary {
+  background: #ffffff;
+  color: #0f172a;
+  border: none;
+  font-weight: 700;
+}
+.topbar-store .btn-primary:hover {
+  background: #f1f5f9;
+  color: #000000;
+}
+.topbar-store .btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.topbar-store .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
 
 @media (max-width: 767px) {
   .store-brand-name { font-size: 16px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -529,6 +604,93 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .default-footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .default-footer-inner a { color: var(--primary); text-decoration: none; font-weight: 600; }
 
+/* Footer Toko Mewah & Kaya Warna */
+.footer.footer-store {
+  background: #090e17;
+  color: #94a3b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 56px 0 36px;
+  margin-top: 64px;
+  position: relative;
+}
+.footer.footer-store::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #25D366 0%, #0066ff 50%, #8b5cf6 100%);
+}
+.footer-store .store-brand-name {
+  color: #ffffff;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+.footer-store .store-topbar-logo {
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.footer-store .store-footer-desc {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.footer-store .store-footer-heading {
+  color: #ffffff;
+  font-size: 13.5px;
+  letter-spacing: 0.8px;
+  position: relative;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+.footer-store .store-footer-heading::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: var(--r-full);
+}
+.footer-store .store-footer-list {
+  color: #cbd5e1;
+  font-size: 14px;
+  gap: 14px;
+}
+.footer-store .store-footer-list li svg {
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+.footer-store .store-footer-list a {
+  color: #25D366 !important;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.footer-store .store-footer-list a:hover {
+  color: #48f58b !important;
+  text-decoration: underline;
+}
+.footer-store .store-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 40px;
+  padding-top: 24px;
+}
+.footer-store .store-footer-bottom strong {
+  color: #e2e8f0;
+}
+.footer-store .store-footer-credit a {
+  color: #38bdf8;
+  font-weight: 700;
+}
+.footer-store .store-footer-credit a:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
 .store-footer-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; }
 .store-footer-col { display: flex; flex-direction: column; }
 .store-footer-desc { font-size: 13.5px; color: var(--steel); margin: 12px 0 0; line-height: 1.6; max-width: 380px; }
@@ -545,6 +707,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 @media (max-width: 767px) {
   .store-footer-grid { grid-template-columns: 1fr; gap: 28px; }
   .footer { padding: 36px 0; margin-top: 48px; }
+  .footer.footer-store { padding: 36px 0 28px; margin-top: 48px; }
 }
 .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0; align-items: center; }
 .category-hierarchy { font-size: 13px; color: var(--steel); font-weight: 500; }

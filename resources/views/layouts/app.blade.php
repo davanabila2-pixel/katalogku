@@ -12,8 +12,8 @@
   @isset($seo['image'])<meta property="og:image" content="{{ $seo['image'] }}">@endisset
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
-<body>
-<header class="topbar">
+<body class="{{ isset($store) && $store ? 'is-store-page' : '' }}">
+<header class="topbar {{ isset($store) && $store ? 'topbar-store' : '' }}">
   <div class="container topbar-inner">
     @if(isset($store) && $store)
       {{-- Topbar Khusus Toko --}}
@@ -95,7 +95,7 @@
   @if($errors->any())<div class="alert alert-error"><ul style="margin:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
   @yield('content')
 </main>
-<footer class="footer">
+<footer class="footer {{ isset($store) && $store ? 'footer-store' : '' }}">
   @if(isset($store) && $store)
     {{-- Footer Khusus Toko --}}
     <div class="container store-footer-inner">
