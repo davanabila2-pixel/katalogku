@@ -12,20 +12,23 @@ class CartService
     /**
      * Dapatkan semua item keranjang pengguna (per-akun / sesi) dikelompokkan berdasarkan toko.
      */
-    public function getCartData(Request $request): array
+    public function getCartData(Request $request, ?int $filterStoreId = null): array
     {
         $userId = auth()->id();
         $sessionId = $request->session()->getId();
+        $storeId = $filterStoreId ?: ($request->filled('store_id') ? (int) $request->input('store_id') : null);
 
         // Jika user login, gabungkan item tamu dari sesi ke akun
         if ($userId) {
             $this->mergeGuestCartToUser($sessionId, $userId);
             $items = CartItem::with(['product', 'store'])
                 ->where('user_id', $userId)
+                ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
                 ->get();
         } else {
             $items = CartItem::with(['product', 'store'])
                 ->where('session_id', $sessionId)
+                ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
                 ->get();
         }
 
@@ -55,6 +58,7 @@ class CartService
             $grandTotal += $subtotal;
 
             if (! isset($grouped[$store->id])) {
+                $customerProfile = $userId ? auth()->user()->customerProfileFor($store->id) : null;
                 $grouped[$store->id] = [
                     'store_id' => $store->id,
                     'store_name' => $store->name,
@@ -63,6 +67,12 @@ class CartService
                     'store_qr_url' => $store->qrImageUrl(),
                     'store_qr_name' => $store->qr_account_name,
                     'store_logo_url' => $store->logoUrl(),
+                    'customer_profile' => $customerProfile ? [
+                        'name' => $customerProfile->name,
+                        'phone' => $customerProfile->phone,
+                        'address' => $customerProfile->address,
+                        'notes' => $customerProfile->notes,
+                    ] : null,
                     'items' => [],
                     'store_subtotal' => 0,
                     'store_subtotal_formatted' => 'Rp 0',

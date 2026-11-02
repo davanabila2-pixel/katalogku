@@ -110,6 +110,11 @@ class Store extends Model
         return $this->hasMany(StoreLink::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function customerProfiles(): HasMany
+    {
+        return $this->hasMany(StoreCustomerProfile::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

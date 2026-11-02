@@ -302,7 +302,11 @@
 
   // Fetch Cart Data
   window.loadCartData = function(callback) {
-    fetch('/cart', {
+    let url = '/cart';
+    if (window.currentStoreId) {
+      url += '?store_id=' + encodeURIComponent(window.currentStoreId);
+    }
+    fetch(url, {
       headers: {
         'Accept': 'application/json'
       }
@@ -327,6 +331,14 @@
     const btn = event ? event.currentTarget : null;
     if (btn) btn.disabled = true;
 
+    const payload = {
+      product_id: productId,
+      quantity: qty
+    };
+    if (window.currentStoreId) {
+      payload.store_id = window.currentStoreId;
+    }
+
     fetch('/cart/add', {
       method: 'POST',
       headers: {
@@ -334,10 +346,7 @@
         'X-CSRF-TOKEN': getCsrfToken(),
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        product_id: productId,
-        quantity: qty
-      })
+      body: JSON.stringify(payload)
     })
     .then(function(res) { return res.json().then(function(d) { return { status: res.status, data: d }; }); })
     .then(function(result) {
@@ -359,14 +368,21 @@
 
   // Update Cart Item Quantity
   window.updateCartQty = function(cartItemId, newQty) {
-    fetch('/cart/items/' + cartItemId, {
+    let url = '/cart/items/' + cartItemId;
+    if (window.currentStoreId) {
+      url += '?store_id=' + encodeURIComponent(window.currentStoreId);
+    }
+    fetch(url, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': getCsrfToken(),
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ quantity: newQty })
+      body: JSON.stringify({
+        quantity: newQty,
+        store_id: window.currentStoreId || undefined
+      })
     })
     .then(function(res) { return res.json(); })
     .then(function(data) {
@@ -382,7 +398,11 @@
   window.removeCartItem = function(cartItemId) {
     if (!confirm('Hapus produk ini dari keranjang?')) return;
 
-    fetch('/cart/items/' + cartItemId, {
+    let url = '/cart/items/' + cartItemId;
+    if (window.currentStoreId) {
+      url += '?store_id=' + encodeURIComponent(window.currentStoreId);
+    }
+    fetch(url, {
       method: 'DELETE',
       headers: {
         'X-CSRF-TOKEN': getCsrfToken(),
@@ -538,25 +558,31 @@
   };
 
   // Restore buyer profile
-  function restoreCartBuyerProfile() {
+  function restoreCartBuyerProfile(store) {
     let saved = null;
     try {
       const raw = localStorage.getItem('katalog_buyer_profile');
       if (raw) saved = JSON.parse(raw);
     } catch (e) {}
 
+    const storeCust = (store && store.customer_profile) ? store.customer_profile : (window.currentStoreCustomer || null);
+
     const nameInput = document.getElementById('cartBuyerName');
     const phoneInput = document.getElementById('cartBuyerPhone');
     const addrInput = document.getElementById('cartBuyerAddress');
+    const notesInput = document.getElementById('cartBuyerNotes');
 
-    if (nameInput && !nameInput.value) {
-      nameInput.value = (saved && saved.name) ? saved.name : (authUser.name || '');
+    if (nameInput) {
+      nameInput.value = (storeCust && storeCust.name) ? storeCust.name : ((saved && saved.name) ? saved.name : (authUser.name || ''));
     }
-    if (phoneInput && !phoneInput.value && saved && saved.phone) {
-      phoneInput.value = saved.phone;
+    if (phoneInput) {
+      phoneInput.value = (storeCust && storeCust.phone) ? storeCust.phone : ((saved && saved.phone) ? saved.phone : '');
     }
-    if (addrInput && !addrInput.value && saved && saved.address) {
-      addrInput.value = saved.address;
+    if (addrInput) {
+      addrInput.value = (storeCust && storeCust.address) ? storeCust.address : ((saved && saved.address) ? saved.address : '');
+    }
+    if (notesInput && storeCust && storeCust.notes && !notesInput.value) {
+      notesInput.value = storeCust.notes;
     }
   }
 
@@ -618,7 +644,7 @@
     }
 
     // Prefill buyer profile
-    restoreCartBuyerProfile();
+    restoreCartBuyerProfile(store);
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -817,6 +843,7 @@
     formData.append('buyer_address', buyerAddress);
     if (buyerNotes) formData.append('buyer_notes', buyerNotes);
     if (selectedCartProofFile) formData.append('payment_proof', selectedCartProofFile);
+    if (window.currentStoreId) formData.append('store_id', window.currentStoreId);
 
     fetch('/' + encodeURIComponent(storeSlug) + '/cart/checkout', {
       method: 'POST',

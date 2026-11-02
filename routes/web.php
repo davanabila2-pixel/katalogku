@@ -14,6 +14,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\GoogleOAuthController;
 use App\Http\Controllers\OrderSubmissionController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\StoreCustomerAuthController;
+use App\Http\Controllers\StoreCustomerController;
 use App\Http\Controllers\Superadmin\CatalogController as SuperadminCatalogController;
 use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardController;
 use App\Http\Controllers\Superadmin\GoogleDriveController;
@@ -122,6 +124,25 @@ Route::post('/{storeSlug}/cart/checkout', [CartController::class, 'checkout'])
 Route::post('/{storeSlug}/orders', [OrderSubmissionController::class, 'store'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
     ->name('store.orders.store');
+
+// ---- Pelanggan Toko (Auth, Profil, dan Pesanan per Toko) ----
+Route::get('/{storeSlug}/masuk', [StoreCustomerAuthController::class, 'showLogin'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.login');
+Route::post('/{storeSlug}/masuk', [StoreCustomerAuthController::class, 'login'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.login.submit');
+Route::get('/{storeSlug}/daftar', [StoreCustomerAuthController::class, 'showRegister'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.register');
+Route::post('/{storeSlug}/daftar', [StoreCustomerAuthController::class, 'register'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.register.submit');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/{storeSlug}/profil', [StoreCustomerController::class, 'profile'])
+        ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.profile');
+    Route::put('/{storeSlug}/profil', [StoreCustomerController::class, 'updateProfile'])
+        ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.profile.update');
+    Route::get('/{storeSlug}/pesanan', [StoreCustomerController::class, 'orders'])
+        ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.orders');
+});
 
 Route::get('/{slug}', [PublicController::class, 'storeShow'])
     ->where('slug', '[a-z0-9][a-z0-9-]*')->name('store.show');

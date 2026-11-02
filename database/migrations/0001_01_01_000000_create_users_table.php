@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->string('google_id')->nullable()->unique();
-            $table->enum('role', ['superadmin', 'admin'])->default('admin');
+            $table->string('role', 30)->default('admin');
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();

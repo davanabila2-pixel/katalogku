@@ -220,18 +220,20 @@
       if (raw) saved = JSON.parse(raw);
     } catch (e) {}
 
+    const storeCust = window.currentStoreCustomer || null;
+
     const nameInput = document.getElementById('buyBuyerName');
     const phoneInput = document.getElementById('buyBuyerPhone');
     const addressInput = document.getElementById('buyBuyerAddress');
 
-    if (nameInput && !nameInput.value) {
-      nameInput.value = (saved && saved.name) ? saved.name : (authUser.name || '');
+    if (nameInput) {
+      nameInput.value = (storeCust && storeCust.name) ? storeCust.name : ((saved && saved.name) ? saved.name : (authUser.name || ''));
     }
-    if (phoneInput && !phoneInput.value && saved && saved.phone) {
-      phoneInput.value = saved.phone;
+    if (phoneInput) {
+      phoneInput.value = (storeCust && storeCust.phone) ? storeCust.phone : ((saved && saved.phone) ? saved.phone : '');
     }
-    if (addressInput && !addressInput.value && saved && saved.address) {
-      addressInput.value = saved.address;
+    if (addressInput) {
+      addressInput.value = (storeCust && storeCust.address) ? storeCust.address : ((saved && saved.address) ? saved.address : '');
     }
   }
 

@@ -76,6 +76,18 @@ class OrderSubmissionController extends Controller
             'status' => $paymentProofPath ? 'paid' : 'pending',
         ]);
 
+        if (auth()->check()) {
+            \App\Models\StoreCustomerProfile::updateOrCreate(
+                ['store_id' => $store->id, 'user_id' => auth()->id()],
+                [
+                    'name' => $data['buyer_name'],
+                    'phone' => $data['buyer_phone'],
+                    'address' => $data['buyer_address'],
+                    'notes' => $data['buyer_notes'] ?? null,
+                ]
+            );
+        }
+
         // Catat rincian order item
         $order->items()->create([
             'product_id' => $product->id,

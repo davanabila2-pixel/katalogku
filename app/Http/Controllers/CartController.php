@@ -172,6 +172,18 @@ class CartController extends Controller
             'status' => $paymentProofPath ? 'paid' : 'pending',
         ]);
 
+        if ($userId) {
+            \App\Models\StoreCustomerProfile::updateOrCreate(
+                ['store_id' => $store->id, 'user_id' => $userId],
+                [
+                    'name' => $data['buyer_name'],
+                    'phone' => $data['buyer_phone'],
+                    'address' => $data['buyer_address'],
+                    'notes' => $data['buyer_notes'] ?? null,
+                ]
+            );
+        }
+
         // Simpan rincian item pesanan & kurangi stok produk
         foreach ($cartItems as $item) {
             $product = $item->product;

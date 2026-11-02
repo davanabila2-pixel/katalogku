@@ -53,11 +53,17 @@
         @endif
 
         @auth
+          @php
+            $storeCustomer = auth()->user()->customerProfileFor($store->id);
+            $customerDisplayName = $storeCustomer?->name ?: auth()->user()->name;
+            $customerAvatar = $storeCustomer ? $storeCustomer->avatarUrl() : auth()->user()->avatarUrl();
+            $customerInitial = $storeCustomer ? $storeCustomer->initial() : auth()->user()->initial();
+          @endphp
           <div class="user-dropdown-wrap">
-            <button type="button" class="user-dropdown-btn" id="userStoreMenuBtn" aria-expanded="false" aria-haspopup="true" onclick="toggleUserDropdown(event)" title="Akun {{ auth()->user()->name }}">
-              <img class="user-nav-avatar" src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
-              <span class="user-nav-avatar-initial" style="display:none;">{{ auth()->user()->initial() }}</span>
-              <span class="user-nav-name">{{ auth()->user()->name }}</span>
+            <button type="button" class="user-dropdown-btn" id="userStoreMenuBtn" aria-expanded="false" aria-haspopup="true" onclick="toggleUserDropdown(event)" title="Akun {{ $customerDisplayName }}">
+              <img class="user-nav-avatar" src="{{ $customerAvatar }}" alt="{{ $customerDisplayName }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+              <span class="user-nav-avatar-initial" style="display:none;">{{ $customerInitial }}</span>
+              <span class="user-nav-name">{{ $customerDisplayName }}</span>
               <svg class="user-dropdown-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m6 9 6 6 6-6"/>
               </svg>
@@ -65,20 +71,20 @@
             <div class="user-dropdown-menu" id="userStoreDropdownMenu" role="menu">
               <div class="user-dropdown-header">
                 <div class="user-dropdown-avatar-lg">
-                  <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
-                  <span class="user-nav-avatar-initial" style="display:none;">{{ auth()->user()->initial() }}</span>
+                  <img src="{{ $customerAvatar }}" alt="{{ $customerDisplayName }}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+                  <span class="user-nav-avatar-initial" style="display:none;">{{ $customerInitial }}</span>
                 </div>
                 <div class="user-dropdown-meta">
-                  <span class="user-dropdown-name">{{ auth()->user()->name }}</span>
+                  <span class="user-dropdown-name">{{ $customerDisplayName }}</span>
                   <span class="user-dropdown-email">{{ auth()->user()->email }}</span>
                 </div>
               </div>
               <div class="user-dropdown-divider"></div>
-              <a class="user-dropdown-item" href="{{ route('user.profile') }}" role="menuitem">
+              <a class="user-dropdown-item" href="{{ route('store.profile', $store->slug) }}" role="menuitem">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 <span>Profile Saya</span>
               </a>
-              <a class="user-dropdown-item" href="{{ route('user.orders') }}" role="menuitem">
+              <a class="user-dropdown-item" href="{{ route('store.orders', $store->slug) }}" role="menuitem">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span>Pesanan Saya</span>
               </a>
@@ -106,7 +112,8 @@
             </div>
           </div>
         @else
-          <a class="btn btn-ghost btn-sm" href="{{ route('login') }}">Masuk</a>
+          <a class="btn btn-ghost btn-sm" href="{{ route('store.login', $store->slug) }}">Masuk</a>
+          <a class="btn btn-primary btn-sm" href="{{ route('store.register', $store->slug) }}">Daftar</a>
         @endauth
       </div>
     @else
@@ -324,6 +331,29 @@
         }
     }, 20 * 60 * 1000); // 20 minutes
 </script>
+@if(isset($store) && $store)
+  @php
+    $activeStoreCustomer = auth()->check() ? auth()->user()->customerProfileFor($store->id) : null;
+  @endphp
+  <script>
+    window.currentStoreId = {{ (int) $store->id }};
+    window.currentStoreSlug = @js($store->slug);
+    window.currentStoreName = @js($store->name);
+    window.currentStoreCustomer = @js($activeStoreCustomer ? [
+      'name' => $activeStoreCustomer->name,
+      'phone' => $activeStoreCustomer->phone,
+      'address' => $activeStoreCustomer->address,
+      'notes' => $activeStoreCustomer->notes,
+    ] : null);
+  </script>
+@else
+  <script>
+    window.currentStoreId = null;
+    window.currentStoreSlug = null;
+    window.currentStoreName = null;
+    window.currentStoreCustomer = null;
+  </script>
+@endif
 <x-product-chat-modal />
 <x-product-buy-modal />
 <x-cart-drawer />

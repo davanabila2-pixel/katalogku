@@ -58,6 +58,16 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function customerProfiles(): HasMany
+    {
+        return $this->hasMany(StoreCustomerProfile::class);
+    }
+
+    public function customerProfileFor(int $storeId): ?StoreCustomerProfile
+    {
+        return $this->customerProfiles()->where('store_id', $storeId)->first();
+    }
+
     public function isSuperadmin(): bool
     {
         return $this->role === 'superadmin';
