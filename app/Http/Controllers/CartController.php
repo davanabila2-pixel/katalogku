@@ -153,6 +153,7 @@ class CartController extends Controller
         }
 
         $customerProfile = auth()->check() ? auth()->user()->customerProfileFor($store->id) : null;
+        $googleMapsApiKey = config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY', ''));
 
         $seo = [
             'title' => "Checkout Pesanan: {$store->name}",
@@ -170,6 +171,7 @@ class CartController extends Controller
             'directProduct',
             'hasOutOfStock',
             'customerProfile',
+            'googleMapsApiKey',
             'seo'
         ));
     }
@@ -185,7 +187,14 @@ class CartController extends Controller
             'buyer_name' => ['required', 'string', 'max:100'],
             'buyer_phone' => ['required', 'string', 'max:25'],
             'buyer_address' => ['required', 'string', 'max:1000'],
+            'buyer_postal_code' => ['nullable', 'string', 'max:10'],
+            'buyer_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'buyer_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'buyer_notes' => ['nullable', 'string', 'max:1000'],
+            'shipping_courier' => ['nullable', 'string', 'max:50'],
+            'shipping_service' => ['nullable', 'string', 'max:50'],
+            'shipping_fee' => ['nullable', 'numeric', 'min:0'],
+            'shipping_etd' => ['nullable', 'string', 'max:50'],
             'payment_proof' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'product_id' => ['nullable', 'integer', 'exists:products,id'],
             'quantity' => ['nullable', 'integer', 'min:1'],
@@ -220,7 +229,9 @@ class CartController extends Controller
             }
 
             $unitPrice = (float) $product->selling_price;
-            $totalPrice = $unitPrice * $qty;
+            $itemsSubtotal = $unitPrice * $qty;
+            $shippingFee = max(0, (float) ($data['shipping_fee'] ?? 0));
+            $totalPrice = $itemsSubtotal + $shippingFee;
 
             $paymentProofPath = null;
             if ($request->hasFile('payment_proof')) {
@@ -238,9 +249,16 @@ class CartController extends Controller
                 'product_price' => $unitPrice,
                 'quantity' => $qty,
                 'total_price' => $totalPrice,
+                'shipping_courier' => $data['shipping_courier'] ?? null,
+                'shipping_service' => $data['shipping_service'] ?? null,
+                'shipping_fee' => $shippingFee,
+                'shipping_etd' => $data['shipping_etd'] ?? null,
                 'buyer_name' => $data['buyer_name'],
                 'buyer_phone' => $data['buyer_phone'],
                 'buyer_address' => $data['buyer_address'],
+                'buyer_postal_code' => $data['buyer_postal_code'] ?? null,
+                'buyer_latitude' => $data['buyer_latitude'] ?? null,
+                'buyer_longitude' => $data['buyer_longitude'] ?? null,
                 'buyer_notes' => $data['buyer_notes'] ?? null,
                 'payment_method' => $store->hasStaticQr() ? 'qris' : 'transfer',
                 'payment_proof_path' => $paymentProofPath,
@@ -250,12 +268,15 @@ class CartController extends Controller
             if ($userId) {
                 \App\Models\StoreCustomerProfile::updateOrCreate(
                     ['store_id' => $store->id, 'user_id' => $userId],
-                    [
+                    array_filter([
                         'name' => $data['buyer_name'],
                         'phone' => $data['buyer_phone'],
                         'address' => $data['buyer_address'],
                         'notes' => $data['buyer_notes'] ?? null,
-                    ]
+                        'postal_code' => $data['buyer_postal_code'] ?? null,
+                        'latitude' => $data['buyer_latitude'] ?? null,
+                        'longitude' => $data['buyer_longitude'] ?? null,
+                    ], fn ($val) => ! is_null($val))
                 );
             }
 
@@ -264,7 +285,7 @@ class CartController extends Controller
                 'product_name' => $product->name,
                 'product_price' => $unitPrice,
                 'quantity' => $qty,
-                'subtotal' => $totalPrice,
+                'subtotal' => $itemsSubtotal,
             ]);
 
             $product->decrement('stock', $qty);
@@ -283,10 +304,21 @@ class CartController extends Controller
             $totalFormatted = 'Rp ' . number_format($totalPrice, 0, ',', '.');
             $hasProof = ! empty($paymentProofPath);
 
+            $shippingText = '';
+            if (! empty($data['shipping_courier'])) {
+                $courierUpper = strtoupper($data['shipping_courier']);
+                $serv = $data['shipping_service'] ? " ({$data['shipping_service']})" : '';
+                $etd = $data['shipping_etd'] ? " [Estimasi {$data['shipping_etd']}]" : '';
+                $ongkirFormatted = 'Rp ' . number_format($shippingFee, 0, ',', '.');
+                $shippingText = "🚚 *Pengiriman*: {$courierUpper}{$serv}{$etd}\n"
+                    . "📦 *Ongkir*: {$ongkirFormatted}\n";
+            }
+
             $waMsg = "Halo {$store->name}, saya telah melakukan pemesanan melalui katalog:\n\n"
                 . "🛍️ *PESANAN TOKO*\n"
                 . "🏷️ *No. Pesanan*: {$order->order_code}\n"
                 . "📦 *Produk*: {$product->name} (x{$qty})\n"
+                . ($shippingText ? "💰 *Subtotal Produk*: Rp " . number_format($itemsSubtotal, 0, ',', '.') . "\n" . $shippingText : "")
                 . "💵 *Total Pembayaran*: {$totalFormatted}\n"
                 . "💳 *Metode*: " . ($hasProof ? 'QRIS Toko (Bukti Terunggah)' : 'Konfirmasi Pembayaran') . "\n\n"
                 . "📋 *DATA PEMBELI*\n"
@@ -356,16 +388,19 @@ class CartController extends Controller
         }
 
         // Hitung total dan persiapkan data pesanan
-        $totalPrice = 0;
+        $itemsSubtotal = 0;
         $totalQty = 0;
         $productNames = [];
 
         foreach ($cartItems as $item) {
             $sub = (float) $item->product->selling_price * $item->quantity;
-            $totalPrice += $sub;
+            $itemsSubtotal += $sub;
             $totalQty += $item->quantity;
             $productNames[] = "{$item->product->name} (x{$item->quantity})";
         }
+
+        $shippingFee = max(0, (float) ($data['shipping_fee'] ?? 0));
+        $totalPrice = $itemsSubtotal + $shippingFee;
 
         $paymentProofPath = null;
         if ($request->hasFile('payment_proof')) {
@@ -384,9 +419,16 @@ class CartController extends Controller
             'product_price' => (float) $primaryProduct->selling_price,
             'quantity' => $totalQty,
             'total_price' => $totalPrice,
+            'shipping_courier' => $data['shipping_courier'] ?? null,
+            'shipping_service' => $data['shipping_service'] ?? null,
+            'shipping_fee' => $shippingFee,
+            'shipping_etd' => $data['shipping_etd'] ?? null,
             'buyer_name' => $data['buyer_name'],
             'buyer_phone' => $data['buyer_phone'],
             'buyer_address' => $data['buyer_address'],
+            'buyer_postal_code' => $data['buyer_postal_code'] ?? null,
+            'buyer_latitude' => $data['buyer_latitude'] ?? null,
+            'buyer_longitude' => $data['buyer_longitude'] ?? null,
             'buyer_notes' => $data['buyer_notes'] ?? null,
             'payment_method' => $store->hasStaticQr() ? 'qris' : 'transfer',
             'payment_proof_path' => $paymentProofPath,
@@ -396,12 +438,15 @@ class CartController extends Controller
         if ($userId) {
             \App\Models\StoreCustomerProfile::updateOrCreate(
                 ['store_id' => $store->id, 'user_id' => $userId],
-                [
+                array_filter([
                     'name' => $data['buyer_name'],
                     'phone' => $data['buyer_phone'],
                     'address' => $data['buyer_address'],
                     'notes' => $data['buyer_notes'] ?? null,
-                ]
+                    'postal_code' => $data['buyer_postal_code'] ?? null,
+                    'latitude' => $data['buyer_latitude'] ?? null,
+                    'longitude' => $data['buyer_longitude'] ?? null,
+                ], fn ($val) => ! is_null($val))
             );
         }
 
@@ -432,6 +477,17 @@ class CartController extends Controller
         $totalFormatted = 'Rp ' . number_format($totalPrice, 0, ',', '.');
         $hasProof = ! empty($paymentProofPath);
 
+        $shippingCartText = '';
+        if (! empty($data['shipping_courier'])) {
+            $courierUpper = strtoupper($data['shipping_courier']);
+            $serv = $data['shipping_service'] ? " ({$data['shipping_service']})" : '';
+            $etd = $data['shipping_etd'] ? " [Estimasi {$data['shipping_etd']}]" : '';
+            $ongkirFormatted = 'Rp ' . number_format($shippingFee, 0, ',', '.');
+            $shippingCartText = "💰 *Subtotal Produk*: Rp " . number_format($itemsSubtotal, 0, ',', '.') . "\n"
+                . "🚚 *Pengiriman*: {$courierUpper}{$serv}{$etd}\n"
+                . "📦 *Ongkos Kirim*: {$ongkirFormatted}\n";
+        }
+
         // Format pesan WhatsApp
         $itemListText = '';
         foreach ($cartItems as $idx => $it) {
@@ -445,6 +501,7 @@ class CartController extends Controller
             . "🏷️ *No. Pesanan*: {$order->order_code}\n"
             . "📦 *Daftar Barang*:\n{$itemListText}"
             . "🔢 *Total Item*: {$totalQty} unit\n"
+            . ($shippingCartText ?: '')
             . "💵 *Total Pembayaran*: {$totalFormatted}\n"
             . "💳 *Metode*: " . ($hasProof ? 'QRIS Toko (Bukti Terunggah)' : 'Konfirmasi Pembayaran') . "\n\n"
             . "📋 *DATA PEMBELI*\n"

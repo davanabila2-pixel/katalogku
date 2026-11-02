@@ -13,8 +13,36 @@ class StoreCustomerProfile extends Model
         'name',
         'phone',
         'address',
+        'postal_code',
+        'latitude',
+        'longitude',
+        'city',
+        'district',
         'notes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'float',
+            'longitude' => 'float',
+        ];
+    }
+
+    public function hasCoordinates(): bool
+    {
+        return ! is_null($this->latitude) && ! is_null($this->longitude);
+    }
+
+    public function destinationForBiteship(): array
+    {
+        return [
+            'postal_code' => $this->postal_code,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'address' => $this->address,
+        ];
+    }
 
     public function store(): BelongsTo
     {

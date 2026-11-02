@@ -155,6 +155,26 @@
                   <div id="checkoutGpsStatusMessage" class="gps-status-hint" style="display:none;"></div>
                 </div>
 
+                <div class="checkout-field-row" style="margin-top:12px;">
+                  <div class="checkout-form-group">
+                    <label for="checkoutBuyerPostalCode" class="checkout-label">Kode Pos <span style="font-size:11px;font-weight:normal;color:#0284c7;">(Penting untuk Cek Ongkir)</span></label>
+                    <input type="text" id="checkoutBuyerPostalCode" name="buyer_postal_code" class="checkout-input" placeholder="cth: 40115" value="{{ $customerProfile->postal_code ?? '' }}" maxlength="10">
+                  </div>
+                  <div class="checkout-form-group">
+                    <label class="checkout-label">Koordinat GPS / Titik Peta</label>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <input type="text" id="checkoutBuyerCoordsDisplay" class="checkout-input" readonly placeholder="Belum ada koordinat" value="{{ ($customerProfile && $customerProfile->hasCoordinates()) ? "{$customerProfile->latitude}, {$customerProfile->longitude}" : '' }}" style="background:#f8fafc;font-family:monospace;font-size:12px;">
+                      @auth
+                        <a href="{{ route('store.address', $store->slug) }}" class="btn-address-link" target="_blank" title="Atur peta di Alamat Saya" style="white-space:nowrap;padding:10px 12px;border-radius:10px;background:#f1f5f9;color:#334155;text-decoration:none;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid #cbd5e1;">
+                          <span>🗺️ Alamat Saya</span>
+                        </a>
+                      @endauth
+                    </div>
+                  </div>
+                </div>
+                <input type="hidden" id="checkoutBuyerLat" name="buyer_latitude" value="{{ $customerProfile->latitude ?? '' }}">
+                <input type="hidden" id="checkoutBuyerLng" name="buyer_longitude" value="{{ $customerProfile->longitude ?? '' }}">
+
                 <div class="checkout-form-group" style="margin-top:12px;margin-bottom:0;">
                   <label for="checkoutBuyerNotes" class="checkout-label">Catatan Tambahan (Opsional)</label>
                   <input type="text" id="checkoutBuyerNotes" name="buyer_notes" class="checkout-input" placeholder="cth: Titipkan di pos satpam, jangan dibanting..." value="{{ $defaultNotes }}">
@@ -162,10 +182,61 @@
               </div>
             </div>
 
-            {{-- 2. Metode & QRIS Pembayaran Toko --}}
-            <div class="checkout-card">
+            {{-- 2. Pilihan Pengiriman & Cek Ongkir (Biteship) --}}
+            <div class="checkout-card" id="shippingSectionCard">
               <div class="checkout-card-header">
                 <div class="checkout-step-badge">2</div>
+                <div>
+                  <h3 class="checkout-card-title">Pilihan Pengiriman & Cek Ongkir (Biteship)</h3>
+                  <div class="checkout-card-subtitle">Pilih ekspedisi dan estimasi ongkos kirim ke alamat Anda</div>
+                </div>
+              </div>
+
+              <div class="checkout-card-body">
+                <input type="hidden" id="checkoutSelectedCourier" name="shipping_courier" value="">
+                <input type="hidden" id="checkoutSelectedService" name="shipping_service" value="">
+                <input type="hidden" id="checkoutSelectedFee" name="shipping_fee" value="0">
+                <input type="hidden" id="checkoutSelectedEtd" name="shipping_etd" value="">
+
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                  <div>
+                    <div style="font-size:11.5px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Gudang / Asal Pengiriman:</div>
+                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;margin-top:2px;">📍 {{ $store->name }} {{ $store->city ? '('.$store->city.')' : '' }}</div>
+                    @if($store->postal_code)
+                      <div style="font-size:12px;color:#64748b;">Kode Pos Asal: {{ $store->postal_code }}</div>
+                    @endif
+                  </div>
+
+                  <button type="button" class="btn-check-rates" id="btnCheckShippingRates" onclick="calculateShippingRates()" style="padding:9px 18px;border-radius:10px;background:var(--brand-coral);color:#fff;border:none;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:opacity 0.2s;">
+                    <span id="btnCheckShippingRatesIcon">🚚</span>
+                    <span id="btnCheckShippingRatesText">Cek Pilihan Kurir</span>
+                  </button>
+                </div>
+
+                {{-- Status / Error box rates --}}
+                <div id="shippingRatesStatus" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:10px;font-size:13px;"></div>
+
+                {{-- Courier Options List --}}
+                <div id="shippingCouriersList" style="display:flex;flex-direction:column;gap:10px;">
+                  {{-- Default / Tanpa Kurir Option --}}
+                  <label class="courier-option-card selected" id="courier-opt-default" onclick="selectCourierOption(null)">
+                    <input type="radio" name="courier_radio" value="" checked style="accent-color:var(--brand-coral);">
+                    <div style="flex:1;">
+                      <div style="font-weight:700;font-size:13.5px;color:#0f172a;">Ambil Sendiri / Ongkir Manual Toko</div>
+                      <div style="font-size:12px;color:#64748b;">Tanpa ongkir otomatis, koordinasi pengiriman langsung dengan penjual melalui WhatsApp.</div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div style="font-weight:700;font-size:14px;color:#16a34a;">Gratis / Rp 0</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {{-- 3. Metode & QRIS Pembayaran Toko --}}
+            <div class="checkout-card">
+              <div class="checkout-card-header">
+                <div class="checkout-step-badge">3</div>
                 <div>
                   <h3 class="checkout-card-title">Metode & QR Pembayaran Toko</h3>
                   <div class="checkout-card-subtitle">Pindai QRIS resmi atau lakukan transfer bank</div>
@@ -215,10 +286,10 @@
               </div>
             </div>
 
-            {{-- 3. Unggah Bukti Transfer / QRIS --}}
+            {{-- 4. Unggah Bukti Transfer / QRIS --}}
             <div class="checkout-card">
               <div class="checkout-card-header">
-                <div class="checkout-step-badge">3</div>
+                <div class="checkout-step-badge">4</div>
                 <div>
                   <div class="d-flex align-items-center gap-2">
                     <h3 class="checkout-card-title">Unggah Bukti Transfer / QRIS</h3>
@@ -317,6 +388,10 @@
                     <span>Subtotal Produk</span>
                     <strong id="checkoutSubtotalSummary">Rp {{ number_format($totalPrice, 0, ',', '.') }}</strong>
                   </div>
+                  <div class="summary-price-line" id="checkoutShippingSummaryRow">
+                    <span id="checkoutShippingLabel">Ongkos Kirim</span>
+                    <strong id="checkoutShippingFeeSummary" style="color:#16a34a;">Rp 0</strong>
+                  </div>
                   <div class="summary-price-divider"></div>
                   <div class="summary-price-line summary-total-line">
                     <span>Total Pembayaran</span>
@@ -407,15 +482,77 @@
   @endif
 </div>
 
+<style>
+.courier-option-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+.courier-option-card:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.courier-option-card.selected {
+  border-color: var(--brand-coral);
+  background: #fff5f6;
+  box-shadow: 0 0 0 1px var(--brand-coral);
+}
+.courier-badge-tag {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.courier-badge-tag.jne { background: #fee2e2; color: #dc2626; }
+.courier-badge-tag.sicepat { background: #fef3c7; color: #b45309; }
+.courier-badge-tag.jnt { background: #fee2e2; color: #b91c1c; }
+.courier-badge-tag.anteraja { background: #ede9fe; color: #6d28d9; }
+.courier-badge-tag.pos { background: #ffedd5; color: #c2410c; }
+.courier-badge-tag.tiki { background: #e0f2fe; color: #0369a1; }
+.courier-badge-tag.wahana { background: #fef9c3; color: #854d0e; }
+.courier-badge-tag.gojek { background: #dcfce7; color: #15803d; }
+.courier-badge-tag.grab { background: #dcfce7; color: #166534; }
+</style>
+
 {{-- Scripts untuk Interaktivitas Halaman Checkout --}}
 <script>
   let selectedCheckoutProofFile = null;
   let isCheckoutSubmitting = false;
   let currentDirectQty = {{ (int) $totalQty }};
   const unitPrice = {{ $isDirectBuy && count($items) === 1 ? (float) $items[0]['price'] : 0 }};
+  const baseItemsSubtotal = {{ (float) $totalPrice }};
+  const isDirectBuy = {{ $isDirectBuy ? 'true' : 'false' }};
+  const directProduct = {{ $directProduct ? 'true' : 'false' }};
+
+  let selectedShippingFee = 0;
+  let availableRates = [];
 
   function formatRupiah(num) {
     return 'Rp ' + Number(num).toLocaleString('id-ID');
+  }
+
+  function updateGrandTotalDisplay() {
+    const currentSubtotal = (isDirectBuy && directProduct) ? (currentDirectQty * unitPrice) : baseItemsSubtotal;
+    const grandTotal = currentSubtotal + selectedShippingFee;
+    const formatted = formatRupiah(grandTotal);
+
+    const grandTotalSummary = document.getElementById('checkoutGrandTotalSummary');
+    const qrDisplay = document.getElementById('checkoutDisplayTotalAmount');
+    const qrInstr = document.getElementById('checkoutInstructionTotal');
+
+    if (grandTotalSummary) grandTotalSummary.textContent = formatted;
+    if (qrDisplay) qrDisplay.textContent = formatted;
+    if (qrInstr) qrInstr.textContent = formatted;
   }
 
   // Direct Buy Qty Adjuster
@@ -433,9 +570,6 @@
     const totalQtySummary = document.getElementById('checkoutTotalQtySummary');
     const subtotalDisplay = document.getElementById('directItemSubtotal');
     const subtotalSummary = document.getElementById('checkoutSubtotalSummary');
-    const grandTotalSummary = document.getElementById('checkoutGrandTotalSummary');
-    const qrDisplay = document.getElementById('checkoutDisplayTotalAmount');
-    const qrInstr = document.getElementById('checkoutInstructionTotal');
 
     if (qtyDisplay) qtyDisplay.textContent = newQty;
     if (qtyInput) qtyInput.value = newQty;
@@ -446,9 +580,8 @@
 
     if (subtotalDisplay) subtotalDisplay.textContent = formatted;
     if (subtotalSummary) subtotalSummary.textContent = formatted;
-    if (grandTotalSummary) grandTotalSummary.textContent = formatted;
-    if (qrDisplay) qrDisplay.textContent = formatted;
-    if (qrInstr) qrInstr.textContent = formatted;
+
+    updateGrandTotalDisplay();
   }
 
   // Geolocation Auto Address
@@ -458,6 +591,10 @@
     const btnIcon = document.getElementById('btnCheckoutAutoGpsIcon');
     const statusHint = document.getElementById('checkoutGpsStatusMessage');
     const addressInput = document.getElementById('checkoutBuyerAddress');
+    const latInput = document.getElementById('checkoutBuyerLat');
+    const lngInput = document.getElementById('checkoutBuyerLng');
+    const coordsDisplay = document.getElementById('checkoutBuyerCoordsDisplay');
+    const postalInput = document.getElementById('checkoutBuyerPostalCode');
 
     if (!navigator.geolocation) {
       alert('Peramban Anda tidak mendukung deteksi lokasi otomatis (GPS). Silakan masukkan alamat secara manual.');
@@ -477,6 +614,10 @@
         const lng = pos.coords.longitude;
         statusHint.textContent = `Titik koordinat ditemukan (${lat.toFixed(5)}, ${lng.toFixed(5)}). Mengambil alamat lengkap...`;
 
+        if (latInput) latInput.value = lat.toFixed(6);
+        if (lngInput) lngInput.value = lng.toFixed(6);
+        if (coordsDisplay) coordsDisplay.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
         try {
           const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
             headers: { 'Accept': 'application/json' }
@@ -494,7 +635,12 @@
             if (data.address.village || data.address.town || data.address.city_district) parts.push(data.address.village || data.address.town || data.address.city_district);
             if (data.address.city || data.address.county) parts.push(data.address.city || data.address.county);
             if (data.address.state) parts.push(data.address.state);
-            if (data.address.postcode) parts.push(data.address.postcode);
+            if (data.address.postcode) {
+              parts.push(data.address.postcode);
+              if (postalInput && !postalInput.value) {
+                postalInput.value = data.address.postcode;
+              }
+            }
 
             if (parts.length > 0) {
               addr = parts.join(', ');
@@ -510,10 +656,15 @@
             statusHint.className = 'gps-status-hint warning';
             statusHint.textContent = 'Titik lokasi ditemukan. Silakan tambahkan rincian nama jalan atau nomor rumah.';
           }
+
+          // Cek ongkir otomatis setelah GPS ditemukan
+          calculateShippingRates();
+
         } catch (e) {
           addressInput.value = `Lokasi GPS: https://www.google.com/maps?q=${lat},${lng}`;
           statusHint.className = 'gps-status-hint warning';
           statusHint.textContent = 'Koordinat peta disematkan. Silakan lengkapi alamat detail secara manual.';
+          calculateShippingRates();
         } finally {
           btn.disabled = false;
           btnIcon.textContent = '📍';
@@ -598,6 +749,194 @@
     });
   }
 
+  // Biteship Shipping Rates Calculation
+  async function calculateShippingRates() {
+    const lat = document.getElementById('checkoutBuyerLat')?.value || '';
+    const lng = document.getElementById('checkoutBuyerLng')?.value || '';
+    const postalCode = document.getElementById('checkoutBuyerPostalCode')?.value.trim() || '';
+    const address = document.getElementById('checkoutBuyerAddress')?.value.trim() || '';
+    const statusBox = document.getElementById('shippingRatesStatus');
+    const btn = document.getElementById('btnCheckShippingRates');
+    const btnText = document.getElementById('btnCheckShippingRatesText');
+    const btnIcon = document.getElementById('btnCheckShippingRatesIcon');
+
+    if (!postalCode && (!lat || !lng)) {
+      if (statusBox) {
+        statusBox.style.display = 'block';
+        statusBox.style.background = '#fef2f2';
+        statusBox.style.color = '#991b1b';
+        statusBox.style.border = '1px solid #fecaca';
+        statusBox.textContent = 'Silakan isi Kode Pos tujuan atau gunakan tombol "Gunakan Lokasi Saya" di atas untuk cek tarif kurir.';
+      }
+      return;
+    }
+
+    if (statusBox) {
+      statusBox.style.display = 'block';
+      statusBox.style.background = '#f0f9ff';
+      statusBox.style.color = '#0369a1';
+      statusBox.style.border = '1px solid #bae6fd';
+      statusBox.textContent = 'Sedang mencari tarif kurir real-time dari Biteship...';
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.75';
+      if (btnIcon) btnIcon.textContent = '⏳';
+      if (btnText) btnText.textContent = 'Mengecek...';
+    }
+
+    try {
+      const payload = {
+        _token: '{{ csrf_token() }}',
+        postal_code: postalCode,
+        latitude: lat,
+        longitude: lng,
+        address: address,
+      };
+
+      @if($isDirectBuy && $directProduct)
+        payload.product_id = '{{ $directProduct->id }}';
+        payload.quantity = currentDirectQty;
+      @endif
+
+      const res = await fetch("{{ route('store.shipping.rates', $store->slug) }}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Gagal mengambil tarif ongkir Biteship.');
+      }
+
+      availableRates = data.rates || [];
+      renderCouriersList(availableRates);
+
+      if (statusBox) {
+        statusBox.style.display = 'block';
+        statusBox.style.background = '#f0fdf4';
+        statusBox.style.color = '#166534';
+        statusBox.style.border = '1px solid #bbf7d0';
+        statusBox.textContent = `✓ Ditemukan ${availableRates.length} opsi kurir Biteship. Silakan pilih layanan kurir yang diinginkan di bawah.`;
+      }
+
+    } catch (err) {
+      if (statusBox) {
+        statusBox.style.display = 'block';
+        statusBox.style.background = '#fef2f2';
+        statusBox.style.color = '#991b1b';
+        statusBox.style.border = '1px solid #fecaca';
+        statusBox.textContent = err.message || 'Gagal menghubungi layanan Biteship.';
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        if (btnIcon) btnIcon.textContent = '🚚';
+        if (btnText) btnText.textContent = 'Perbarui Tarif';
+      }
+    }
+  }
+
+  function renderCouriersList(rates) {
+    const list = document.getElementById('shippingCouriersList');
+    if (!list) return;
+
+    let html = `
+      <label class="courier-option-card ${selectedShippingFee === 0 ? 'selected' : ''}" id="courier-opt-default" onclick="selectCourierOption(null)">
+        <input type="radio" name="courier_radio" value="" ${selectedShippingFee === 0 ? 'checked' : ''} style="accent-color:var(--brand-coral);">
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:13.5px;color:#0f172a;">Ambil Sendiri / Ongkir Manual Toko</div>
+          <div style="font-size:12px;color:#64748b;">Tanpa ongkir otomatis, koordinasi pengiriman langsung dengan penjual melalui WhatsApp.</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;font-size:14px;color:#16a34a;">Gratis / Rp 0</div>
+        </div>
+      </label>
+    `;
+
+    rates.forEach((r, idx) => {
+      const company = (r.company || '').toLowerCase();
+      html += `
+        <label class="courier-option-card" id="courier-opt-${idx}" onclick="selectCourierOption(${idx})">
+          <input type="radio" name="courier_radio" value="${idx}" style="accent-color:var(--brand-coral);">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap;">
+              <span class="courier-badge-tag ${company}">${r.courier_name}</span>
+              <strong style="font-size:13.5px;color:#0f172a;">${r.service_name}</strong>
+              <span style="font-size:12px;color:#64748b;">• Estimasi: ${r.duration || '-'}</span>
+            </div>
+            <div style="font-size:12px;color:#64748b;">Layanan ${r.service_type || 'standard'} pengiriman resmi ${r.courier_name}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700;font-size:14px;color:#0f172a;">${r.price_formatted}</div>
+          </div>
+        </label>
+      `;
+    });
+
+    list.innerHTML = html;
+  }
+
+  function selectCourierOption(rateIndex) {
+    document.querySelectorAll('.courier-option-card').forEach(el => el.classList.remove('selected'));
+
+    const courierInput = document.getElementById('checkoutSelectedCourier');
+    const serviceInput = document.getElementById('checkoutSelectedService');
+    const feeInput = document.getElementById('checkoutSelectedFee');
+    const etdInput = document.getElementById('checkoutSelectedEtd');
+    const label = document.getElementById('checkoutShippingLabel');
+    const summary = document.getElementById('checkoutShippingFeeSummary');
+
+    if (rateIndex === null || typeof availableRates[rateIndex] === 'undefined') {
+      const defaultCard = document.getElementById('courier-opt-default');
+      if (defaultCard) defaultCard.classList.add('selected');
+      const radio = defaultCard?.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+
+      selectedShippingFee = 0;
+      if (courierInput) courierInput.value = '';
+      if (serviceInput) serviceInput.value = '';
+      if (feeInput) feeInput.value = '0';
+      if (etdInput) etdInput.value = '';
+
+      if (label) label.textContent = 'Ongkos Kirim';
+      if (summary) {
+        summary.textContent = 'Rp 0';
+        summary.style.color = '#16a34a';
+      }
+    } else {
+      const rate = availableRates[rateIndex];
+      const card = document.getElementById(`courier-opt-${rateIndex}`);
+      if (card) {
+        card.classList.add('selected');
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      }
+
+      selectedShippingFee = parseFloat(rate.price) || 0;
+      if (courierInput) courierInput.value = rate.courier_name || rate.company;
+      if (serviceInput) serviceInput.value = rate.service_name || '';
+      if (feeInput) feeInput.value = selectedShippingFee.toString();
+      if (etdInput) etdInput.value = rate.duration || '';
+
+      if (label) label.textContent = `Ongkir (${rate.courier_name} ${rate.service_name || ''})`.trim();
+      if (summary) {
+        summary.textContent = rate.price_formatted;
+        summary.style.color = '#0f172a';
+      }
+    }
+
+    updateGrandTotalDisplay();
+  }
+
   // Form Submit Handler
   async function handleCheckoutFormSubmit(event) {
     event.preventDefault();
@@ -628,6 +967,14 @@
     formData.append('buyer_phone', phone);
     formData.append('buyer_address', address);
     formData.append('buyer_notes', notes);
+    formData.append('buyer_postal_code', document.getElementById('checkoutBuyerPostalCode')?.value.trim() || '');
+    formData.append('buyer_latitude', document.getElementById('checkoutBuyerLat')?.value || '');
+    formData.append('buyer_longitude', document.getElementById('checkoutBuyerLng')?.value || '');
+
+    formData.append('shipping_courier', document.getElementById('checkoutSelectedCourier')?.value || '');
+    formData.append('shipping_service', document.getElementById('checkoutSelectedService')?.value || '');
+    formData.append('shipping_fee', document.getElementById('checkoutSelectedFee')?.value || '0');
+    formData.append('shipping_etd', document.getElementById('checkoutSelectedEtd')?.value || '');
 
     @if($isDirectBuy && $directProduct)
       formData.append('product_id', '{{ $directProduct->id }}');
@@ -702,6 +1049,15 @@
       submitText.textContent = 'Kirim Pesanan & Konfirmasi WA';
     }
   }
+
+  // Auto trigger rate check jika koordinat atau kode pos sudah tersedia
+  document.addEventListener('DOMContentLoaded', function() {
+    const postal = document.getElementById('checkoutBuyerPostalCode')?.value;
+    const lat = document.getElementById('checkoutBuyerLat')?.value;
+    if (postal || lat) {
+      calculateShippingRates();
+    }
+  });
 </script>
 @endsection
 

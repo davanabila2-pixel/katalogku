@@ -14,6 +14,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\GoogleOAuthController;
 use App\Http\Controllers\OrderSubmissionController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\StoreCustomerAuthController;
 use App\Http\Controllers\StoreCustomerController;
 use App\Http\Controllers\Superadmin\CatalogController as SuperadminCatalogController;
@@ -129,6 +130,10 @@ Route::post('/{storeSlug}/orders', [OrderSubmissionController::class, 'store'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
     ->name('store.orders.store');
 
+Route::post('/{storeSlug}/shipping/rates', [ShippingController::class, 'rates'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
+    ->name('store.shipping.rates');
+
 // ---- Pelanggan Toko (Auth, Profil, dan Pesanan per Toko) ----
 Route::get('/{storeSlug}/masuk', [StoreCustomerAuthController::class, 'showLogin'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.login');
@@ -144,6 +149,10 @@ Route::middleware('auth')->group(function () {
         ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.profile');
     Route::put('/{storeSlug}/profil', [StoreCustomerController::class, 'updateProfile'])
         ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.profile.update');
+    Route::get('/{storeSlug}/alamat', [StoreCustomerController::class, 'address'])
+        ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.address');
+    Route::put('/{storeSlug}/alamat', [StoreCustomerController::class, 'updateAddress'])
+        ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.address.update');
     Route::get('/{storeSlug}/pesanan', [StoreCustomerController::class, 'orders'])
         ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.orders');
 });

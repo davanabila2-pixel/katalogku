@@ -47,6 +47,11 @@ class StoreCustomerController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:25'],
             'address' => ['nullable', 'string', 'max:1000'],
+            'postal_code' => ['nullable', 'string', 'max:10'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'district' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -57,6 +62,56 @@ class StoreCustomerController extends Controller
 
         return redirect()->route('store.profile', $store->slug)
             ->with('status', "Profil Anda di {$store->name} berhasil diperbarui.");
+    }
+
+    public function address(string $storeSlug)
+    {
+        $store = $this->getStore($storeSlug);
+        $user = auth()->user();
+
+        $profile = StoreCustomerProfile::firstOrCreate(
+            ['store_id' => $store->id, 'user_id' => $user->id],
+            [
+                'name' => $user->name,
+                'phone' => null,
+                'address' => null,
+            ]
+        );
+
+        $googleMapsApiKey = config('services.google_maps.key');
+
+        $seo = [
+            'title' => "Alamat Saya: {$store->name}",
+            'description' => "Pengaturan alamat pengiriman dan titik lokasi Google Maps di {$store->name}.",
+            'canonical' => route('store.address', $store->slug),
+            'image' => $store->logoUrl(),
+        ];
+
+        return view('public.customer.address', compact('store', 'user', 'profile', 'googleMapsApiKey', 'seo'));
+    }
+
+    public function updateAddress(Request $request, string $storeSlug)
+    {
+        $store = $this->getStore($storeSlug);
+        $user = auth()->user();
+
+        $data = $request->validate([
+            'address' => ['required', 'string', 'max:1000'],
+            'postal_code' => ['nullable', 'string', 'max:10'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'district' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        StoreCustomerProfile::updateOrCreate(
+            ['store_id' => $store->id, 'user_id' => $user->id],
+            array_merge(['name' => $user->name], $data)
+        );
+
+        return redirect()->route('store.address', $store->slug)
+            ->with('status', 'Alamat pengiriman Anda berhasil diperbarui.');
     }
 
     public function orders(string $storeSlug)

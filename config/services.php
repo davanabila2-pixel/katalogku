@@ -49,4 +49,13 @@ return [
         'root_folder_id' => env('GOOGLE_DRIVE_ROOT_FOLDER_ID'),
     ],
 
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
+    'biteship' => [
+        'key' => env('BITESHIP_API_KEY'),
+        'base_url' => env('BITESHIP_BASE_URL', 'https://api.biteship.com/v1'),
+    ],
+
 ];

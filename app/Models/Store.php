@@ -23,6 +23,11 @@ class Store extends Model
         'qr_account_name',
         'contact_information',
         'address',
+        'postal_code',
+        'latitude',
+        'longitude',
+        'city',
+        'district',
         'status',
         'hide_component_products',
     ];
@@ -31,6 +36,23 @@ class Store extends Model
     {
         return [
             'hide_component_products' => 'boolean',
+            'latitude' => 'float',
+            'longitude' => 'float',
+        ];
+    }
+
+    public function hasCoordinates(): bool
+    {
+        return ! is_null($this->latitude) && ! is_null($this->longitude);
+    }
+
+    public function originForBiteship(): array
+    {
+        return [
+            'postal_code' => $this->postal_code,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'address' => $this->address,
         ];
     }
 

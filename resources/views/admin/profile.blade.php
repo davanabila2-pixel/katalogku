@@ -649,7 +649,7 @@
         <div class="tab-panel" role="tabpanel" id="panel-kontak" aria-labelledby="tab-kontak" hidden>
           <div class="section-intro">
             <h3>Kontak & Lokasi Toko</h3>
-            <p>Informasi layanan pelanggan dan alamat fisik gerai toko.</p>
+            <p>Informasi layanan pelanggan, alamat gerai, serta titik peta untuk integrasi cek ongkir Biteship.</p>
           </div>
 
           <div class="field">
@@ -660,12 +660,74 @@
             <div class="field-hint-text">Nomor WhatsApp atau email untuk pertanyaan calon pembeli.</div>
           </div>
 
-          <div class="field" style="margin-top:20px;margin-bottom:0">
-            <div class="field-label-group">
-              <label for="input-store-address">Alamat Fisik Toko</label>
+          <div style="margin-top:24px;padding-top:20px;border-top:1px dashed #e2e8f0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <div>
+                <h4 style="margin:0;font-size:14px;font-weight:700;color:#0f172a;">📍 Titik Peta & Alamat Asal Pengiriman (Biteship)</h4>
+                <p style="margin:2px 0 0;font-size:12px;color:#64748b;">Tentukan lokasi fisik toko/gudang untuk menghitung ongkos kirim pesanan pembeli.</p>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnAdminGps" onclick="locateAdminPosition()" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;">
+                <span>📍 Gunakan Lokasi Saat Ini (GPS)</span>
+              </button>
             </div>
-            <textarea class="textarea-styled" id="input-store-address" name="address" rows="3" placeholder="cth: Jl. Malioboro No. 45, Yogyakarta">{{ old('address', $store->address) }}</textarea>
-            <div class="field-hint-text">Alamat gerai atau gudang pengambilan barang.</div>
+
+            <input type="hidden" name="latitude" id="inputStoreLat" value="{{ old('latitude', $store->latitude) }}">
+            <input type="hidden" name="longitude" id="inputStoreLng" value="{{ old('longitude', $store->longitude) }}">
+
+            {{-- Pencarian Lokasi --}}
+            <div class="field" style="margin-bottom:14px;">
+              <input class="input-styled" type="text" id="adminGmapsAddressSearch" placeholder="Ketik nama jalan, komplek, atau nama toko untuk mencari di peta..." style="font-size:13.5px;">
+              <div id="adminGpsStatusHint" style="display:none;margin-top:6px;font-size:12px;"></div>
+            </div>
+
+            {{-- Kanvas Peta Interaktif --}}
+            <div style="margin-bottom:18px;">
+              <div id="adminStoreMapCanvas" style="width:100%;height:300px;border-radius:12px;background:#e2e8f0;border:1px solid #cbd5e1;position:relative;overflow:hidden;">
+                <div id="adminMapLoadingNotice" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:#64748b;font-weight:600;">
+                  Buka tab ini untuk memuat peta lokasi toko...
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:12px;color:#64748b;flex-wrap:wrap;gap:6px;">
+                <span>* Geser pin penanda di peta untuk mengatur koordinat gudang/toko secara akurat.</span>
+                <span id="adminCoordsDisplayBadge" style="font-family:monospace;background:#f1f5f9;padding:2px 8px;border-radius:6px;font-weight:600;color:#0f172a;">
+                  {{ $store->hasCoordinates() ? "{$store->latitude}, {$store->longitude}" : "Titik belum ditentukan" }}
+                </span>
+              </div>
+            </div>
+
+            <div class="field" style="margin-bottom:16px;">
+              <div class="field-label-group">
+                <label for="input-store-address">Alamat Fisik Lengkap Toko / Gudang</label>
+              </div>
+              <textarea class="textarea-styled" id="input-store-address" name="address" rows="3" placeholder="cth: Jl. Malioboro No. 45, Danurejan, Yogyakarta">{{ old('address', $store->address) }}</textarea>
+              <div class="field-hint-text">Alamat lengkap gerai atau gudang asal pengiriman paket.</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:14px;margin-bottom:16px;">
+              <div class="field">
+                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="input-store-postal-code">
+                  Kode Pos <span style="font-size:11px;color:#ff4d61;font-weight:normal;">(Wajib untuk Biteship)</span>
+                </label>
+                <input class="input-styled" type="text" id="input-store-postal-code" name="postal_code" value="{{ old('postal_code', $store->postal_code) }}" placeholder="cth: 55213" maxlength="10">
+              </div>
+
+              <div class="field">
+                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="input-store-city">Kota / Kabupaten</label>
+                <input class="input-styled" type="text" id="input-store-city" name="city" value="{{ old('city', $store->city) }}" placeholder="cth: Yogyakarta">
+              </div>
+
+              <div class="field">
+                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="input-store-district">Kecamatan</label>
+                <input class="input-styled" type="text" id="input-store-district" name="district" value="{{ old('district', $store->district) }}" placeholder="cth: Danurejan">
+              </div>
+            </div>
+
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;font-size:12.5px;color:#166534;line-height:1.5;display:flex;align-items:flex-start;gap:10px;">
+              <span style="font-size:16px;">🚚</span>
+              <div>
+                <strong>Integrasi Ongkir Otomatis Biteship:</strong> Data alamat asal, kode pos, dan titik koordinat ini akan digunakan saat pembeli menghitung tarif pengiriman (JNE, SiCepat, J&T, Wahana, Anteraja, dll) di halaman checkout toko Anda.
+              </div>
+            </div>
           </div>
         </div>
 
@@ -964,6 +1026,13 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById(t.getAttribute('aria-controls')).hidden = !active;
     });
     if (focus) tab.focus();
+    if (tab.getAttribute('aria-controls') === 'panel-kontak') {
+      setTimeout(function () {
+        if (typeof initOrResizeAdminMap === 'function') {
+          initOrResizeAdminMap();
+        }
+      }, 100);
+    }
   }
   tabs.forEach(function (tab, i) {
     tab.addEventListener('click', function () { selectTab(tab, false); });
@@ -1056,5 +1125,283 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   });
 });
+</script>
+
+{{-- Leaflet CSS & JS (Fallback peta universal) --}}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+@if(!empty($googleMapsApiKey))
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places"></script>
+@endif
+
+<script>
+(function() {
+  let defaultStoreLat = {{ $store->latitude ?: -6.2088 }};
+  let defaultStoreLng = {{ $store->longitude ?: 106.8456 }};
+  const adminHasSavedCoords = {{ $store->hasCoordinates() ? 'true' : 'false' }};
+  const adminGoogleKey = @js($googleMapsApiKey);
+
+  let adminGmap, adminGmarker, adminGautocomplete;
+  let adminLmap, adminLmarker;
+  let adminMapInitialized = false;
+
+  function updateAdminInputs(lat, lng) {
+    const latFixed = Number(lat).toFixed(6);
+    const lngFixed = Number(lng).toFixed(6);
+    const latInput = document.getElementById('inputStoreLat');
+    const lngInput = document.getElementById('inputStoreLng');
+    const badge = document.getElementById('adminCoordsDisplayBadge');
+
+    if (latInput) latInput.value = latFixed;
+    if (lngInput) lngInput.value = lngFixed;
+    if (badge) {
+      badge.textContent = `${latFixed}, ${lngFixed}`;
+      badge.style.color = '#0284c7';
+      badge.style.background = '#e0f2fe';
+    }
+  }
+
+  function reverseGeocodeAdmin(lat, lng) {
+    if (adminGoogleKey && window.google && window.google.maps && window.google.maps.Geocoder) {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat: parseFloat(lat), lng: parseFloat(lng) } }, function(results, status) {
+        if (status === 'OK' && results && results[0]) {
+          parseAndFillAdminPlace(results[0]);
+        }
+      });
+      return;
+    }
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.address) {
+          const addr = data.address;
+          const addressInput = document.getElementById('input-store-address');
+          const postalInput = document.getElementById('input-store-postal-code');
+          const cityInput = document.getElementById('input-store-city');
+          const districtInput = document.getElementById('input-store-district');
+
+          if (data.display_name && addressInput && !addressInput.value) {
+            addressInput.value = data.display_name;
+          }
+          if (addr.postcode && postalInput && !postalInput.value) {
+            postalInput.value = addr.postcode.substring(0, 10);
+          }
+          if ((addr.city || addr.town || addr.municipality || addr.county) && cityInput && !cityInput.value) {
+            cityInput.value = addr.city || addr.town || addr.municipality || addr.county;
+          }
+          if ((addr.suburb || addr.quarter || addr.district) && districtInput && !districtInput.value) {
+            districtInput.value = addr.suburb || addr.quarter || addr.district;
+          }
+        }
+      })
+      .catch(function() {});
+  }
+
+  function parseAndFillAdminPlace(place) {
+    if (!place) return;
+    const addressInput = document.getElementById('input-store-address');
+    const postalInput = document.getElementById('input-store-postal-code');
+    const cityInput = document.getElementById('input-store-city');
+    const districtInput = document.getElementById('input-store-district');
+
+    if (place.formatted_address && addressInput) {
+      addressInput.value = place.formatted_address;
+    }
+
+    if (place.address_components) {
+      place.address_components.forEach(function(comp) {
+        const types = comp.types;
+        if (types.includes('postal_code') && postalInput) {
+          postalInput.value = comp.long_name;
+        }
+        if ((types.includes('administrative_area_level_2') || types.includes('locality')) && cityInput && !cityInput.value) {
+          cityInput.value = comp.long_name.replace(/^(Kota|Kabupaten)\s+/i, '');
+        }
+        if (types.includes('administrative_area_level_3') && districtInput) {
+          districtInput.value = comp.long_name.replace(/^Kecamatan\s+/i, '');
+        }
+      });
+    }
+  }
+
+  function initGoogleMap() {
+    const canvas = document.getElementById('adminStoreMapCanvas');
+    if (!canvas) return;
+    document.getElementById('adminMapLoadingNotice')?.remove();
+
+    const centerPos = { lat: parseFloat(defaultStoreLat), lng: parseFloat(defaultStoreLng) };
+    adminGmap = new google.maps.Map(canvas, {
+      center: centerPos,
+      zoom: adminHasSavedCoords ? 16 : 13,
+      mapTypeControl: false,
+      streetViewControl: false,
+    });
+
+    adminGmarker = new google.maps.Marker({
+      position: centerPos,
+      map: adminGmap,
+      draggable: true,
+      title: 'Toko {{ $store->name }}'
+    });
+
+    adminGmarker.addListener('dragend', function() {
+      const pos = adminGmarker.getPosition();
+      updateAdminInputs(pos.lat(), pos.lng());
+      reverseGeocodeAdmin(pos.lat(), pos.lng());
+    });
+
+    adminGmap.addListener('click', function(e) {
+      adminGmarker.setPosition(e.latLng);
+      updateAdminInputs(e.latLng.lat(), e.latLng.lng());
+      reverseGeocodeAdmin(e.latLng.lat(), e.latLng.lng());
+    });
+
+    const searchInput = document.getElementById('adminGmapsAddressSearch');
+    if (searchInput) {
+      adminGautocomplete = new google.maps.places.Autocomplete(searchInput, {
+        componentRestrictions: { country: 'id' },
+        fields: ['formatted_address', 'geometry', 'address_components', 'name']
+      });
+
+      adminGautocomplete.addListener('place_changed', function() {
+        const place = adminGautocomplete.getPlace();
+        if (!place.geometry || !place.geometry.location) return;
+
+        adminGmap.setCenter(place.geometry.location);
+        adminGmap.setZoom(16);
+        adminGmarker.setPosition(place.geometry.location);
+
+        updateAdminInputs(place.geometry.location.lat(), place.geometry.location.lng());
+        parseAndFillAdminPlace(place);
+      });
+    }
+  }
+
+  function initLeafletMap() {
+    const canvas = document.getElementById('adminStoreMapCanvas');
+    if (!canvas || !window.L) return;
+    document.getElementById('adminMapLoadingNotice')?.remove();
+
+    adminLmap = L.map('adminStoreMapCanvas').setView([defaultStoreLat, defaultStoreLng], adminHasSavedCoords ? 16 : 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(adminLmap);
+
+    adminLmarker = L.marker([defaultStoreLat, defaultStoreLng], { draggable: true }).addTo(adminLmap);
+
+    adminLmarker.on('dragend', function(e) {
+      const latlng = e.target.getLatLng();
+      updateAdminInputs(latlng.lat, latlng.lng);
+      reverseGeocodeAdmin(latlng.lat, latlng.lng);
+    });
+
+    adminLmap.on('click', function(e) {
+      adminLmarker.setLatLng(e.latlng);
+      updateAdminInputs(e.latlng.lat, e.latlng.lng);
+      reverseGeocodeAdmin(e.latlng.lat, e.latlng.lng);
+    });
+
+    const searchInput = document.getElementById('adminGmapsAddressSearch');
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          searchAddressQuery(searchInput.value);
+        }
+      });
+    }
+  }
+
+  function searchAddressQuery(query) {
+    if (!query || query.length < 3) return;
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Indonesia')}&limit=1`)
+      .then(res => res.json())
+      .then(results => {
+        if (results && results.length > 0) {
+          const item = results[0];
+          const lat = parseFloat(item.lat);
+          const lon = parseFloat(item.lon);
+          if (adminLmap && adminLmarker) {
+            adminLmap.setView([lat, lon], 16);
+            adminLmarker.setLatLng([lat, lon]);
+            updateAdminInputs(lat, lon);
+            reverseGeocodeAdmin(lat, lon);
+          }
+        }
+      })
+      .catch(function() {});
+  }
+
+  window.initOrResizeAdminMap = function() {
+    if (!adminMapInitialized) {
+      adminMapInitialized = true;
+      if (adminGoogleKey && window.google && window.google.maps) {
+        initGoogleMap();
+      } else if (window.L) {
+        initLeafletMap();
+      }
+    } else {
+      if (adminLmap) {
+        adminLmap.invalidateSize();
+      } else if (adminGmap && window.google && window.google.maps) {
+        google.maps.event.trigger(adminGmap, 'resize');
+      }
+    }
+  };
+
+  window.locateAdminPosition = function() {
+    const hint = document.getElementById('adminGpsStatusHint');
+    if (!navigator.geolocation) {
+      if (hint) {
+        hint.style.display = 'block';
+        hint.style.color = '#ef4444';
+        hint.textContent = 'Browser Anda tidak mendukung deteksi GPS.';
+      }
+      return;
+    }
+
+    if (hint) {
+      hint.style.display = 'block';
+      hint.style.color = '#0284c7';
+      hint.textContent = 'Mencari sinyal GPS Anda...';
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        updateAdminInputs(lat, lng);
+        reverseGeocodeAdmin(lat, lng);
+
+        if (adminGmap && adminGmarker) {
+          const latlng = new google.maps.LatLng(lat, lng);
+          adminGmap.setCenter(latlng);
+          adminGmap.setZoom(16);
+          adminGmarker.setPosition(latlng);
+        } else if (adminLmap && adminLmarker) {
+          adminLmap.setView([lat, lng], 16);
+          adminLmarker.setLatLng([lat, lng]);
+        }
+
+        if (hint) {
+          hint.style.color = '#16a34a';
+          hint.textContent = '✓ Lokasi berhasil disinkronkan dari GPS.';
+          setTimeout(() => { hint.style.display = 'none'; }, 4000);
+        }
+      },
+      function(err) {
+        if (hint) {
+          hint.style.color = '#ef4444';
+          hint.textContent = 'Gagal mengambil GPS: ' + (err.message || 'Izin ditolak atau timeout.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+})();
 </script>
 @endsection
