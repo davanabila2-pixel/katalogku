@@ -4548,3 +4548,471 @@ body.is-standalone-links {
     border-top: 1px dashed #f1f5f9;
   }
 }
+
+/* ==========================================================================
+   Store Split-Card Auth (Login & Register per Toko)
+   ========================================================================== */
+.store-auth-page-bg {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px;
+  background: radial-gradient(circle at 10% 15%, rgba(244, 63, 94, 0.06) 0%, transparent 40%),
+              radial-gradient(circle at 90% 85%, rgba(225, 29, 72, 0.06) 0%, transparent 40%),
+              #f8fafc;
+  box-sizing: border-box;
+}
+.store-auth-card {
+  width: 100%;
+  max-width: 980px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(226, 232, 240, 0.85);
+  display: grid;
+  grid-template-columns: 1.15fr 0.95fr;
+  overflow: hidden;
+  min-height: 570px;
+  box-sizing: border-box;
+}
+.store-auth-card.is-register {
+  max-width: 1020px;
+}
+
+/* Left: Form Column */
+.store-auth-left {
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+.store-auth-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.store-auth-logo-img {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid #fecdd3;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.12);
+  flex-shrink: 0;
+}
+.store-auth-logo-fallback {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.15);
+  flex-shrink: 0;
+}
+.store-auth-brand-info {
+  display: flex;
+  flex-direction: column;
+}
+.store-auth-brand-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.store-auth-brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+.store-auth-brand-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: #ffe4e6;
+  color: #e11d48;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+.store-auth-brand-sub {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.store-auth-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.store-auth-subtitle {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0 0 22px;
+  line-height: 1.45;
+}
+
+.store-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.store-auth-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.store-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.store-auth-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.store-auth-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.store-auth-input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  padding: 10.5px 14px;
+  font-size: 13.5px;
+  color: #0f172a;
+  outline: none;
+  transition: all .15s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.store-auth-input:focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+.store-auth-input-pass {
+  padding-right: 44px;
+}
+.btn-toggle-password {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: color .15s;
+}
+.btn-toggle-password:hover {
+  color: #0f172a;
+}
+.store-auth-check-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #475569;
+  margin-top: 2px;
+}
+.store-auth-forgot-link {
+  color: #e11d48;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12.5px;
+  transition: color .15s;
+}
+.store-auth-forgot-link:hover {
+  text-decoration: underline;
+  color: #be123c;
+}
+.store-auth-submit-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: #ffffff;
+  padding: 12.5px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.35);
+  text-decoration: none;
+  font-family: inherit;
+  margin-top: 6px;
+}
+.store-auth-submit-btn:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.45);
+  background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+}
+.store-auth-submit-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(225, 29, 72, 0.3);
+}
+
+.store-auth-nav-links {
+  text-align: center;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.store-auth-switch-link {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+.store-auth-switch-link a {
+  color: #e11d48;
+  font-weight: 700;
+  text-decoration: none;
+}
+.store-auth-switch-link a:hover {
+  text-decoration: underline;
+}
+.store-auth-return-link {
+  font-size: 12.5px;
+  color: #64748b;
+  text-decoration: none;
+  transition: color .15s;
+}
+.store-auth-return-link:hover {
+  color: #0f172a;
+}
+
+.store-auth-trust-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 18px;
+  margin-top: 18px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+/* Right: Showcase & Carousel Column */
+.store-auth-right {
+  background: linear-gradient(145deg, #f43f5e 0%, #e11d48 50%, #be123c 100%);
+  background-image: radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.22) 0%, transparent 45%),
+                    radial-gradient(circle at 15% 85%, rgba(0, 0, 0, 0.15) 0%, transparent 50%),
+                    linear-gradient(145deg, #f43f5e 0%, #e11d48 50%, #be123c 100%);
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  color: #ffffff;
+  box-sizing: border-box;
+}
+.showcase-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 2;
+}
+.showcase-pill-badge {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.showcase-counter {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.05em;
+}
+
+.showcase-slider-wrapper {
+  position: relative;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 270px;
+}
+.showcase-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0f172a;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: all .15s ease;
+  z-index: 10;
+}
+.showcase-nav-arrow.prev {
+  left: 0;
+}
+.showcase-nav-arrow.next {
+  right: 0;
+}
+.showcase-nav-arrow:hover {
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.showcase-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px;
+  width: 100%;
+  max-width: 290px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+  text-align: center;
+  box-sizing: border-box;
+}
+.showcase-thumb-frame {
+  width: 100%;
+  height: 180px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.showcase-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.showcase-tags-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.showcase-card-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #475569;
+}
+.showcase-card-tag.price {
+  background: #ffe4e6;
+  color: #e11d48;
+}
+.showcase-card-tag.stock {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.showcase-content-info {
+  text-align: center;
+  z-index: 2;
+}
+.showcase-headline {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+.showcase-description {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.showcase-dots-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+.showcase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all .2s ease;
+  border: none;
+  padding: 0;
+}
+.showcase-dot.active {
+  width: 22px;
+  border-radius: 9999px;
+  background: #ffffff;
+}
+
+.store-auth-outer-footer {
+  margin-top: 20px;
+  font-size: 12.5px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+@media (max-width: 880px) {
+  .store-auth-card {
+    grid-template-columns: 1fr;
+    border-radius: 22px;
+  }
+  .store-auth-left {
+    padding: 32px 24px;
+  }
+  .store-auth-field-grid {
+    grid-template-columns: 1fr;
+  }
+  .store-auth-right {
+    padding: 32px 24px;
+    min-height: 380px;
+  }
+}

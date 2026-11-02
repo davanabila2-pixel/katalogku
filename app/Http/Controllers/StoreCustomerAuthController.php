@@ -27,6 +27,12 @@ class StoreCustomerAuthController extends Controller
             return redirect()->route('store.show', $store->slug);
         }
 
+        $showcaseProducts = $store->products()
+            ->where('status', 'active')
+            ->latest()
+            ->take(4)
+            ->get();
+
         $seo = [
             'title' => "Masuk ke {$store->name}",
             'description' => "Masuk ke akun pelanggan {$store->name}.",
@@ -34,7 +40,7 @@ class StoreCustomerAuthController extends Controller
             'image' => $store->logoUrl(),
         ];
 
-        return view('public.customer.login', compact('store', 'seo'));
+        return view('public.customer.login', compact('store', 'seo', 'showcaseProducts'));
     }
 
     public function login(Request $request, string $storeSlug)
@@ -83,6 +89,12 @@ class StoreCustomerAuthController extends Controller
             return redirect()->route('store.show', $store->slug);
         }
 
+        $showcaseProducts = $store->products()
+            ->where('status', 'active')
+            ->latest()
+            ->take(4)
+            ->get();
+
         $seo = [
             'title' => "Daftar Pelanggan {$store->name}",
             'description' => "Daftar akun pelanggan baru di {$store->name}.",
@@ -90,7 +102,7 @@ class StoreCustomerAuthController extends Controller
             'image' => $store->logoUrl(),
         ];
 
-        return view('public.customer.register', compact('store', 'seo'));
+        return view('public.customer.register', compact('store', 'seo', 'showcaseProducts'));
     }
 
     public function register(Request $request, string $storeSlug)

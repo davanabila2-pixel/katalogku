@@ -34,6 +34,10 @@ class StoreCustomerIsolationTest extends TestCase
         $regPage->assertOk();
         $regPage->assertSee('Daftar Akun Pelanggan');
         $regPage->assertSee('Byvii Fashion');
+        $regPage->assertSee('store-auth-card', false);
+        $regPage->assertSee('store-auth-left', false);
+        $regPage->assertSee('store-auth-right', false);
+        $regPage->assertSee('btn-toggle-password', false);
 
         $response = $this->post(route('store.register.submit', $store->slug), [
             'name' => 'Adinda Putri',
@@ -74,6 +78,11 @@ class StoreCustomerIsolationTest extends TestCase
         $loginPage = $this->get(route('store.login', $store->slug));
         $loginPage->assertOk();
         $loginPage->assertSee('Masuk ke Byvii Fashion');
+        $loginPage->assertSee('store-auth-card', false);
+        $loginPage->assertSee('store-auth-left', false);
+        $loginPage->assertSee('store-auth-right', false);
+        $loginPage->assertSee('btn-toggle-password', false);
+        $loginPage->assertSee('256-Bit SSL Enkripsi');
 
         $response = $this->post(route('store.login.submit', $store->slug), [
             'email' => 'pelanggan@example.com',
