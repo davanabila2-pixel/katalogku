@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('is-auth-page', true)
 @section('hide-appbar-footer', true)
 @section('content')
 
@@ -74,8 +75,8 @@
         </div>
 
         {{-- Titles --}}
-        <h1 class="store-auth-title">Daftar Akun Pelanggan ✨</h1>
-        <p class="store-auth-subtitle">Buat akun untuk belanja, lacak pesanan, dan transaksi di <strong>{{ $store->name }}</strong>:</p>
+        <h1 class="store-auth-title">Daftar Akun Pelanggan</h1>
+        <p class="store-auth-subtitle">Buat akun untuk belanja, lacak pesanan, dan bertransaksi di <strong>{{ $store->name }}</strong>:</p>
 
         @if ($errors->any())
           <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #dc2626;">

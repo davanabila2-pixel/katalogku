@@ -13,9 +13,11 @@
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 @php
-  $shouldHideAppbarFooter = ($hideAppbarFooter ?? false) || View::hasSection('hide-appbar-footer');
+  $isAuthPage = View::hasSection('is-auth-page');
+  $isStandaloneLinks = View::hasSection('is-standalone-links') || (request()->routeIs('store.links') && ! $isAuthPage);
+  $shouldHideAppbarFooter = ($hideAppbarFooter ?? false) || View::hasSection('hide-appbar-footer') || $isAuthPage || $isStandaloneLinks;
 @endphp
-<body class="{{ isset($store) && $store ? 'is-store-page' : '' }} {{ $shouldHideAppbarFooter ? 'is-standalone-links' : '' }}">
+<body class="{{ isset($store) && $store ? 'is-store-page' : '' }} {{ $isStandaloneLinks ? 'is-standalone-links' : '' }} {{ $isAuthPage ? 'is-auth-page' : '' }}">
 @if(! $shouldHideAppbarFooter)
 <header class="topbar {{ isset($store) && $store ? 'topbar-store' : '' }}">
   <div class="container topbar-inner">
@@ -193,9 +195,11 @@
   </div>
 </header>
 @endif
-<main class="{{ $shouldHideAppbarFooter ? 'container-standalone' : 'container' }}">
-  @if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
-  @if($errors->any())<div class="alert alert-error"><ul style="margin:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
+<main class="{{ $isAuthPage ? 'main-auth-fullscreen' : ($isStandaloneLinks ? 'container-standalone' : 'container') }}">
+  @if(! $isAuthPage)
+    @if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
+    @if($errors->any())<div class="alert alert-error"><ul style="margin:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
+  @endif
   @yield('content')
 </main>
 @if(! $shouldHideAppbarFooter)
