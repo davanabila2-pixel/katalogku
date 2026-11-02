@@ -5058,12 +5058,35 @@ body.is-standalone-links {
 }
 
 /* ==========================================================================
-   Halaman Checkout Mandiri Toko (Dedicated Checkout Page)
+   Halaman Checkout Mandiri Toko (Dedicated Checkout Page - 100% Full Width)
    ========================================================================== */
+.container-checkout {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+body.is-checkout-page .topbar .container {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+@media (max-width: 768px) {
+  .container-checkout {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+  body.is-checkout-page .topbar .container {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}
+
 .checkout-page-wrap {
-  max-width: 1140px;
-  margin: 0 auto;
-  padding: 8px 16px 54px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 8px 0 54px;
 }
 .checkout-header-area {
   margin-bottom: 22px;
@@ -5096,9 +5119,10 @@ body.is-standalone-links {
 }
 .checkout-layout-grid {
   display: grid;
-  grid-template-columns: 1fr 390px;
+  grid-template-columns: minmax(0, 1fr) 420px;
   gap: 24px;
   align-items: start;
+  width: 100%;
 }
 .checkout-left-col {
   display: flex;
