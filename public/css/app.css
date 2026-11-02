@@ -162,24 +162,24 @@ body {
   width: 38px;
   height: 38px;
   padding: 0 !important;
-  background: #ecfdf5 !important;
-  color: #059669 !important;
-  border: 1px solid #a7f3d0 !important;
+  background: #f8fafc !important;
+  color: #25D366 !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: var(--r-full);
   text-decoration: none;
   flex-shrink: 0;
   transition: all .15s ease;
-  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 .store-contact-btn svg {
   display: block;
 }
 .store-contact-btn:hover {
-  background: #10b981 !important;
+  background: #25D366 !important;
   color: #ffffff !important;
-  border-color: #10b981 !important;
+  border-color: #25D366 !important;
   transform: scale(1.05);
-  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.28);
 }
 .topbar-store .btn-cart-nav {
   background: #f8fafc;
