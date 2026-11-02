@@ -21,7 +21,7 @@
   <div class="container topbar-inner">
     @if(isset($store) && $store)
       {{-- Topbar Khusus Toko --}}
-      <a class="brand store-brand-link" href="{{ $store->url() }}">
+      <a class="store-brand-link" href="{{ $store->url() }}" title="{{ $store->name }}">
         @if($store->logoUrl())
           <img class="store-topbar-logo" src="{{ $store->logoUrl() }}" alt="{{ $store->name }}">
         @else
@@ -66,7 +66,7 @@
       </div>
     @else
       {{-- Topbar Default (Beranda / Semua Toko) --}}
-      <a class="brand" href="{{ route('home') }}">Kata<span>log</span></a>
+      <a class="brand" href="{{ route('home') }}">Kata<span class="brand-accent">log</span></a>
       <nav class="pillnav">
         <a class="pill-tab {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Beranda</a>
         <a class="pill-tab {{ request()->routeIs('stores.*') ? 'active' : '' }}" href="{{ route('stores.index') }}">Toko</a>
@@ -108,7 +108,7 @@
       <div class="store-footer-grid">
         {{-- Kolom 1: Profil Toko --}}
         <div class="store-footer-col store-footer-brand-col">
-          <a class="brand store-brand-link" href="{{ $store->url() }}">
+          <a class="store-brand-link" href="{{ $store->url() }}" title="{{ $store->name }}">
             @if($store->logoUrl())
               <img class="store-topbar-logo" src="{{ $store->logoUrl() }}" alt="{{ $store->name }}">
             @else

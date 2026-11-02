@@ -1,9 +1,20 @@
 @extends('layouts.app')
 @section('content')
-<nav class="breadcrumb">
-  <a href="{{ route('home') }}">Beranda</a> ›
-  <a href="{{ $store->url() }}">{{ $store->name }}</a> ›
-  <span>Produk Terjual & Ulasan</span>
+<nav class="breadcrumb" aria-label="Navigasi Halaman">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item">
+      <a href="{{ $store->url() }}" class="breadcrumb-link" title="Katalog {{ $store->name }}">
+        <svg class="breadcrumb-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+        <span>{{ $store->name }}</span>
+      </a>
+    </li>
+    <li class="breadcrumb-separator" aria-hidden="true">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">
+      <span class="breadcrumb-current">Produk Terjual & Ulasan</span>
+    </li>
+  </ol>
 </nav>
 
 <div class="sold-page-header">
