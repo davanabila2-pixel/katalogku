@@ -19,3 +19,4 @@ class UserOrderController extends Controller
         return view('user.orders', compact('orders', 'user'));
     }
 }
+

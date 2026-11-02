@@ -36,3 +36,4 @@ class UserProfileController extends Controller
         return redirect()->route('user.profile')->with('status', 'Profil berhasil diperbarui.');
     }
 }
+

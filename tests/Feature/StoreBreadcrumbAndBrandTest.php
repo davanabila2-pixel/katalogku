@@ -36,6 +36,18 @@ class StoreBreadcrumbAndBrandTest extends TestCase
         $response->assertSee('Byvii Store');
     }
 
+    public function test_topbar_toko_menampilkan_tombol_whatsapp_hanya_logo_tanpa_teks_hubungi(): void
+    {
+        $store = $this->createSampleStore();
+
+        $response = $this->get('/' . $store->slug);
+
+        $response->assertOk();
+        $response->assertSee('store-contact-btn', false);
+        $response->assertSee('https://wa.me/6281234567890', false);
+        $response->assertDontSee('<span>Hubungi</span>', false);
+    }
+
     public function test_katalog_toko_tidak_memuat_breadcrumb_beranda(): void
     {
         $store = $this->createSampleStore();
