@@ -117,6 +117,10 @@ Route::prefix('cart')->name('cart.')->group(function () {
 });
 
 // ---- Checkout Keranjang per Toko & Pesanan Langsung ----
+Route::get('/{storeSlug}/checkout', [CartController::class, 'showCheckout'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
+    ->name('store.checkout');
+
 Route::post('/{storeSlug}/cart/checkout', [CartController::class, 'checkout'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
     ->name('cart.checkout');

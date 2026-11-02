@@ -249,6 +249,12 @@
   }
 
   window.openProductBuy = function(data) {
+    if (data && data.storeSlug && data.id) {
+      const qty = data.quantity || 1;
+      window.location.href = '/' + encodeURIComponent(data.storeSlug) + '/checkout?product_id=' + encodeURIComponent(data.id) + '&quantity=' + encodeURIComponent(qty);
+      return;
+    }
+
     activeBuyProduct = data;
     currentQty = 1;
     selectedProofFile = null;
