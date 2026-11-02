@@ -19,6 +19,8 @@ use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardCo
 use App\Http\Controllers\Superadmin\GoogleDriveController;
 use App\Http\Controllers\Superadmin\StoreController as SuperadminStoreController;
 use App\Http\Controllers\Superadmin\UserController as SuperadminUserController;
+use App\Http\Controllers\UserOrderController;
+use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Route;
 
 // ---- Sistem (didefinisikan SEBELUM route katalog dinamis) ----
@@ -37,6 +39,12 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [UserProfileController::class, 'edit'])->name('user.profile');
+    Route::put('/profile', [UserProfileController::class, 'update'])->name('user.profile.update');
+    Route::get('/orders', [UserOrderController::class, 'index'])->name('user.orders');
+});
 
 Route::get('/sanctum/csrf-cookie', function () {
     $response = response()->json(['status' => 'success']);

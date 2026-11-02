@@ -54,12 +54,58 @@
         @endif
 
         @auth
-          @if(auth()->user()->managesStore($store->id))
-            <a class="btn btn-primary btn-sm" href="{{ route('admin.dashboard', $store) }}">Kelola Toko</a>
-          @elseif(auth()->user()->isSuperadmin())
-            <a class="btn btn-ghost btn-sm" href="{{ route('superadmin.dashboard') }}">Superadmin</a>
-          @endif
-          <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-ghost btn-sm" type="submit">Keluar</button></form>
+          <div class="user-dropdown-wrap">
+            <button type="button" class="user-dropdown-btn" id="userStoreMenuBtn" aria-expanded="false" aria-haspopup="true" onclick="toggleUserDropdown(event)" title="Akun {{ auth()->user()->name }}">
+              <img class="user-nav-avatar" src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+              <span class="user-nav-avatar-initial" style="display:none;">{{ auth()->user()->initial() }}</span>
+              <span class="user-nav-name">{{ auth()->user()->name }}</span>
+              <svg class="user-dropdown-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+            <div class="user-dropdown-menu" id="userStoreDropdownMenu" role="menu">
+              <div class="user-dropdown-header">
+                <div class="user-dropdown-avatar-lg">
+                  <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+                  <span class="user-nav-avatar-initial" style="display:none;">{{ auth()->user()->initial() }}</span>
+                </div>
+                <div class="user-dropdown-meta">
+                  <span class="user-dropdown-name">{{ auth()->user()->name }}</span>
+                  <span class="user-dropdown-email">{{ auth()->user()->email }}</span>
+                </div>
+              </div>
+              <div class="user-dropdown-divider"></div>
+              <a class="user-dropdown-item" href="{{ route('user.profile') }}" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Profile Saya</span>
+              </a>
+              <a class="user-dropdown-item" href="{{ route('user.orders') }}" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>Pesanan Saya</span>
+              </a>
+              @if(auth()->user()->managesStore($store->id))
+                <div class="user-dropdown-divider"></div>
+                <a class="user-dropdown-item user-dropdown-admin-item" href="{{ route('admin.dashboard', $store) }}" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                  <span>Kelola Toko</span>
+                </a>
+              @elseif(auth()->user()->isSuperadmin())
+                <div class="user-dropdown-divider"></div>
+                <a class="user-dropdown-item user-dropdown-admin-item" href="{{ route('superadmin.dashboard') }}" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>Panel Superadmin</span>
+                </a>
+              @endif
+              <div class="user-dropdown-divider"></div>
+              <form method="POST" action="{{ route('logout') }}" class="user-dropdown-logout-form">
+                @csrf
+                <button type="submit" class="user-dropdown-item user-dropdown-logout-btn" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <span>Keluar</span>
+                </button>
+              </form>
+            </div>
+          </div>
         @else
           <a class="btn btn-ghost btn-sm" href="{{ route('login') }}">Masuk</a>
         @endauth
@@ -80,12 +126,58 @@
         </button>
 
         @auth
-          @if(auth()->user()->isSuperadmin())
-            <a class="btn btn-ghost btn-sm" href="{{ route('superadmin.dashboard') }}">Superadmin</a>
-          @elseif(auth()->user()->stores()->exists())
-            <a class="btn btn-ghost btn-sm" href="{{ route('admin.dashboard', auth()->user()->stores()->first()) }}">Dashboard</a>
-          @endif
-          <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-primary btn-sm" type="submit">Keluar</button></form>
+          <div class="user-dropdown-wrap">
+            <button type="button" class="user-dropdown-btn" id="userMainMenuBtn" aria-expanded="false" aria-haspopup="true" onclick="toggleUserDropdown(event)" title="Akun {{ auth()->user()->name }}">
+              <img class="user-nav-avatar" src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+              <span class="user-nav-avatar-initial" style="display:none;">{{ auth()->user()->initial() }}</span>
+              <span class="user-nav-name">{{ auth()->user()->name }}</span>
+              <svg class="user-dropdown-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+            <div class="user-dropdown-menu" id="userMainDropdownMenu" role="menu">
+              <div class="user-dropdown-header">
+                <div class="user-dropdown-avatar-lg">
+                  <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+                  <span class="user-nav-avatar-initial" style="display:none;">{{ auth()->user()->initial() }}</span>
+                </div>
+                <div class="user-dropdown-meta">
+                  <span class="user-dropdown-name">{{ auth()->user()->name }}</span>
+                  <span class="user-dropdown-email">{{ auth()->user()->email }}</span>
+                </div>
+              </div>
+              <div class="user-dropdown-divider"></div>
+              <a class="user-dropdown-item" href="{{ route('user.profile') }}" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Profile Saya</span>
+              </a>
+              <a class="user-dropdown-item" href="{{ route('user.orders') }}" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>Pesanan Saya</span>
+              </a>
+              @if(auth()->user()->isSuperadmin())
+                <div class="user-dropdown-divider"></div>
+                <a class="user-dropdown-item user-dropdown-admin-item" href="{{ route('superadmin.dashboard') }}" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>Panel Superadmin</span>
+                </a>
+              @elseif(auth()->user()->stores()->exists())
+                <div class="user-dropdown-divider"></div>
+                <a class="user-dropdown-item user-dropdown-admin-item" href="{{ route('admin.dashboard', auth()->user()->stores()->first()) }}" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                  <span>Dashboard Toko</span>
+                </a>
+              @endif
+              <div class="user-dropdown-divider"></div>
+              <form method="POST" action="{{ route('logout') }}" class="user-dropdown-logout-form">
+                @csrf
+                <button type="submit" class="user-dropdown-item user-dropdown-logout-btn" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <span>Keluar</span>
+                </button>
+              </form>
+            </div>
+          </div>
         @else
           <a class="btn btn-ghost btn-sm" href="{{ route('login') }}">Masuk</a>
           <a class="btn btn-primary btn-sm" href="{{ route('register') }}">Daftar</a>
@@ -171,6 +263,44 @@
 </footer>
 @endif
 <script>
+    // User menu dropdown toggle
+    function toggleUserDropdown(e) {
+        e.stopPropagation();
+        var wrap = e.currentTarget.closest('.user-dropdown-wrap');
+        if (!wrap) return;
+        var wasOpen = wrap.classList.contains('is-open');
+        document.querySelectorAll('.user-dropdown-wrap.is-open').forEach(function(el) {
+            el.classList.remove('is-open');
+            var b = el.querySelector('.user-dropdown-btn');
+            if (b) b.setAttribute('aria-expanded', 'false');
+        });
+        if (!wasOpen) {
+            wrap.classList.add('is-open');
+            var btn = wrap.querySelector('.user-dropdown-btn');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-dropdown-wrap')) {
+            document.querySelectorAll('.user-dropdown-wrap.is-open').forEach(function(el) {
+                el.classList.remove('is-open');
+                var btn = el.querySelector('.user-dropdown-btn');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.user-dropdown-wrap.is-open').forEach(function(el) {
+                el.classList.remove('is-open');
+                var btn = el.querySelector('.user-dropdown-btn');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+
     // Refresh CSRF token every 20 minutes (before default 120-minute expiry)
     setInterval(function() {
         var tokenInput = document.querySelector('meta[name="csrf-token"]');

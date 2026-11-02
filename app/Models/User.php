@@ -84,4 +84,15 @@ class User extends Authenticatable
             ->wherePivot('is_primary', true)
             ->exists();
     }
+
+    public function avatarUrl(): string
+    {
+        $name = urlencode($this->name ?: 'User');
+        return "https://ui-avatars.com/api/?name={$name}&background=0f172a&color=ffffff&size=128&bold=true";
+    }
+
+    public function initial(): string
+    {
+        return mb_strtoupper(mb_substr($this->name ?: 'U', 0, 1));
+    }
 }
