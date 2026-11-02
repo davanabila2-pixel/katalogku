@@ -105,6 +105,11 @@ class Store extends Model
         return $this->hasMany(CartItem::class);
     }
 
+    public function links(): HasMany
+    {
+        return $this->hasMany(StoreLink::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

@@ -78,3 +78,4 @@ class StorePaginationTest extends TestCase
         $response->assertSee('15 produk', false);
     }
 }
+

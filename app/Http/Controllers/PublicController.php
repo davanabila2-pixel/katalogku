@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\StoreLink;
 use App\Models\StoreSlugHistory;
 use Illuminate\Http\Request;
 
@@ -182,6 +183,32 @@ class PublicController extends Controller
         ];
 
         return view('public.store-sold', compact('store', 'soldOrders', 'seo'));
+    }
+
+    public function storeLinks(string $storeSlug)
+    {
+        $found = $this->findStore($storeSlug);
+        if ($found instanceof \Illuminate\Http\RedirectResponse) {
+            return $found;
+        }
+        $store = $found;
+
+        $links = StoreLink::forStore($store->id)
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $seo = [
+            'title' => "Tautan: {$store->name}",
+            'description' => $store->slogan ?? "Kumpulan tautan resmi {$store->name} dalam satu halaman.",
+            'canonical' => route('store.links', $store->slug),
+            'image' => $store->logoUrl(),
+        ];
+
+        $hideAppbarFooter = true;
+
+        return view('public.links', compact('store', 'links', 'seo', 'hideAppbarFooter'));
     }
 
     public function productShow(string $storeSlug, string $productSlug)

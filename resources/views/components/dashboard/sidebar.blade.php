@@ -34,6 +34,7 @@
             <a class="{{ request()->routeIs('admin.activity') ? 'active' : '' }}" href="{{ route('admin.activity', $store) }}" title="Aktivitas"><x-dashboard.nav-icon name="activity" /><span class="nav-label">Aktivitas</span></a>
 
             <p class="sidebar-label">Akses Publik</p>
+            <a class="{{ request()->routeIs('admin.links.*') ? 'active' : '' }}" href="{{ route('admin.links.index', $store) }}" title="Tautan"><x-dashboard.nav-icon name="link" /><span class="nav-label">Tautan</span></a>
             <a href="{{ $store->url() }}" target="_blank" rel="noopener" title="Lihat Katalog"><x-dashboard.nav-icon name="external" /><span class="nav-label">Lihat Katalog</span></a>
         </nav>
     @else

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController as AdminStockController;
+use App\Http\Controllers\Admin\StoreLinkController;
 use App\Http\Controllers\Admin\StoreProfileController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BarcodeScanController;
@@ -70,6 +71,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('profil', [StoreProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profil', [StoreProfileController::class, 'update'])->name('profile.update');
 
+        // Halaman tautan (gaya linktree): daftar link yang dibagikan ke pelanggan.
+        Route::resource('links', StoreLinkController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::patch('links/{link}/move', [StoreLinkController::class, 'move'])->name('links.move');
+
         Route::resource('categories', AdminCategoryController::class)->except(['show']);
         Route::resource('products', AdminProductController::class)->except(['show']);
         Route::post('products/{product}/adjust', [AdminProductController::class, 'adjust'])->name('products.adjust');
@@ -112,6 +117,9 @@ Route::post('/{storeSlug}/orders', [OrderSubmissionController::class, 'store'])
 
 Route::get('/{slug}', [PublicController::class, 'storeShow'])
     ->where('slug', '[a-z0-9][a-z0-9-]*')->name('store.show');
+Route::get('/{storeSlug}/tautan', [PublicController::class, 'storeLinks'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
+    ->name('store.links');
 Route::get('/{storeSlug}/terjual', [PublicController::class, 'storeSold'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
     ->name('store.sold');

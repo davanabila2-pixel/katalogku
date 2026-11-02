@@ -12,7 +12,11 @@
   @isset($seo['image'])<meta property="og:image" content="{{ $seo['image'] }}">@endisset
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
-<body class="{{ isset($store) && $store ? 'is-store-page' : '' }}">
+@php
+  $shouldHideAppbarFooter = ($hideAppbarFooter ?? false) || View::hasSection('hide-appbar-footer');
+@endphp
+<body class="{{ isset($store) && $store ? 'is-store-page' : '' }} {{ $shouldHideAppbarFooter ? 'is-standalone-links' : '' }}">
+@if(! $shouldHideAppbarFooter)
 <header class="topbar {{ isset($store) && $store ? 'topbar-store' : '' }}">
   <div class="container topbar-inner">
     @if(isset($store) && $store)
@@ -90,11 +94,13 @@
     @endif
   </div>
 </header>
-<main class="container">
+@endif
+<main class="{{ $shouldHideAppbarFooter ? 'container-standalone' : 'container' }}">
   @if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
   @if($errors->any())<div class="alert alert-error"><ul style="margin:0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
   @yield('content')
 </main>
+@if(! $shouldHideAppbarFooter)
 <footer class="footer {{ isset($store) && $store ? 'footer-store' : '' }}">
   @if(isset($store) && $store)
     {{-- Footer Khusus Toko --}}
@@ -163,6 +169,7 @@
     </div>
   @endif
 </footer>
+@endif
 <script>
     // Refresh CSRF token every 20 minutes (before default 120-minute expiry)
     setInterval(function() {
