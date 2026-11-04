@@ -57,6 +57,11 @@ class Product extends Model
         return $this->hasMany(PurchaseBatchItem::class);
     }
 
+    public function purchaseBatchItems(): HasMany
+    {
+        return $this->hasMany(PurchaseBatchItem::class);
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class)->orderByDesc('created_at')->orderByDesc('id');

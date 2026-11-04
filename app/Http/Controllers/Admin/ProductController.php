@@ -9,6 +9,7 @@ use App\Http\Requests\StockAdjustRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\PurchaseBatch;
 use App\Models\Store;
 use App\Services\AuditLogger;
 use App\Services\BarcodeService;
@@ -25,10 +26,14 @@ class ProductController extends Controller
     {
         // Data produk dimuat oleh JavaScript lewat API JSON
         // (lihat App\Http\Controllers\Api\ProductController),
-        // Blade hanya menyiapkan kerangka + filter kategori.
+        // Blade hanya menyiapkan kerangka + filter kategori dan daftar batch.
         $categories = Category::forStore($store->id)->orderBy('name')->get();
+        $batches = PurchaseBatch::where('store_id', $store->id)
+            ->orderByDesc('purchase_date')
+            ->orderByDesc('id')
+            ->get();
 
-        return view('admin.products.index', compact('store', 'categories'));
+        return view('admin.products.index', compact('store', 'categories', 'batches'));
     }
 
     public function create(Store $store)

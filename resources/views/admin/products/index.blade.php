@@ -11,13 +11,13 @@
   <div class="toolbar-right">
     <x-search-input placeholder="Cari produk/SKU…" width="250px" />
     <span class="category-hierarchy" id="product-count"></span>
-    <button type="button" class="btn btn-ghost btn-sm" id="product-export-btn" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;display:inline-flex;align-items:center;gap:5px;color:#334155" title="Export produk ke CSV dengan pilihan kolom & checksum">
+    <button type="button" class="btn btn-ghost btn-sm" id="product-export-btn" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;display:inline-flex;align-items:center;gap:6px;color:#334155" title="Export produk ke Excel (.xlsx) per-kolom & checksum">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export CSV
+      Export Excel
     </button>
-    <button type="button" class="btn btn-ghost btn-sm" id="product-import-btn" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;display:inline-flex;align-items:center;gap:5px;color:#334155" title="Import produk dari file CSV per batch">
+    <button type="button" class="btn btn-ghost btn-sm" id="product-import-btn" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;display:inline-flex;align-items:center;gap:6px;color:#334155" title="Import produk dari file Excel (.xlsx) per batch">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Import CSV
+      Import Excel
     </button>
     <button class="btn btn-primary btn-sm" type="button" id="product-create">+ Tambah Produk</button>
   </div>
@@ -31,6 +31,14 @@
 </table>
 </div></div>
 <div id="product-pagination"></div>
+<script id="store-batches-data" type="application/json">{!! json_encode(($batches ?? collect())->map(function ($b) {
+    return [
+        'id' => $b->id,
+        'batch_code' => $b->batch_code,
+        'date' => $b->purchase_date ? $b->purchase_date->format('d/m/Y') : '',
+        'supplier' => $b->supplier_name,
+    ];
+})) !!}</script>
 <noscript><div class="alert alert-error" style="margin-top:16px">Daftar produk ini dimuat dengan JavaScript. Aktifkan JavaScript untuk melihat datanya.</div></noscript>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -392,6 +400,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var exportBtn = document.getElementById('product-export-btn');
     if (exportBtn && exportUrl) {
         exportBtn.addEventListener('click', function () {
+            var batchesEl = document.getElementById('store-batches-data');
+            var storeBatches = [];
+            if (batchesEl) {
+                try { storeBatches = JSON.parse(batchesEl.textContent); } catch (e) {}
+            }
+
+            var batchOptionsHtml = '<option value="">Semua Batch / Semua Produk</option>';
+            if (Array.isArray(storeBatches) && storeBatches.length > 0) {
+                storeBatches.forEach(function (b) {
+                    var desc = esc(b.batch_code) + (b.date ? ' (' + esc(b.date) + ')' : '') + (b.supplier ? ' - ' + esc(b.supplier) : '');
+                    batchOptionsHtml += '<option value="' + esc(b.id) + '">' + desc + '</option>';
+                });
+            }
+
             var columnsList = [
                 { id: 'name', label: 'Nama Produk', checked: true },
                 { id: 'slug', label: 'Slug URL', checked: true },
@@ -413,8 +435,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             colCheckboxesHtml += '</div>';
 
-            var exportBody = '<div class="modal-field">'
-                + '<p style="margin:0 0 10px 0;font-size:13px;color:#334155">Pilih kolom yang ingin diexport. Kolom <code>id</code> dan <code>checksum</code> otomatis disertakan agar hasil export bisa diedit dan diimport kembali per-kolom.</p>'
+            var exportBody = '<div class="modal-field" style="margin-bottom:14px">'
+                + '<label class="modal-label" style="font-weight:600;display:block;margin-bottom:4px">Pilihan Batch Pembelian (Opsional):</label>'
+                + '<select name="batch_id" class="select" style="width:100%">' + batchOptionsHtml + '</select>'
+                + '<small class="modal-help" style="color:#64748b;font-size:11px">Pilih jika hanya ingin mengekspor produk yang terdaftar pada batch pembelian tertentu, atau biarkan default untuk semua produk.</small>'
+                + '</div>'
+                + '<div class="modal-field">'
+                + '<label class="modal-label" style="font-weight:600;display:block;margin-bottom:4px">Pilihan Kolom Produk:</label>'
+                + '<p style="margin:0 0 10px 0;font-size:12px;color:#475569">Setiap kolom ditempatkan rapi per-kolom di file Excel (.xlsx). Kolom <code>id</code> dan <code>checksum</code> otomatis disertakan agar hasil export bisa diedit dan diimport kembali.</p>'
                 + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
                 + '<button type="button" class="btn btn-ghost btn-sm" id="btn-col-all" style="font-size:11px;padding:3px 10px;height:auto">Pilih Semua</button>'
                 + '<button type="button" class="btn btn-ghost btn-sm" id="btn-col-pricing" style="font-size:11px;padding:3px 10px;height:auto">Hanya Harga & Stok</button>'
@@ -424,9 +452,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 + '</div>';
 
             AdminUI.formModal({
-                title: 'Export Produk (Pilih Kolom & Checksum)',
+                title: 'Export Produk Excel (.xlsx)',
                 width: 'lg',
-                submitText: 'Unduh File CSV',
+                submitText: 'Unduh File Excel (.xlsx)',
                 body: exportBody,
                 onMount: function (form) {
                     var checks = form.querySelectorAll('input[name="cols"]');
@@ -464,10 +492,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         return Promise.reject(new Error('Pilih minimal satu kolom untuk diexport.'));
                     }
 
+                    var batchSelect = ui.form.querySelector('select[name="batch_id"]');
+                    var batchVal = batchSelect ? batchSelect.value : '';
+
                     var categorySelect = document.querySelector('#product-filters select[name="category_id"]');
                     var catVal = categorySelect ? categorySelect.value : '';
 
                     var targetUrl = exportUrl + '?columns=' + encodeURIComponent(selected.join(','));
+                    if (batchVal) {
+                        targetUrl += '&batch_id=' + encodeURIComponent(batchVal);
+                    }
                     if (catVal) {
                         targetUrl += '&category_id=' + encodeURIComponent(catVal);
                     }
@@ -483,50 +517,69 @@ document.addEventListener('DOMContentLoaded', function () {
     var importBtn = document.getElementById('product-import-btn');
     if (importBtn && importUrl) {
         importBtn.addEventListener('click', function () {
+            var batchesEl = document.getElementById('store-batches-data');
+            var storeBatches = [];
+            if (batchesEl) {
+                try { storeBatches = JSON.parse(batchesEl.textContent); } catch (e) {}
+            }
+
+            var batchOptionsHtml = '<option value="">-- Tidak dikaitkan ke batch tertentu --</option>';
+            if (Array.isArray(storeBatches) && storeBatches.length > 0) {
+                storeBatches.forEach(function (b) {
+                    var desc = esc(b.batch_code) + (b.date ? ' (' + esc(b.date) + ')' : '') + (b.supplier ? ' - ' + esc(b.supplier) : '');
+                    batchOptionsHtml += '<option value="' + esc(b.id) + '">' + desc + '</option>';
+                });
+            }
+
             var bodyHtml = '<div class="modal-field">'
-                + '<label class="modal-label">Pilih File CSV Produk <span style="color:var(--critical)">*</span></label>'
-                + '<input type="file" name="file" accept=".csv,text/csv,text/plain" required style="display:block;width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;background:#f8fafc">'
-                + '<small class="modal-help">Format file harus berupa CSV (.csv atau .txt). Kolom bisa lengkap atau sebagian saja (per-kolom).</small>'
+                + '<label class="modal-label" style="font-weight:600;display:block;margin-bottom:4px">Pilih File Excel (.xlsx) atau CSV Produk <span style="color:var(--critical)">*</span></label>'
+                + '<input type="file" name="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required style="display:block;width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;background:#f8fafc">'
+                + '<small class="modal-help" style="color:#64748b;font-size:12px">Mendukung format native Excel (.xlsx) per-kolom (bukan perkotak pemisah) atau CSV. Kolom bisa lengkap atau sebagian saja.</small>'
                 + '</div>'
                 + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">'
                 + '<div class="modal-field">'
-                + '<label class="modal-label">Ukuran Batch Transaksi</label>'
+                + '<label class="modal-label" style="font-weight:600;display:block;margin-bottom:4px">Kaitkan ke Batch Pembelian (Opsional)</label>'
+                + '<select name="batch_id" class="select" style="width:100%">' + batchOptionsHtml + '</select>'
+                + '<small class="modal-help" style="color:#64748b;font-size:11px">Opsional: Kaitkan penambahan stok/mutasi ke batch pembelian tertentu.</small>'
+                + '</div>'
+                + '<div class="modal-field">'
+                + '<label class="modal-label" style="font-weight:600;display:block;margin-bottom:4px">Ukuran Batch Transaksi</label>'
                 + '<select name="batch_size" class="select" style="width:100%">'
                 + '<option value="50">50 baris per batch</option>'
                 + '<option value="100" selected>100 baris per batch (Standar)</option>'
                 + '<option value="200">200 baris per batch</option>'
                 + '<option value="500">500 baris per batch</option>'
                 + '</select>'
-                + '<small class="modal-help">Tiap batch disimpan dalam transaksi database terpisah.</small>'
+                + '<small class="modal-help" style="color:#64748b;font-size:11px">Tiap batch disimpan dalam transaksi database terpisah.</small>'
                 + '</div>'
-                + '<div class="modal-field">'
-                + '<label class="modal-label">Mode Simulasi</label>'
-                + '<label class="modal-check" style="margin-top:8px"><input type="checkbox" name="dry_run" value="1"> <span><strong>Dry Run</strong> (validasi tanpa simpan ke database)</span></label>'
                 + '</div>'
+                + '<div class="modal-field" style="margin-top:12px">'
+                + '<label class="modal-check"><input type="checkbox" name="dry_run" value="1"> <span><strong>Mode Simulasi (Dry Run)</strong> — validasi baris tanpa mengubah data database</span></label>'
                 + '</div>'
                 + '<div class="modal-subcard" style="margin-top:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.5">'
-                + '<strong style="display:block;margin-bottom:6px;color:#1e293b">💡 Panduan Import Per-Kolom & Checksum:</strong>'
+                + '<strong style="display:block;margin-bottom:6px;color:#1e293b">💡 Panduan Import Native Excel (.xlsx) & Checksum:</strong>'
                 + '<ul style="margin:0 0 10px 18px;padding:0;color:#475569">'
-                + '<li><strong>Per-Kolom Fleksibel:</strong> File CSV boleh hanya memuat kolom yang ingin diubah (contoh: hanya <code>id</code> dan <code>harga_jual</code> untuk update harga, atau <code>id</code> dan <code>stok</code>). Kolom lain tidak akan tertimpa.</li>'
-                + '<li><strong>Verifikasi by Checksum:</strong> Sistem otomatis mendeteksi checksum baris. Baris yang nilainya tidak diedit akan dilewati (<em>unchanged</em>) tanpa membebani database.</li>'
+                + '<li><strong>Format Rapi Per-Kolom:</strong> Format .xlsx menempatkan tiap data di sel kolomnya masing-masing (Kolom A, B, C, dst.), tidak digabung dalam 1 kotak teks berpemisah koma.</li>'
+                + '<li><strong>Pilihan Dropdown Batch:</strong> Anda dapat memilih batch pembelian untuk mengaitkan penambahan stok secara otomatis.</li>'
+                + '<li><strong>Per-Kolom Fleksibel:</strong> File Excel boleh hanya memuat kolom tertentu yang ingin diubah (misal: hanya <code>id</code> dan <code>selling_price</code>). Kolom lain tetap aman tidak tertimpa.</li>'
+                + '<li><strong>Verifikasi by Checksum:</strong> Baris yang datanya tidak berubah dilewati otomatis (<em>unchanged</em>) agar proses cepat dan hemat database.</li>'
                 + '<li><strong>Tambah Produk Baru:</strong> Tambahkan baris baru dengan mengosongkan kolom <code>id</code> dan mengisi nama produk.</li>'
-                + '<li><strong>Kategori & Stok:</strong> Kategori baru otomatis dibuat jika belum ada. Perubahan stok otomatis tercatat di kartu stok.</li>'
                 + '</ul>'
                 + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:8px;border-top:1px dashed #cbd5e1">'
-                + '<a href="' + esc(templateUrl) + '" class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px;height:auto;border:1px solid #cbd5e1;background:#fff;border-radius:6px;text-decoration:none">📥 Unduh Template CSV</a>'
-                + '<span style="color:#64748b;font-size:11px">Artisan CLI: <code>php artisan products:import &lt;file&gt;</code></span>'
+                + '<a href="' + esc(templateUrl) + '" class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px;height:auto;border:1px solid #cbd5e1;background:#fff;border-radius:6px;text-decoration:none">📥 Unduh Template Excel (.xlsx)</a>'
+                + '<span style="color:#64748b;font-size:11px">Artisan CLI: <code>php artisan products:import &lt;file.xlsx&gt;</code></span>'
                 + '</div>'
                 + '</div>';
 
             AdminUI.formModal({
-                title: 'Import Produk (Batch CSV)',
+                title: 'Import Produk Excel (.xlsx / CSV)',
                 width: 'lg',
                 submitText: 'Unggah & Proses Import',
                 body: bodyHtml,
                 submit: function (values, ui) {
                     var fileInput = ui.form.querySelector('input[type="file"]');
                     if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-                        return Promise.reject(new Error('Silakan pilih file CSV terlebih dahulu.'));
+                        return Promise.reject(new Error('Silakan pilih file Excel (.xlsx) atau CSV terlebih dahulu.'));
                     }
 
                     var formData = new FormData(ui.form);
