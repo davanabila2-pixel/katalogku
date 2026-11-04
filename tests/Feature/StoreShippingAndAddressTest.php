@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\StoreCustomerAddress;
 use App\Models\StoreCustomerProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -264,6 +265,160 @@ class StoreShippingAndAddressTest extends TestCase
         $this->assertEquals('40112', $profile->postal_code);
         $this->assertEquals(-6.9214, (float) $profile->latitude);
         $this->assertEquals(107.6105, (float) $profile->longitude);
+    }
+
+    public function test_customer_can_manage_multiple_addresses_and_set_default(): void
+    {
+        [$admin, $store, $product] = $this->createStoreWithAdmin();
+
+        $customer = User::factory()->create([
+            'role' => 'user',
+            'name' => 'Dian Sastro',
+        ]);
+
+        // 1. Tambah alamat pertama (Rumah)
+        $resp1 = $this->actingAs($customer)->post(route('store.address.store', $store->slug), [
+            'label' => 'Rumah',
+            'recipient_name' => 'Dian Sastro',
+            'phone' => '081234567890',
+            'address' => 'Jl. Gandaria I No. 15, Kebayoran Baru',
+            'postal_code' => '12130',
+            'city' => 'Jakarta Selatan',
+            'district' => 'Kebayoran Baru',
+            'latitude' => -6.2482,
+            'longitude' => 106.7915,
+            'notes' => 'Pagar abu-abu',
+            'is_default' => 1,
+        ]);
+        $resp1->assertRedirect(route('store.address', $store->slug));
+
+        // 2. Tambah alamat kedua (Kantor)
+        $resp2 = $this->actingAs($customer)->post(route('store.address.store', $store->slug), [
+            'label' => 'Kantor',
+            'recipient_name' => 'Dian Sastro (Kantor)',
+            'phone' => '081987654321',
+            'address' => 'Gedung Menara Sudirman Lt. 18, Jl. Jend. Sudirman Kav. 60',
+            'postal_code' => '12190',
+            'city' => 'Jakarta Selatan',
+            'district' => 'Kebayoran Baru',
+            'latitude' => -6.2235,
+            'longitude' => 106.8091,
+            'notes' => 'Titip di resepsionis lobi',
+            'is_default' => 0,
+        ]);
+        $resp2->assertRedirect(route('store.address', $store->slug));
+
+        $addresses = StoreCustomerAddress::where('store_id', $store->id)
+            ->where('user_id', $customer->id)
+            ->get();
+        $this->assertCount(2, $addresses);
+
+        $addrHome = $addresses->firstWhere('label', 'Rumah');
+        $addrOffice = $addresses->firstWhere('label', 'Kantor');
+        $this->assertTrue($addrHome->is_default);
+        $this->assertFalse($addrOffice->is_default);
+
+        // Halaman Alamat Saya menampilkan kedua alamat
+        $pageResp = $this->actingAs($customer)->get(route('store.address', $store->slug));
+        $pageResp->assertOk();
+        $pageResp->assertSee('Rumah');
+        $pageResp->assertSee('Kantor');
+        $pageResp->assertSee('Jl. Gandaria I No. 15');
+        $pageResp->assertSee('Gedung Menara Sudirman');
+
+        // 3. Set Kantor sebagai alamat utama
+        $setDefaultResp = $this->actingAs($customer)->post(route('store.address.set_default', [$store->slug, $addrOffice->id]));
+        $setDefaultResp->assertRedirect(route('store.address', $store->slug));
+
+        $addrOffice->refresh();
+        $addrHome->refresh();
+        $this->assertTrue($addrOffice->is_default);
+        $this->assertFalse($addrHome->is_default);
+
+        // 4. Ubah detail alamat
+        $updateResp = $this->actingAs($customer)->put(route('store.address.update_item', [$store->slug, $addrOffice->id]), [
+            'label' => 'Kantor Pusat',
+            'recipient_name' => 'Dian Sastro (HQ)',
+            'phone' => '081987654321',
+            'address' => 'Gedung Menara Sudirman Lt. 20, Jl. Jend. Sudirman Kav. 60',
+            'postal_code' => '12190',
+            'city' => 'Jakarta Selatan',
+            'district' => 'Kebayoran Baru',
+            'latitude' => -6.2235,
+            'longitude' => 106.8091,
+            'notes' => 'Lantai 20 unit B',
+        ]);
+        $updateResp->assertRedirect(route('store.address', $store->slug));
+        $addrOffice->refresh();
+        $this->assertEquals('Kantor Pusat', $addrOffice->label);
+        $this->assertEquals('Dian Sastro (HQ)', $addrOffice->recipient_name);
+
+        // 5. Hapus alamat
+        $delResp = $this->actingAs($customer)->delete(route('store.address.destroy', [$store->slug, $addrHome->id]));
+        $delResp->assertRedirect(route('store.address', $store->slug));
+        $this->assertDatabaseMissing('store_customer_addresses', ['id' => $addrHome->id]);
+    }
+
+    public function test_checkout_page_auto_populates_from_saved_addresses_and_renders_address_selector(): void
+    {
+        [$admin, $store, $product] = $this->createStoreWithAdmin();
+
+        $customer = User::factory()->create([
+            'role' => 'user',
+            'name' => 'Reza Rahadian',
+        ]);
+
+        // Simpan 2 alamat pelanggan
+        $addr1 = StoreCustomerAddress::create([
+            'store_id' => $store->id,
+            'user_id' => $customer->id,
+            'label' => 'Apartemen',
+            'recipient_name' => 'Reza Rahadian',
+            'phone' => '081299998888',
+            'address' => 'Apartemen Sudirman Tower A No. 1205',
+            'postal_code' => '10220',
+            'city' => 'Jakarta Pusat',
+            'district' => 'Tanah Abang',
+            'latitude' => -6.2088,
+            'longitude' => 106.8225,
+            'notes' => 'Titip di concierge',
+            'is_default' => true,
+        ]);
+
+        $addr2 = StoreCustomerAddress::create([
+            'store_id' => $store->id,
+            'user_id' => $customer->id,
+            'label' => 'Studio',
+            'recipient_name' => 'Reza Rahadian (Studio)',
+            'phone' => '081277776666',
+            'address' => 'Jl. Kemang Raya No. 45',
+            'postal_code' => '12730',
+            'city' => 'Jakarta Selatan',
+            'district' => 'Mampang Prapatan',
+            'latitude' => -6.2625,
+            'longitude' => 106.8155,
+            'notes' => 'Pintu gerbang hitam',
+            'is_default' => false,
+        ]);
+
+        // Akses checkout langsung produk
+        $checkoutUrl = route('store.checkout', $store->slug) . "?product_id={$product->id}&quantity=1";
+        $response = $this->actingAs($customer)->get($checkoutUrl);
+
+        $response->assertOk();
+        // Memastikan alamat default otomatis terisi di form
+        $response->assertSee('Apartemen Sudirman Tower A No. 1205');
+        $response->assertSee('10220');
+        $response->assertSee('Reza Rahadian');
+        $response->assertSee('081299998888');
+        $response->assertSee('-6.2088');
+        $response->assertSee('106.8225');
+
+        // Memastikan selector multiple addresses ter-render
+        $response->assertSee('Pilih Alamat Lain (2)');
+        $response->assertSee('checkoutAddressModal');
+        $response->assertSee('Studio');
+        $response->assertSee('Jl. Kemang Raya No. 45');
     }
 }
 

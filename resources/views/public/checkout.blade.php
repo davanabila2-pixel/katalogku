@@ -23,10 +23,16 @@
   @php
     $flashSuccess = session('order_success');
     $hasItems = ! empty($items) && count($items) > 0;
-    $defaultName = old('buyer_name', $customerProfile?->name ?? (auth()->check() ? auth()->user()->name : ''));
-    $defaultPhone = old('buyer_phone', $customerProfile?->phone ?? '');
-    $defaultAddress = old('buyer_address', $customerProfile?->address ?? '');
-    $defaultNotes = old('buyer_notes', $customerProfile?->notes ?? '');
+    $savedAddresses = $savedAddresses ?? collect();
+    $selectedAddress = $savedAddresses->firstWhere('is_default', true) ?? $savedAddresses->first();
+    $defaultName = old('buyer_name', $selectedAddress?->recipient_name ?? $customerProfile?->name ?? (auth()->check() ? auth()->user()->name : ''));
+    $defaultPhone = old('buyer_phone', $selectedAddress?->phone ?? $customerProfile?->phone ?? '');
+    $defaultAddress = old('buyer_address', $selectedAddress?->address ?? $customerProfile?->address ?? '');
+    $defaultPostal = old('buyer_postal_code', $selectedAddress?->postal_code ?? $customerProfile?->postal_code ?? '');
+    $defaultLat = old('buyer_latitude', $selectedAddress?->latitude ?? $customerProfile?->latitude ?? '');
+    $defaultLng = old('buyer_longitude', $selectedAddress?->longitude ?? $customerProfile?->longitude ?? '');
+    $defaultNotes = old('buyer_notes', $selectedAddress?->notes ?? $customerProfile?->notes ?? '');
+    $hasCoords = !empty($defaultLat) && !empty($defaultLng);
   @endphp
 
   {{-- State 1: Flash Success (Non-AJAX Redirect Fallback) --}}
@@ -132,6 +138,45 @@
               </div>
 
               <div class="checkout-card-body">
+                @if($savedAddresses->isNotEmpty())
+                  {{-- Banner / Kartu Alamat Pengiriman Terpilih (Multiple Addresses) --}}
+                  <div class="saved-address-active-card" id="savedAddressActiveCard" style="background:#f8fafc;border:1.5px solid var(--primary, #0066ff);border-radius:14px;padding:16px 18px;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span class="badge" id="activeAddressLabelBadge" style="background:#0f172a;color:#fff;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:0.5px;">
+                          {{ $selectedAddress->label ?: 'Alamat Pengiriman' }}
+                        </span>
+                        <span class="badge" id="activeAddressDefaultBadge" style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;{{ $selectedAddress->is_default ? '' : 'display:none;' }}">
+                          ⭐ Utama
+                        </span>
+                        <strong id="activeAddressRecipientText" style="font-size:14px;color:var(--ink-deep);">{{ $selectedAddress->recipient_name }}</strong>
+                        <span id="activeAddressPhoneText" style="font-size:13px;color:#64748b;">({{ $selectedAddress->phone ?: '-' }})</span>
+                      </div>
+
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <button type="button" class="btn-change-address" onclick="openAddressSelectionModal()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r-full);background:#fff;border:1.5px solid var(--primary, #0066ff);color:var(--primary, #0066ff);font-size:12.5px;font-weight:700;cursor:pointer;transition:all .15s ease;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                          <span>Pilih Alamat Lain ({{ $savedAddresses->count() }})</span>
+                        </button>
+                        <a href="{{ route('store.address', $store->slug) }}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--r-full);background:#f1f5f9;border:1px solid #cbd5e1;color:#334155;font-size:12px;font-weight:600;text-decoration:none;">
+                          <span>⚙️ Kelola</span>
+                        </a>
+                      </div>
+                    </div>
+
+                    <div id="activeAddressFullText" style="font-size:13.5px;color:#334155;line-height:1.5;margin-bottom:6px;">
+                      {{ $selectedAddress->address }}
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:#64748b;">
+                      <span id="activeAddressCityPostal">📍 {{ $selectedAddress->district ? $selectedAddress->district . ', ' : '' }}{{ $selectedAddress->city ? $selectedAddress->city . ' ' : '' }}{{ $selectedAddress->postal_code }}</span>
+                      <span id="activeAddressCoordsBadge" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;{{ $hasCoords ? '' : 'display:none;' }}">
+                        ✓ Titik GPS Aktif
+                      </span>
+                    </div>
+                  </div>
+                @endif
+
                 <div class="checkout-field-row">
                   <div class="checkout-form-group">
                     <label for="checkoutBuyerName" class="checkout-label">Nama Lengkap <span class="required-star">*</span></label>
@@ -158,12 +203,12 @@
                 <div class="checkout-field-row" style="margin-top:12px;">
                   <div class="checkout-form-group">
                     <label for="checkoutBuyerPostalCode" class="checkout-label">Kode Pos <span style="font-size:11px;font-weight:normal;color:#0284c7;">(Penting untuk Cek Ongkir)</span></label>
-                    <input type="text" id="checkoutBuyerPostalCode" name="buyer_postal_code" class="checkout-input" placeholder="cth: 40115" value="{{ $customerProfile->postal_code ?? '' }}" maxlength="10">
+                    <input type="text" id="checkoutBuyerPostalCode" name="buyer_postal_code" class="checkout-input" placeholder="cth: 40115" value="{{ $defaultPostal }}" maxlength="10">
                   </div>
                   <div class="checkout-form-group">
                     <label class="checkout-label">Koordinat GPS / Titik Peta</label>
                     <div style="display:flex;align-items:center;gap:8px;">
-                      <input type="text" id="checkoutBuyerCoordsDisplay" class="checkout-input" readonly placeholder="Belum ada koordinat" value="{{ ($customerProfile && $customerProfile->hasCoordinates()) ? "{$customerProfile->latitude}, {$customerProfile->longitude}" : '' }}" style="background:#f8fafc;font-family:monospace;font-size:12px;">
+                      <input type="text" id="checkoutBuyerCoordsDisplay" class="checkout-input" readonly placeholder="Belum ada koordinat" value="{{ $hasCoords ? "{$defaultLat}, {$defaultLng}" : '' }}" style="background:#f8fafc;font-family:monospace;font-size:12px;">
                       @auth
                         <a href="{{ route('store.address', $store->slug) }}" class="btn-address-link" target="_blank" title="Atur peta di Alamat Saya" style="white-space:nowrap;padding:10px 12px;border-radius:10px;background:#f1f5f9;color:#334155;text-decoration:none;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid #cbd5e1;">
                           <span>🗺️ Alamat Saya</span>
@@ -172,8 +217,8 @@
                     </div>
                   </div>
                 </div>
-                <input type="hidden" id="checkoutBuyerLat" name="buyer_latitude" value="{{ $customerProfile->latitude ?? '' }}">
-                <input type="hidden" id="checkoutBuyerLng" name="buyer_longitude" value="{{ $customerProfile->longitude ?? '' }}">
+                <input type="hidden" id="checkoutBuyerLat" name="buyer_latitude" value="{{ $defaultLat }}">
+                <input type="hidden" id="checkoutBuyerLng" name="buyer_longitude" value="{{ $defaultLng }}">
 
                 <div class="checkout-form-group" style="margin-top:12px;margin-bottom:0;">
                   <label for="checkoutBuyerNotes" class="checkout-label">Catatan Tambahan (Opsional)</label>
@@ -482,6 +527,49 @@
   @endif
 </div>
 
+{{-- Modal Pemilihan Alamat Pengiriman (Multiple Addresses) --}}
+@if(!empty($savedAddresses) && $savedAddresses->count() > 1)
+  <div id="checkoutAddressModal" class="checkout-modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div class="checkout-modal-card" style="background:#fff;border-radius:20px;max-width:540px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;">
+      <div style="padding:18px 24px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--ink-deep);">Pilih Alamat Pengiriman</h3>
+          <div style="font-size:12.5px;color:#64748b;margin-top:2px;">Gunakan salah satu alamat tersimpan Anda di {{ $store->name }}</div>
+        </div>
+        <button type="button" onclick="closeAddressSelectionModal()" style="border:none;background:none;font-size:22px;color:#94a3b8;cursor:pointer;padding:4px 8px;border-radius:8px;line-height:1;">&times;</button>
+      </div>
+
+      <div style="padding:20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+        @foreach($savedAddresses as $addr)
+          <label class="address-pick-option" onclick="selectSavedAddress({{ json_encode($addr) }})" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1.5px solid {{ ($selectedAddress && $selectedAddress->id === $addr->id) ? 'var(--primary, #0066ff)' : '#e2e8f0' }};border-radius:12px;background:{{ ($selectedAddress && $selectedAddress->id === $addr->id) ? '#eff6ff' : '#fff' }};cursor:pointer;transition:all .15s ease;">
+            <input type="radio" name="selected_saved_address_radio" value="{{ $addr->id }}" {{ ($selectedAddress && $selectedAddress->id === $addr->id) ? 'checked' : '' }} style="margin-top:3px;accent-color:var(--primary, #0066ff);">
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
+                <span class="badge" style="background:#0f172a;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;">{{ $addr->label ?: 'Alamat' }}</span>
+                @if($addr->is_default)
+                  <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;">⭐ Utama</span>
+                @endif
+                <strong style="font-size:13.5px;color:var(--ink-deep);">{{ $addr->recipient_name }}</strong>
+                <span style="font-size:12.5px;color:#64748b;">({{ $addr->phone }})</span>
+              </div>
+              <div style="font-size:13px;color:#334155;line-height:1.45;margin-bottom:4px;">{{ $addr->address }}</div>
+              <div style="font-size:12px;color:#64748b;">📍 {{ $addr->district ? $addr->district . ', ' : '' }}{{ $addr->city ? $addr->city . ' ' : '' }}{{ $addr->postal_code }}</div>
+            </div>
+          </label>
+        @endforeach
+      </div>
+
+      <div style="padding:14px 24px;border-top:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;">
+        <a href="{{ route('store.address', $store->slug) }}" target="_blank" style="font-size:13px;font-weight:600;color:var(--primary, #0066ff);text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Tambah / Kelola Alamat di Tab Baru</span>
+        </a>
+        <button type="button" class="btn btn-secondary" onclick="closeAddressSelectionModal()" style="padding:7px 16px;border-radius:var(--r-full);font-size:12.5px;">Tutup</button>
+      </div>
+    </div>
+  </div>
+@endif
+
 <style>
 .courier-option-card {
   display: flex;
@@ -536,6 +624,87 @@
 
   let selectedShippingFee = 0;
   let availableRates = [];
+
+  // Multi-Address Picker Handlers
+  function openAddressSelectionModal() {
+    const modal = document.getElementById('checkoutAddressModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeAddressSelectionModal() {
+    const modal = document.getElementById('checkoutAddressModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function selectSavedAddress(addr) {
+    if (!addr) return;
+
+    // 1. Perbarui nilai input form checkout
+    const nameInput = document.getElementById('checkoutBuyerName');
+    const phoneInput = document.getElementById('checkoutBuyerPhone');
+    const addressInput = document.getElementById('checkoutBuyerAddress');
+    const postalInput = document.getElementById('checkoutBuyerPostalCode');
+    const latInput = document.getElementById('checkoutBuyerLat');
+    const lngInput = document.getElementById('checkoutBuyerLng');
+    const coordsDisplay = document.getElementById('checkoutBuyerCoordsDisplay');
+    const notesInput = document.getElementById('checkoutBuyerNotes');
+
+    if (nameInput) nameInput.value = addr.recipient_name || '';
+    if (phoneInput) phoneInput.value = addr.phone || '';
+    if (addressInput) addressInput.value = addr.address || '';
+    if (postalInput) postalInput.value = addr.postal_code || '';
+    if (latInput) latInput.value = addr.latitude || '';
+    if (lngInput) lngInput.value = addr.longitude || '';
+    if (notesInput && addr.notes) notesInput.value = addr.notes;
+
+    if (coordsDisplay) {
+      if (addr.latitude && addr.longitude) {
+        coordsDisplay.value = `${Number(addr.latitude).toFixed(5)}, ${Number(addr.longitude).toFixed(5)}`;
+      } else {
+        coordsDisplay.value = 'Belum ada koordinat';
+      }
+    }
+
+    // 2. Perbarui kartu ringkasan alamat terpilih di atas form
+    const labelBadge = document.getElementById('activeAddressLabelBadge');
+    const defaultBadge = document.getElementById('activeAddressDefaultBadge');
+    const recipientText = document.getElementById('activeAddressRecipientText');
+    const phoneText = document.getElementById('activeAddressPhoneText');
+    const fullText = document.getElementById('activeAddressFullText');
+    const cityPostal = document.getElementById('activeAddressCityPostal');
+    const coordsBadge = document.getElementById('activeAddressCoordsBadge');
+
+    if (labelBadge) labelBadge.textContent = addr.label || 'Alamat Pengiriman';
+    if (defaultBadge) defaultBadge.style.display = addr.is_default ? 'inline-block' : 'none';
+    if (recipientText) recipientText.textContent = addr.recipient_name || '';
+    if (phoneText) phoneText.textContent = `(${addr.phone || '-'})`;
+    if (fullText) fullText.textContent = addr.address || '';
+
+    const districtCity = (addr.district ? addr.district + ', ' : '') + (addr.city ? addr.city + ' ' : '') + (addr.postal_code || '');
+    if (cityPostal) cityPostal.textContent = `📍 ${districtCity}`;
+
+    if (coordsBadge) {
+      coordsBadge.style.display = (addr.latitude && addr.longitude) ? 'inline-flex' : 'none';
+    }
+
+    // 3. Sinkronkan radio selection di dalam modal
+    document.querySelectorAll('input[name="selected_saved_address_radio"]').forEach(r => {
+      r.checked = (r.value == addr.id);
+    });
+
+    closeAddressSelectionModal();
+
+    // 4. Picu ulang kalkulasi ongkos kirim Biteship dengan alamat baru
+    if (typeof calculateShippingRates === 'function') {
+      calculateShippingRates();
+    }
+  }
 
   function formatRupiah(num) {
     return 'Rp ' + Number(num).toLocaleString('id-ID');

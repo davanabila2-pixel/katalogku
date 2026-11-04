@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\StoreCustomerAddress;
 use App\Services\CartService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -152,7 +153,63 @@ class CartController extends Controller
             }
         }
 
-        $customerProfile = auth()->check() ? auth()->user()->customerProfileFor($store->id) : null;
+        $user = auth()->user();
+        $customerProfile = $user ? $user->customerProfileFor($store->id) : null;
+        $savedAddresses = collect();
+
+        if ($user) {
+            $savedAddresses = StoreCustomerAddress::where('store_id', $store->id)
+                ->where('user_id', $user->id)
+                ->orderByDesc('is_default')
+                ->latest()
+                ->get();
+
+            // Jika belum ada di store_customer_addresses untuk toko ini:
+            if ($savedAddresses->isEmpty()) {
+                if ($customerProfile && ! empty($customerProfile->address)) {
+                    $newAddr = StoreCustomerAddress::create([
+                        'store_id' => $store->id,
+                        'user_id' => $user->id,
+                        'label' => 'Alamat Utama',
+                        'recipient_name' => $customerProfile->name ?: $user->name,
+                        'phone' => $customerProfile->phone ?: '',
+                        'address' => $customerProfile->address,
+                        'postal_code' => $customerProfile->postal_code,
+                        'city' => $customerProfile->city,
+                        'district' => $customerProfile->district,
+                        'latitude' => $customerProfile->latitude,
+                        'longitude' => $customerProfile->longitude,
+                        'notes' => $customerProfile->notes,
+                        'is_default' => true,
+                    ]);
+                    $savedAddresses = collect([$newAddr]);
+                } else {
+                    $anyAddress = StoreCustomerAddress::where('user_id', $user->id)
+                        ->orderByDesc('is_default')
+                        ->latest()
+                        ->first();
+                    if ($anyAddress) {
+                        $newAddr = StoreCustomerAddress::create([
+                            'store_id' => $store->id,
+                            'user_id' => $user->id,
+                            'label' => $anyAddress->label ?: 'Alamat Utama',
+                            'recipient_name' => $anyAddress->recipient_name ?: $user->name,
+                            'phone' => $anyAddress->phone ?: '',
+                            'address' => $anyAddress->address,
+                            'postal_code' => $anyAddress->postal_code,
+                            'city' => $anyAddress->city,
+                            'district' => $anyAddress->district,
+                            'latitude' => $anyAddress->latitude,
+                            'longitude' => $anyAddress->longitude,
+                            'notes' => $anyAddress->notes,
+                            'is_default' => true,
+                        ]);
+                        $savedAddresses = collect([$newAddr]);
+                    }
+                }
+            }
+        }
+
         $googleMapsApiKey = config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY', ''));
 
         $seo = [
@@ -171,6 +228,7 @@ class CartController extends Controller
             'directProduct',
             'hasOutOfStock',
             'customerProfile',
+            'savedAddresses',
             'googleMapsApiKey',
             'seo'
         ));
@@ -278,6 +336,29 @@ class CartController extends Controller
                         'longitude' => $data['buyer_longitude'] ?? null,
                     ], fn ($val) => ! is_null($val))
                 );
+
+                $existingAddr = StoreCustomerAddress::where('store_id', $store->id)
+                    ->where('user_id', $userId)
+                    ->where('address', $data['buyer_address'])
+                    ->first();
+                if (! $existingAddr) {
+                    $hasAny = StoreCustomerAddress::where('store_id', $store->id)
+                        ->where('user_id', $userId)
+                        ->exists();
+                    StoreCustomerAddress::create([
+                        'store_id' => $store->id,
+                        'user_id' => $userId,
+                        'label' => $hasAny ? 'Alamat Pengiriman' : 'Alamat Utama',
+                        'recipient_name' => $data['buyer_name'],
+                        'phone' => $data['buyer_phone'],
+                        'address' => $data['buyer_address'],
+                        'postal_code' => $data['buyer_postal_code'] ?? null,
+                        'latitude' => $data['buyer_latitude'] ?? null,
+                        'longitude' => $data['buyer_longitude'] ?? null,
+                        'notes' => $data['buyer_notes'] ?? null,
+                        'is_default' => ! $hasAny,
+                    ]);
+                }
             }
 
             $order->items()->create([
@@ -448,6 +529,29 @@ class CartController extends Controller
                     'longitude' => $data['buyer_longitude'] ?? null,
                 ], fn ($val) => ! is_null($val))
             );
+
+            $existingAddr = StoreCustomerAddress::where('store_id', $store->id)
+                ->where('user_id', $userId)
+                ->where('address', $data['buyer_address'])
+                ->first();
+            if (! $existingAddr) {
+                $hasAny = StoreCustomerAddress::where('store_id', $store->id)
+                    ->where('user_id', $userId)
+                    ->exists();
+                StoreCustomerAddress::create([
+                    'store_id' => $store->id,
+                    'user_id' => $userId,
+                    'label' => $hasAny ? 'Alamat Pengiriman' : 'Alamat Utama',
+                    'recipient_name' => $data['buyer_name'],
+                    'phone' => $data['buyer_phone'],
+                    'address' => $data['buyer_address'],
+                    'postal_code' => $data['buyer_postal_code'] ?? null,
+                    'latitude' => $data['buyer_latitude'] ?? null,
+                    'longitude' => $data['buyer_longitude'] ?? null,
+                    'notes' => $data['buyer_notes'] ?? null,
+                    'is_default' => ! $hasAny,
+                ]);
+            }
         }
 
         // Simpan rincian item pesanan & kurangi stok produk

@@ -151,8 +151,16 @@ Route::middleware('auth')->group(function () {
         ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.profile.update');
     Route::get('/{storeSlug}/alamat', [StoreCustomerController::class, 'address'])
         ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.address');
+    Route::post('/{storeSlug}/alamat', [StoreCustomerController::class, 'storeAddress'])
+        ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.address.store');
     Route::put('/{storeSlug}/alamat', [StoreCustomerController::class, 'updateAddress'])
         ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.address.update');
+    Route::put('/{storeSlug}/alamat/{addressId}', [StoreCustomerController::class, 'updateAddressItem'])
+        ->where(['storeSlug' => '[a-z0-9][a-z0-9-]*', 'addressId' => '[0-9]+'])->name('store.address.update_item');
+    Route::delete('/{storeSlug}/alamat/{addressId}', [StoreCustomerController::class, 'deleteAddress'])
+        ->where(['storeSlug' => '[a-z0-9][a-z0-9-]*', 'addressId' => '[0-9]+'])->name('store.address.destroy');
+    Route::post('/{storeSlug}/alamat/{addressId}/set-default', [StoreCustomerController::class, 'setDefaultAddress'])
+        ->where(['storeSlug' => '[a-z0-9][a-z0-9-]*', 'addressId' => '[0-9]+'])->name('store.address.set_default');
     Route::get('/{storeSlug}/pesanan', [StoreCustomerController::class, 'orders'])
         ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.orders');
 });

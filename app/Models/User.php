@@ -68,6 +68,22 @@ class User extends Authenticatable
         return $this->customerProfiles()->where('store_id', $storeId)->first();
     }
 
+    public function customerAddresses(): HasMany
+    {
+        return $this->hasMany(StoreCustomerAddress::class);
+    }
+
+    public function customerAddressesFor(int $storeId)
+    {
+        return $this->customerAddresses()->where('store_id', $storeId)->orderByDesc('is_default')->latest();
+    }
+
+    public function defaultCustomerAddress(int $storeId): ?StoreCustomerAddress
+    {
+        return $this->customerAddressesFor($storeId)->where('is_default', true)->first()
+            ?: $this->customerAddressesFor($storeId)->first();
+    }
+
     public function isSuperadmin(): bool
     {
         return $this->role === 'superadmin';

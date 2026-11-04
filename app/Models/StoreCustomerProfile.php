@@ -54,6 +54,20 @@ class StoreCustomerProfile extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function addresses()
+    {
+        return StoreCustomerAddress::where('store_id', $this->store_id)
+            ->where('user_id', $this->user_id)
+            ->orderByDesc('is_default')
+            ->latest();
+    }
+
+    public function defaultAddress(): ?StoreCustomerAddress
+    {
+        return $this->addresses()->where('is_default', true)->first()
+            ?: $this->addresses()->first();
+    }
+
     public function initial(): string
     {
         return mb_strtoupper(mb_substr($this->name ?: 'P', 0, 1));
