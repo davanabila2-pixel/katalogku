@@ -84,7 +84,25 @@ class ShippingController extends Controller
             }
         }
 
-        $result = $biteship->checkRates($origin, $destination, $items);
+        // Master ekspedisi: hanya ekspedisi yang diaktifkan admin toko yang ditawarkan.
+        $activeCouriers = $store->activeCourierCodes();
+        if (empty($activeCouriers)) {
+            return response()->json([
+                'success' => true,
+                'message' => "Toko {$store->name} belum mengaktifkan ekspedisi. Silakan pilih Ambil Sendiri / koordinasi ongkir via WhatsApp.",
+                'rates' => [],
+            ]);
+        }
+
+        $result = $biteship->checkRates($origin, $destination, $items, implode(',', $activeCouriers));
+
+        if (! empty($result['rates'])) {
+            $result['rates'] = array_values(array_filter(
+                $result['rates'],
+                fn ($rate) => in_array(strtolower($rate['company'] ?? ''), $activeCouriers, true)
+                    || in_array(strtolower($rate['courier_code'] ?? ''), $activeCouriers, true)
+            ));
+        }
 
         return response()->json($result);
     }

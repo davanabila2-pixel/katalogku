@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Services\QrisService;
 use App\Services\SlugService;
+use App\Support\Couriers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,6 +23,8 @@ class Store extends Model
         'banner_path',
         'qr_image_path',
         'qr_account_name',
+        'qris_payload',
+        'active_couriers',
         'contact_information',
         'address',
         'postal_code',
@@ -36,6 +40,7 @@ class Store extends Model
     {
         return [
             'hide_component_products' => 'boolean',
+            'active_couriers' => 'array',
             'latitude' => 'float',
             'longitude' => 'float',
         ];
@@ -199,6 +204,62 @@ class Store extends Model
     public function hasStaticQr(): bool
     {
         return ! empty($this->qr_image_path);
+    }
+
+    /**
+     * Apakah QRIS toko bisa dibuat dinamis (membawa nominal otomatis).
+     */
+    public function hasDynamicQris(): bool
+    {
+        return ! empty($this->qris_payload);
+    }
+
+    /**
+     * URL gambar QRIS dinamis bernominal untuk total pembayaran tertentu.
+     */
+    public function dynamicQrisUrl(float $amount): ?string
+    {
+        if (! $this->hasDynamicQris() || $amount <= 0) {
+            return null;
+        }
+
+        return route('store.qris', [$this->slug, 'amount' => (int) round($amount)]);
+    }
+
+    public function dynamicQrisPayload(float $amount): ?string
+    {
+        if (! $this->hasDynamicQris()) {
+            return null;
+        }
+
+        return app(QrisService::class)->makeDynamic($this->qris_payload, $amount);
+    }
+
+    /**
+     * Kode ekspedisi yang aktif di toko ini. NULL di database = semua ekspedisi aktif.
+     *
+     * @return string[]
+     */
+    public function activeCourierCodes(): array
+    {
+        if (is_null($this->active_couriers)) {
+            return Couriers::codes();
+        }
+
+        return Couriers::sanitize($this->active_couriers);
+    }
+
+    public function isCourierActive(string $codeOrName): bool
+    {
+        $needle = strtolower(trim($codeOrName));
+
+        foreach ($this->activeCourierCodes() as $code) {
+            if ($needle === $code || $needle === strtolower(Couriers::all()[$code]['name'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function cleanPhoneNumber(): ?string

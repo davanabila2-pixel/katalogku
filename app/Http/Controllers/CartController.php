@@ -258,6 +258,25 @@ class CartController extends Controller
             'quantity' => ['nullable', 'integer', 'min:1'],
         ]);
 
+        // Master ekspedisi: tolak ekspedisi yang sudah dinonaktifkan admin toko.
+        if (! empty($data['shipping_courier'])) {
+            $chosen = strtolower($data['shipping_courier']);
+            $blocked = false;
+            foreach (\App\Support\Couriers::all() as $code => $info) {
+                $matches = $chosen === $code || $chosen === strtolower($info['name']) || str_contains($chosen, $code);
+                if ($matches && ! in_array($code, $store->activeCourierCodes(), true)) {
+                    $blocked = true;
+                }
+            }
+            if ($blocked) {
+                $msg = 'Ekspedisi yang dipilih tidak aktif di toko ini. Silakan pilih ekspedisi lain.';
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                return back()->withInput()->withErrors(['checkout' => $msg]);
+            }
+        }
+
         $userId = auth()->id();
         $sessionId = $request->session()->getId();
 
@@ -388,8 +407,8 @@ class CartController extends Controller
             $shippingText = '';
             if (! empty($data['shipping_courier'])) {
                 $courierUpper = strtoupper($data['shipping_courier']);
-                $serv = $data['shipping_service'] ? " ({$data['shipping_service']})" : '';
-                $etd = $data['shipping_etd'] ? " [Estimasi {$data['shipping_etd']}]" : '';
+                $serv = ($data['shipping_service'] ?? null) ? " ({$data['shipping_service']})" : '';
+                $etd = ($data['shipping_etd'] ?? null) ? " [Estimasi {$data['shipping_etd']}]" : '';
                 $ongkirFormatted = 'Rp ' . number_format($shippingFee, 0, ',', '.');
                 $shippingText = "🚚 *Pengiriman*: {$courierUpper}{$serv}{$etd}\n"
                     . "📦 *Ongkir*: {$ongkirFormatted}\n";
@@ -406,7 +425,7 @@ class CartController extends Controller
                 . "👤 *Nama*: {$data['buyer_name']}\n"
                 . "📱 *No. WA*: {$data['buyer_phone']}\n"
                 . "📍 *Alamat*: {$data['buyer_address']}\n"
-                . ($data['buyer_notes'] ? "📝 *Catatan*: {$data['buyer_notes']}\n\n" : "\n")
+                . (($data['buyer_notes'] ?? null) ? "📝 *Catatan*: {$data['buyer_notes']}\n\n" : "\n")
                 . ($hasProof
                     ? "Bukti transfer QRIS telah saya unggah di sistem. Mohon dicek dan diproses ya kak. Terima kasih!"
                     : "Mohon info instruksi pembayaran / rekening untuk memproses pesanan ini. Terima kasih!");
@@ -584,8 +603,8 @@ class CartController extends Controller
         $shippingCartText = '';
         if (! empty($data['shipping_courier'])) {
             $courierUpper = strtoupper($data['shipping_courier']);
-            $serv = $data['shipping_service'] ? " ({$data['shipping_service']})" : '';
-            $etd = $data['shipping_etd'] ? " [Estimasi {$data['shipping_etd']}]" : '';
+            $serv = ($data['shipping_service'] ?? null) ? " ({$data['shipping_service']})" : '';
+            $etd = ($data['shipping_etd'] ?? null) ? " [Estimasi {$data['shipping_etd']}]" : '';
             $ongkirFormatted = 'Rp ' . number_format($shippingFee, 0, ',', '.');
             $shippingCartText = "💰 *Subtotal Produk*: Rp " . number_format($itemsSubtotal, 0, ',', '.') . "\n"
                 . "🚚 *Pengiriman*: {$courierUpper}{$serv}{$etd}\n"
@@ -612,7 +631,7 @@ class CartController extends Controller
             . "👤 *Nama*: {$data['buyer_name']}\n"
             . "📱 *No. WA*: {$data['buyer_phone']}\n"
             . "📍 *Alamat*: {$data['buyer_address']}\n"
-            . ($data['buyer_notes'] ? "📝 *Catatan*: {$data['buyer_notes']}\n\n" : "\n")
+            . (($data['buyer_notes'] ?? null) ? "📝 *Catatan*: {$data['buyer_notes']}\n\n" : "\n")
             . ($hasProof
                 ? "Bukti transfer QRIS telah saya unggah di sistem. Mohon dicek dan diproses ya kak. Terima kasih!"
                 : "Mohon info instruksi pembayaran / rekening untuk memproses pesanan keranjang ini. Terima kasih!");

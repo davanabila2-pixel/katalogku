@@ -130,6 +130,10 @@ Route::post('/{storeSlug}/orders', [OrderSubmissionController::class, 'store'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
     ->name('store.orders.store');
 
+Route::get('/{storeSlug}/qris', [\App\Http\Controllers\StoreQrisController::class, 'show'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
+    ->name('store.qris');
+
 Route::post('/{storeSlug}/shipping/rates', [ShippingController::class, 'rates'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')
     ->name('store.shipping.rates');

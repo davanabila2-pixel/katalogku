@@ -236,6 +236,14 @@
                     @if($store->postal_code)
                       <div style="font-size:12px;color:#64748b;">Kode Pos Asal: {{ $store->postal_code }}</div>
                     @endif
+                    <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                      Ekspedisi aktif:
+                      @forelse($store->activeCourierCodes() as $cc)
+                        <span class="courier-badge-tag {{ $cc }}" style="margin-left:2px;">{{ \App\Support\Couriers::all()[$cc]['name'] }}</span>
+                      @empty
+                        <em>belum ada (Ambil Sendiri / manual via WhatsApp)</em>
+                      @endforelse
+                    </div>
                   </div>
 
                   <button type="button" class="btn-check-rates" id="btnCheckShippingRates" onclick="calculateShippingRates()" style="padding:9px 18px;border-radius:10px;background:var(--brand-coral);color:#fff;border:none;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:opacity 0.2s;">
@@ -279,8 +287,13 @@
                   <div class="checkout-qr-layout">
                     <div class="checkout-qr-box">
                       <div class="qr-image-frame">
-                        <img src="{{ $store->qrImageUrl() }}" alt="QRIS {{ $store->name }}" class="qr-code-img">
+                        <img id="checkoutQrImage" @if($store->hasDynamicQris()) data-dynamic="1" data-base-url="{{ route('store.qris', $store->slug) }}" @endif src="{{ $store->hasDynamicQris() ? $store->dynamicQrisUrl((float) $totalPrice) : $store->qrImageUrl() }}" alt="QRIS {{ $store->name }}" class="qr-code-img">
                       </div>
+                      @if($store->hasDynamicQris())
+                        <div id="checkoutQrDynamicNote" style="margin-top:8px;font-size:11.5px;font-weight:700;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:5px 9px;text-align:center;">
+                          ✓ QR sudah berisi nominal, langsung scan &amp; bayar
+                        </div>
+                      @endif
                       <div class="qr-account-badge">{{ $store->qr_account_name ?: ($store->name . ' QRIS') }}</div>
                     </div>
 
@@ -289,7 +302,7 @@
                         <div class="qr-amount-caption">Total Pembayaran Pas:</div>
                         <div class="qr-amount-row">
                           <strong class="qr-amount-num" id="checkoutDisplayTotalAmount">Rp {{ number_format($totalPrice, 0, ',', '.') }}</strong>
-                          <button type="button" class="btn-copy-amount" onclick="copyAmount('{{ (int) $totalPrice }}', this)" title="Salin nominal total">
+                          <button type="button" class="btn-copy-amount" onclick="copyAmount(String(window.currentGrandTotal || {{ (int) $totalPrice }}), this)" title="Salin nominal total">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                             <span>Salin Nominal</span>
                           </button>
@@ -637,6 +650,14 @@
     if (grandTotalSummary) grandTotalSummary.textContent = formatted;
     if (qrDisplay) qrDisplay.textContent = formatted;
     if (qrInstr) qrInstr.textContent = formatted;
+
+    window.currentGrandTotal = Math.round(grandTotal);
+
+    // QRIS dinamis: muat ulang QR dengan nominal total terbaru (termasuk ongkir).
+    const qrImg = document.getElementById('checkoutQrImage');
+    if (qrImg && qrImg.dataset.dynamic === '1' && grandTotal > 0) {
+      qrImg.src = qrImg.dataset.baseUrl + '?amount=' + Math.round(grandTotal);
+    }
   }
 
   // Direct Buy Qty Adjuster
@@ -908,7 +929,14 @@
         statusBox.style.background = '#f0fdf4';
         statusBox.style.color = '#166534';
         statusBox.style.border = '1px solid #bbf7d0';
-        statusBox.textContent = `✓ Ditemukan ${availableRates.length} opsi kurir Biteship. Silakan pilih layanan kurir yang diinginkan di bawah.`;
+        if (availableRates.length === 0) {
+          statusBox.style.background = '#fffbeb';
+          statusBox.style.color = '#92400e';
+          statusBox.style.border = '1px solid #fde68a';
+          statusBox.textContent = data.message || 'Belum ada opsi kurir yang tersedia untuk tujuan ini. Silakan pilih Ambil Sendiri / koordinasi via WhatsApp.';
+        } else {
+          statusBox.textContent = `✓ Ditemukan ${availableRates.length} opsi kurir. Silakan pilih layanan kurir yang diinginkan di bawah.`;
+        }
       }
 
     } catch (err) {

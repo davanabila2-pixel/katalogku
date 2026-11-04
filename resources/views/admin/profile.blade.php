@@ -469,6 +469,7 @@
         <button type="button" class="profile-tab" role="tab" id="tab-url" aria-controls="panel-url" aria-selected="false" tabindex="-1">Alamat URL</button>
         <button type="button" class="profile-tab" role="tab" id="tab-kontak" aria-controls="panel-kontak" aria-selected="false" tabindex="-1">Kontak</button>
         <button type="button" class="profile-tab" role="tab" id="tab-pembayaran" aria-controls="panel-pembayaran" aria-selected="false" tabindex="-1">Pembayaran / QR</button>
+        <button type="button" class="profile-tab" role="tab" id="tab-ekspedisi" aria-controls="panel-ekspedisi" aria-selected="false" tabindex="-1">Ekspedisi</button>
         <button type="button" class="profile-tab" role="tab" id="tab-katalog" aria-controls="panel-katalog" aria-selected="false" tabindex="-1">Katalog</button>
       </div>
 
@@ -781,6 +782,43 @@
             <input class="input-styled" type="text" id="input-store-qr-name" name="qr_account_name" value="{{ old('qr_account_name', $store->qr_account_name) }}" placeholder="cth: QRIS Toko Byvii / BCA 1234567890 a/n Byvii Official">
             <div class="field-hint-text">Ditampilkan di atas QR code pada saat pelanggan melakukan checkout agar mereka dapat memverifikasi nama penerima transfer.</div>
           </div>
+
+          <div class="field" style="margin-top:20px;margin-bottom:0">
+            <div class="field-label-group">
+              <label for="input-store-qris-payload">QRIS Dinamis (Nominal Otomatis)</label>
+              @if($store->hasDynamicQris())
+                <span style="font-size:12px;color:#065f46;font-weight:700">✓ Aktif — QR checkout otomatis berisi total</span>
+              @else
+                <span style="font-size:12px;color:#92400e;font-weight:700">Belum aktif — QR checkout tanpa nominal</span>
+              @endif
+            </div>
+            <textarea class="input-styled" id="input-store-qris-payload" name="qris_payload" rows="3" style="font-family:monospace;font-size:12px" placeholder="Teks QRIS (diawali 000201...) — terisi otomatis saat gambar QR diunggah">{{ old('qris_payload', $store->qris_payload) }}</textarea>
+            @error('qris_payload')<div class="field-hint-text" style="color:var(--critical)">{{ $message }}</div>@enderror
+            <div class="field-hint-text">Saat gambar QRIS diunggah, sistem membaca teks QR-nya otomatis. Bila gagal terbaca, tempel teks QRIS statis toko di sini. Dengan ini pembeli yang scan langsung melihat total nominal (barang + ongkir).</div>
+          </div>
+        </div>
+
+        <!-- Panel: Master Ekspedisi -->
+        <div class="tab-panel" role="tabpanel" id="panel-ekspedisi" aria-labelledby="tab-ekspedisi" hidden>
+          <div class="section-intro">
+            <h3>Master Ekspedisi</h3>
+            <p>Pilih ekspedisi yang aktif untuk toko ini. Hanya ekspedisi aktif yang muncul pada cek ongkir saat pelanggan checkout. "Ambil Sendiri / Ongkir Manual" selalu tersedia.</p>
+          </div>
+
+          <input type="hidden" name="couriers_submitted" value="1">
+          @php($activeCodes = old('active_couriers', $store->activeCourierCodes()))
+          @foreach(\App\Support\Couriers::all() as $code => $courier)
+            <label class="feature-toggle-row">
+              <div class="custom-switch">
+                <input type="checkbox" name="active_couriers[]" value="{{ $code }}" {{ in_array($code, $activeCodes, true) ? 'checked' : '' }}>
+                <span class="switch-slider"></span>
+              </div>
+              <div>
+                <strong style="font-size:14px;color:#0f172a;display:block">{{ $courier['name'] }}</strong>
+                <p style="font-size:13px;color:#64748b;margin:4px 0 0;line-height:1.5">{{ $courier['note'] }}</p>
+              </div>
+            </label>
+          @endforeach
         </div>
 
         <!-- Panel 5: Katalog & Visibilitas -->
