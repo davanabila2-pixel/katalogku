@@ -414,9 +414,9 @@ class StoreShippingAndAddressTest extends TestCase
         $response->assertSee('-6.2088');
         $response->assertSee('106.8225');
 
-        // Memastikan selector multiple addresses ter-render
-        $response->assertSee('Pilih Alamat Lain (2)');
-        $response->assertSee('checkoutAddressModal');
+        // Memastikan dropdown multiple addresses ter-render
+        $response->assertSee('checkoutAddressSelect');
+        $response->assertSee('Pilih Alamat Pengiriman Saya');
         $response->assertSee('Studio');
         $response->assertSee('Jl. Kemang Raya No. 45');
     }
