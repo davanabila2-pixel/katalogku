@@ -13,17 +13,25 @@ class ProductImportExportController extends Controller
 {
     /**
      * Export data produk toko ke format CSV (bisa langsung dibuka di Excel & diimport kembali).
+     * Mendukung pilihan kolom tertentu dan dilengkapi checksum integritas per baris.
      */
     public function export(Request $request, Store $store, ProductImportExportService $service): StreamedResponse
     {
         $this->authorize('viewAny', [\App\Models\Product::class, $store->id]);
 
         $categoryId = $request->query('category_id') ? (int) $request->query('category_id') : null;
+
+        $columns = null;
+        if ($request->filled('columns')) {
+            $rawCols = $request->query('columns');
+            $columns = is_array($rawCols) ? $rawCols : explode(',', (string) $rawCols);
+        }
+
         $filename = sprintf('products_%s_%s.csv', $store->slug, date('Ymd_His'));
 
-        return response()->streamDownload(function () use ($store, $categoryId, $service) {
+        return response()->streamDownload(function () use ($store, $categoryId, $columns, $service) {
             $handle = fopen('php://output', 'w');
-            $service->exportToStream($store, $handle, $categoryId);
+            $service->exportToStream($store, $handle, $categoryId, $columns);
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -32,7 +40,7 @@ class ProductImportExportController extends Controller
     }
 
     /**
-     * Download template CSV kosong dengan baris contoh untuk panduan pengisian.
+     * Download template CSV kosong dengan baris contoh dan checksum untuk panduan pengisian.
      */
     public function template(Store $store): StreamedResponse
     {
@@ -45,8 +53,9 @@ class ProductImportExportController extends Controller
             // BOM UTF-8
             fputs($handle, "\xEF\xBB\xBF");
             // Header
-            fputcsv($handle, ProductImportExportService::HEADERS);
-            // Contoh 1: Tambah produk baru (kolom 'id' dikosongkan)
+            fputcsv($handle, ProductImportExportService::DEFAULT_EXPORT_COLUMNS);
+
+            // Contoh 1: Tambah produk baru (kolom 'id' dikosongkan, checksum otomatis dihitung saat import)
             fputcsv($handle, [
                 '', // id kosong = tambah produk baru
                 'Baju Kaos Katun Polos',
@@ -60,8 +69,24 @@ class ProductImportExportController extends Controller
                 '0',
                 '0',
                 'Bahan katun combed 30s adem dan nyaman dipakai.',
+                '', // checksum kosong untuk produk baru
             ]);
+
             // Contoh 2: Update produk yang sudah ada (kolom 'id' diisi ID produk asli hasil export)
+            $sampleRow2 = [
+                'name' => 'Kemeja Flannel Lengan Panjang (Edit)',
+                'sku' => 'KMG-002',
+                'category' => 'Kemeja',
+                'selling_price' => 125000,
+                'weight' => 350,
+                'stock' => 25,
+                'status' => 'active',
+                'is_bundle' => '0',
+                'is_hidden' => '0',
+                'description' => 'Kemeja flannel motif kotak-kotak.',
+            ];
+            $sampleChecksum = ProductImportExportService::calculateChecksum($sampleRow2);
+
             fputcsv($handle, [
                 '1', // id diisi = update produk dengan ID 1
                 'Kemeja Flannel Lengan Panjang (Edit)',
@@ -75,6 +100,7 @@ class ProductImportExportController extends Controller
                 '0',
                 '0',
                 'Kemeja flannel motif kotak-kotak.',
+                $sampleChecksum,
             ]);
             fclose($handle);
         }, $filename, [
@@ -85,6 +111,7 @@ class ProductImportExportController extends Controller
 
     /**
      * Import produk dari file CSV yang diunggah pengguna via form web per batch.
+     * Mendukung import parsial per-kolom dan deteksi perubahan otomatis via checksum.
      */
     public function import(Request $request, Store $store, ProductImportExportService $service)
     {
@@ -115,10 +142,11 @@ class ProductImportExportController extends Controller
 
             $mode = $dryRun ? 'Simulasi Import (Dry-Run)' : 'Import Produk Selesai';
             $msg = sprintf(
-                '%s: %d produk baru ditambahkan, %d produk diperbarui dari total %d baris (diproses dalam %d batch).',
+                '%s: %d baru dibuat, %d diperbarui, %d tidak berubah (checksum cocok) dari total %d baris (%d batch).',
                 $mode,
                 $result['created_count'],
                 $result['updated_count'],
+                $result['unchanged_count'],
                 $result['total_rows'],
                 $result['batches_count']
             );

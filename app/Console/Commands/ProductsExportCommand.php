@@ -17,14 +17,15 @@ class ProductsExportCommand extends Command
     protected $signature = 'products:export
                             {--store= : ID atau Slug toko yang akan diexport}
                             {--path= : Path file tujuan export (misal: storage/app/products.csv)}
-                            {--category= : Filter berdasarkan ID atau nama kategori}';
+                            {--category= : Filter berdasarkan ID atau nama kategori}
+                            {--columns= : Pilih kolom yang ingin diexport, pisahkan koma (contoh: name,selling_price,stock)}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Export data produk toko ke format file CSV untuk edit atau penambahan per batch';
+    protected $description = 'Export data produk toko ke format file CSV (per-kolom & dengan checksum integritas baris)';
 
     public function handle(ProductImportExportService $service): int
     {
@@ -60,7 +61,14 @@ class ProductsExportCommand extends Command
             $this->line("🏷️  Filter Kategori: <comment>{$category->name}</comment>");
         }
 
-        // 3. Tentukan Path File Output
+        // 3. Kolom yang dipilih
+        $columnsInput = $this->option('columns');
+        $columns = null;
+        if ($columnsInput) {
+            $columns = array_filter(array_map('trim', explode(',', $columnsInput)));
+        }
+
+        // 4. Tentukan Path File Output
         $outputPath = $this->option('path');
         if (! $outputPath) {
             $dir = storage_path('app/exports');
@@ -76,7 +84,7 @@ class ProductsExportCommand extends Command
             }
         }
 
-        // 4. Hitung total produk untuk progress bar
+        // 5. Hitung total produk untuk progress bar
         $totalQuery = $store->products();
         if ($categoryId) {
             $totalQuery->where('category_id', $categoryId);
@@ -96,6 +104,7 @@ class ProductsExportCommand extends Command
             $store,
             $outputPath,
             $categoryId,
+            $columns,
             function ($product, $currentCount) use ($progressBar) {
                 $progressBar->setMessage(substr($product->name, 0, 30));
                 $progressBar->advance();
@@ -105,22 +114,26 @@ class ProductsExportCommand extends Command
         $progressBar->finish();
         $this->newLine(2);
 
+        $activeColumns = $service->resolveExportColumns($columns);
+
         $this->info("✅ Berhasil mengexport {$count} produk!");
         $this->table(
             ['Informasi', 'Detail'],
             [
                 ['Toko', "{$store->name} (ID: {$store->id})"],
                 ['Total Baris Produk', $count],
+                ['Kolom Terpilih (' . count($activeColumns) . ')', implode(', ', $activeColumns)],
                 ['Lokasi File', $outputPath],
                 ['Ukuran File', file_exists($outputPath) ? number_format(filesize($outputPath) / 1024, 2) . ' KB' : '0 KB'],
             ]
         );
 
         $this->newLine();
-        $this->line('💡 <comment>Tips Import:</comment>');
-        $this->line("   Untuk mengedit produk, ubah nilai di file CSV (jangan ubah kolom 'id').");
-        $this->line("   Untuk menambah produk baru, tambahkan baris baru dengan mengosongkan kolom 'id'.");
-        $this->line("   Jalankan perintah berikut untuk mengimport kembali per batch:");
+        $this->line('💡 <comment>Tips Import & Checksum:</comment>');
+        $this->line("   • Kolom 'checksum' otomatis disertakan untuk mendeteksi perubahan baris.");
+        $this->line("   • Jika nilai suatu baris tidak Anda ubah, checksum mendeteksinya dan sistem tidak akan menimpa data.");
+        $this->line("   • Anda bisa mengimport file CSV yang hanya memuat sebagian kolom (per-kolom).");
+        $this->line("   • Jalankan perintah berikut untuk mengimport kembali per batch:");
         $this->line("   <info>php artisan products:import \"{$outputPath}\" --store={$store->id} --batch-size=100</info>");
 
         return self::SUCCESS;
@@ -160,4 +173,3 @@ class ProductsExportCommand extends Command
         return $stores->firstWhere('id', $selectedId);
     }
 }
-

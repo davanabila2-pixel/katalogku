@@ -12,9 +12,28 @@ use Illuminate\Support\Facades\Log;
 class ProductImportExportService
 {
     /**
-     * Header CSV standar untuk export dan import produk.
+     * Definisi kolom-kolom produk yang dapat diexport/diimport beserta labelnya.
      */
-    public const HEADERS = [
+    public const AVAILABLE_COLUMNS = [
+        'id' => 'ID Produk',
+        'name' => 'Nama Produk',
+        'slug' => 'Slug URL',
+        'sku' => 'SKU',
+        'category' => 'Kategori',
+        'selling_price' => 'Harga Jual',
+        'weight' => 'Berat (Gram)',
+        'stock' => 'Stok',
+        'status' => 'Status',
+        'is_bundle' => 'Setelan',
+        'is_hidden' => 'Tersembunyi',
+        'description' => 'Deskripsi',
+        'checksum' => 'Checksum',
+    ];
+
+    /**
+     * Urutan kolom default untuk export lengkap.
+     */
+    public const DEFAULT_EXPORT_COLUMNS = [
         'id',
         'name',
         'slug',
@@ -27,20 +46,154 @@ class ProductImportExportService
         'is_bundle',
         'is_hidden',
         'description',
+        'checksum',
     ];
 
     /**
-     * Export produk milik toko ke stream resource (misal php://output atau file pointer).
+     * Backward-compatibility alias HEADERS.
+     */
+    public const HEADERS = self::DEFAULT_EXPORT_COLUMNS;
+
+    /**
+     * Hitung checksum deterministik (12-char hex berawalan ck_) dari nilai-nilai atribut.
+     * Mengabaikan 'id', 'slug', dan 'checksum' agar checksum murni merepresentasikan isi data produk.
+     */
+    public static function calculateChecksum(array $attributes): string
+    {
+        $normalized = [];
+        foreach ($attributes as $key => $val) {
+            if (in_array($key, ['id', 'slug', 'checksum'], true)) {
+                continue;
+            }
+
+            if ($val === null || $val === '') {
+                $normalized[$key] = '';
+            } elseif (is_bool($val)) {
+                $normalized[$key] = $val ? '1' : '0';
+            } elseif (is_numeric($val)) {
+                $normalized[$key] = (string) (int) round((float) $val);
+            } else {
+                $normalized[$key] = trim((string) $val);
+            }
+        }
+
+        ksort($normalized);
+        $json = json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return 'ck_' . substr(hash('sha256', (string) $json), 0, 12);
+    }
+
+    /**
+     * Resolusi daftar kolom yang diminta menjadi nama kolom standar yang valid.
+     */
+    public function resolveExportColumns(?array $requested): array
+    {
+        if (empty($requested)) {
+            return self::DEFAULT_EXPORT_COLUMNS;
+        }
+
+        $resolved = [];
+        foreach ($requested as $col) {
+            $clean = mb_strtolower(trim((string) $col));
+            $clean = str_replace([' ', '-', '_', '.'], '', $clean);
+
+            foreach (self::AVAILABLE_COLUMNS as $k => $label) {
+                $canonical = str_replace([' ', '-', '_', '.'], '', mb_strtolower($k));
+                $labelClean = str_replace([' ', '-', '_', '.'], '', mb_strtolower($label));
+                if ($clean === $canonical || $clean === $labelClean) {
+                    $resolved[] = $k;
+                    break;
+                }
+            }
+        }
+
+        $resolved = array_unique($resolved);
+        if (empty($resolved)) {
+            return self::DEFAULT_EXPORT_COLUMNS;
+        }
+
+        // Kolom 'id' diletakkan di paling depan untuk identifikasi baris
+        if (! in_array('id', $resolved, true)) {
+            array_unshift($resolved, 'id');
+        }
+
+        // Kolom 'checksum' selalu disertakan di paling akhir untuk verifikasi integritas
+        if (! in_array('checksum', $resolved, true)) {
+            $resolved[] = 'checksum';
+        }
+
+        return array_values($resolved);
+    }
+
+    /**
+     * Ekstrak nilai atribut produk untuk subset kolom tertentu.
+     */
+    public function extractProductValuesForSubset(Product $product, array $keys): array
+    {
+        $values = [];
+        foreach ($keys as $key) {
+            switch ($key) {
+                case 'id':
+                    $values['id'] = $product->id;
+                    break;
+                case 'name':
+                    $values['name'] = $product->name;
+                    break;
+                case 'slug':
+                    $values['slug'] = $product->slug;
+                    break;
+                case 'sku':
+                    $values['sku'] = $product->sku ?? '';
+                    break;
+                case 'category':
+                    $values['category'] = $product->category ? $product->category->name : '';
+                    break;
+                case 'selling_price':
+                    $values['selling_price'] = (int) round((float) $product->selling_price);
+                    break;
+                case 'weight':
+                    $values['weight'] = (int) ($product->weight ?? 500);
+                    break;
+                case 'stock':
+                    $values['stock'] = (int) $product->stock;
+                    break;
+                case 'status':
+                    $values['status'] = $product->status;
+                    break;
+                case 'is_bundle':
+                    $values['is_bundle'] = $product->is_bundle ? '1' : '0';
+                    break;
+                case 'is_hidden':
+                    $values['is_hidden'] = $product->is_hidden_from_catalog ? '1' : '0';
+                    break;
+                case 'description':
+                    $values['description'] = $product->description ?? '';
+                    break;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * Export produk milik toko ke stream resource dengan pilihan kolom dan checksum.
      *
      * @param resource $stream
      */
-    public function exportToStream(Store $store, $stream, ?int $categoryId = null, ?callable $onRowExported = null): int
-    {
+    public function exportToStream(
+        Store $store,
+        $stream,
+        ?int $categoryId = null,
+        ?array $columns = null,
+        ?callable $onRowExported = null
+    ): int {
+        $targetColumns = $this->resolveExportColumns($columns);
+
         // Tulis UTF-8 BOM agar langsung terbaca rapi di Microsoft Excel
         fputs($stream, "\xEF\xBB\xBF");
 
         // Tulis baris header
-        fputcsv($stream, self::HEADERS);
+        fputcsv($stream, $targetColumns);
 
         $query = Product::forStore($store->id)
             ->with('category')
@@ -51,23 +204,17 @@ class ProductImportExportService
         }
 
         $exportedCount = 0;
+        $allAttributeKeys = array_keys(self::AVAILABLE_COLUMNS);
 
-        $query->chunk(200, function ($products) use ($stream, &$exportedCount, $onRowExported) {
+        $query->chunk(200, function ($products) use ($stream, $targetColumns, $allAttributeKeys, &$exportedCount, $onRowExported) {
             foreach ($products as $p) {
-                $row = [
-                    $p->id,
-                    $p->name,
-                    $p->slug,
-                    $p->sku ?? '',
-                    $p->category ? $p->category->name : '',
-                    (int) round((float) $p->selling_price),
-                    (int) ($p->weight ?? 500),
-                    (int) $p->stock,
-                    $p->status,
-                    $p->is_bundle ? '1' : '0',
-                    $p->is_hidden_from_catalog ? '1' : '0',
-                    $p->description ?? '',
-                ];
+                $allValues = $this->extractProductValuesForSubset($p, $allAttributeKeys);
+                $allValues['checksum'] = self::calculateChecksum($allValues);
+
+                $row = [];
+                foreach ($targetColumns as $colKey) {
+                    $row[] = $allValues[$colKey] ?? '';
+                }
 
                 fputcsv($stream, $row);
                 $exportedCount++;
@@ -84,8 +231,13 @@ class ProductImportExportService
     /**
      * Export produk milik toko langsung ke file di disk.
      */
-    public function exportToFile(Store $store, string $filePath, ?int $categoryId = null, ?callable $onRowExported = null): int
-    {
+    public function exportToFile(
+        Store $store,
+        string $filePath,
+        ?int $categoryId = null,
+        ?array $columns = null,
+        ?callable $onRowExported = null
+    ): int {
         $dir = dirname($filePath);
         if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
@@ -97,7 +249,7 @@ class ProductImportExportService
         }
 
         try {
-            return $this->exportToStream($store, $handle, $categoryId, $onRowExported);
+            return $this->exportToStream($store, $handle, $categoryId, $columns, $onRowExported);
         } finally {
             fclose($handle);
         }
@@ -105,12 +257,12 @@ class ProductImportExportService
 
     /**
      * Import produk dari file CSV ke toko tertentu per batch.
-     * Hasil exportan bisa diedit atau ditambah baris baru lalu diimport kembali.
      *
      * @return array{
      *     total_rows: int,
      *     created_count: int,
      *     updated_count: int,
+     *     unchanged_count: int,
      *     skipped_count: int,
      *     batches_count: int,
      *     errors: array<int, string>,
@@ -163,6 +315,7 @@ class ProductImportExportService
                 'total_rows' => 0,
                 'created_count' => 0,
                 'updated_count' => 0,
+                'unchanged_count' => 0,
                 'skipped_count' => 0,
                 'batches_count' => 0,
                 'errors' => ['File CSV kosong.'],
@@ -177,14 +330,15 @@ class ProductImportExportService
         $headerRaw = str_getcsv($firstLine, $delimiter);
 
         $headerMap = $this->resolveHeaderMap($headerRaw);
-        if (empty($headerMap['name'])) {
+        if (empty($headerMap)) {
             return [
                 'total_rows' => 0,
                 'created_count' => 0,
                 'updated_count' => 0,
+                'unchanged_count' => 0,
                 'skipped_count' => 0,
                 'batches_count' => 0,
-                'errors' => ['Kolom nama produk wajib ada pada file CSV (header "name" atau "nama").'],
+                'errors' => ['File CSV tidak memiliki kolom produk yang dikenali.'],
                 'dry_run' => $dryRun,
             ];
         }
@@ -192,6 +346,7 @@ class ProductImportExportService
         $totalRows = 0;
         $createdCount = 0;
         $updatedCount = 0;
+        $unchangedCount = 0;
         $skippedCount = 0;
         $batchesCount = 0;
         $errors = [];
@@ -218,11 +373,12 @@ class ProductImportExportService
                 $batchResult = $this->processBatch($store, $currentBatch, $headerMap, $dryRun, $userId);
                 $createdCount += $batchResult['created'];
                 $updatedCount += $batchResult['updated'];
+                $unchangedCount += $batchResult['unchanged'];
                 $skippedCount += $batchResult['skipped'];
                 $errors = array_merge($errors, $batchResult['errors']);
 
                 if ($onBatchProcessed) {
-                    $onBatchProcessed($batchesCount, count($currentBatch), $createdCount, $updatedCount);
+                    $onBatchProcessed($batchesCount, count($currentBatch), $createdCount, $updatedCount, $unchangedCount);
                 }
 
                 $currentBatch = [];
@@ -235,11 +391,12 @@ class ProductImportExportService
             $batchResult = $this->processBatch($store, $currentBatch, $headerMap, $dryRun, $userId);
             $createdCount += $batchResult['created'];
             $updatedCount += $batchResult['updated'];
+            $unchangedCount += $batchResult['unchanged'];
             $skippedCount += $batchResult['skipped'];
             $errors = array_merge($errors, $batchResult['errors']);
 
             if ($onBatchProcessed) {
-                $onBatchProcessed($batchesCount, count($currentBatch), $createdCount, $updatedCount);
+                $onBatchProcessed($batchesCount, count($currentBatch), $createdCount, $updatedCount, $unchangedCount);
             }
         }
 
@@ -247,6 +404,7 @@ class ProductImportExportService
             'total_rows' => $totalRows,
             'created_count' => $createdCount,
             'updated_count' => $updatedCount,
+            'unchanged_count' => $unchangedCount,
             'skipped_count' => $skippedCount,
             'batches_count' => $batchesCount,
             'errors' => $errors,
@@ -266,10 +424,11 @@ class ProductImportExportService
     ): array {
         $created = 0;
         $updated = 0;
+        $unchanged = 0;
         $skipped = 0;
         $errors = [];
 
-        $operation = function () use ($store, $batch, $headerMap, &$created, &$updated, &$skipped, &$errors, $userId) {
+        $operation = function () use ($store, $batch, $headerMap, &$created, &$updated, &$unchanged, &$skipped, &$errors, $userId) {
             // Cache kategori di memori untuk toko ini agar hemat query
             $categoryCache = Category::forStore($store->id)->get()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
 
@@ -279,16 +438,15 @@ class ProductImportExportService
 
                 try {
                     $parsed = $this->parseRow($row, $headerMap);
-
-                    if (empty($parsed['name'])) {
+                    if (empty($parsed)) {
                         $skipped++;
-                        $errors[] = "Baris {$line}: Nama produk tidak boleh kosong.";
+                        $errors[] = "Baris {$line}: Baris kosong atau tidak memiliki data yang valid.";
                         continue;
                     }
 
-                    // Resolusi Kategori
+                    // Resolusi Kategori jika kolom category ada pada CSV
                     $categoryId = null;
-                    if (! empty($parsed['category'])) {
+                    if (array_key_exists('category', $parsed) && ! empty($parsed['category'])) {
                         $catKey = mb_strtolower(trim($parsed['category']));
                         if ($categoryCache->has($catKey)) {
                             $categoryId = $categoryCache->get($catKey)->id;
@@ -307,7 +465,7 @@ class ProductImportExportService
                     // Logika UPSERT (Edit vs Tambah):
                     // 1. Cek berdasarkan ID jika ID diisi
                     // 2. Jika ID kosong, cek berdasarkan SKU jika SKU diisi
-                    // 3. Jika tidak ada yang cocok, TAMBAHKAN produk baru!
+                    // 3. Jika ID/SKU tidak cocok, cek slug jika slug diisi
                     $product = null;
 
                     if (! empty($parsed['id']) && is_numeric($parsed['id'])) {
@@ -323,11 +481,21 @@ class ProductImportExportService
                     }
 
                     if ($product) {
-                        // MODE EDIT (UPDATE)
-                        $this->updateExistingProduct($store, $product, $parsed, $categoryId, $userId);
-                        $updated++;
+                        // MODE EDIT (UPDATE) per-kolom dengan deteksi checksum
+                        $status = $this->updateExistingProduct($store, $product, $parsed, $categoryId, $userId);
+                        if ($status === 'unchanged') {
+                            $unchanged++;
+                        } else {
+                            $updated++;
+                        }
                     } else {
                         // MODE TAMBAH (INSERT)
+                        if (empty($parsed['name'])) {
+                            $skipped++;
+                            $errors[] = "Baris {$line}: Produk baru harus memiliki nama produk (kolom 'name' atau 'nama').";
+                            continue;
+                        }
+
                         $this->createNewProduct($store, $parsed, $categoryId, $userId);
                         $created++;
                     }
@@ -357,50 +525,117 @@ class ProductImportExportService
         return [
             'created' => $created,
             'updated' => $updated,
+            'unchanged' => $unchanged,
             'skipped' => $skipped,
             'errors' => $errors,
         ];
     }
 
     /**
-     * Perbarui produk yang sudah ada (Mode Edit).
+     * Perbarui produk yang sudah ada secara parsial per-kolom dengan verifikasi checksum.
+     *
+     * @return 'updated'|'unchanged'
      */
-    protected function updateExistingProduct(Store $store, Product $product, array $parsed, ?int $categoryId, ?int $userId): void
+    protected function updateExistingProduct(Store $store, Product $product, array $parsed, ?int $categoryId, ?int $userId): string
     {
-        $oldStock = (int) $product->stock;
-        $newStock = isset($parsed['stock']) ? (int) $parsed['stock'] : $oldStock;
+        // 1. Ekstrak nilai database saat ini untuk kolom-kolom yang ada pada baris CSV
+        $keysToCompare = array_diff(array_keys($parsed), ['id', 'checksum']);
+        if (empty($keysToCompare)) {
+            return 'unchanged';
+        }
 
-        $updateData = [
-            'name' => $parsed['name'],
-            'selling_price' => max(0, (float) ($parsed['selling_price'] ?? $product->selling_price)),
-            'weight' => max(1, (int) ($parsed['weight'] ?? $product->weight ?? 500)),
-            'status' => in_array($parsed['status'] ?? '', ['active', 'draft', 'inactive'], true) ? $parsed['status'] : $product->status,
-        ];
+        $currentDbValues = $this->extractProductValuesForSubset($product, $keysToCompare);
+
+        // Hitung checksum data DB vs data CSV untuk kolom-kolom yang ada
+        $dbChecksum = self::calculateChecksum($currentDbValues);
+        $csvChecksum = self::calculateChecksum($parsed);
+
+        // Jika checksum sama persis, data baris tidak mengalami perubahan (Unchanged)
+        if ($dbChecksum === $csvChecksum) {
+            return 'unchanged';
+        }
+
+        // 2. Ada perubahan! Tentukan kolom mana saja yang berubah (dirty)
+        $dirty = [];
+        $oldStock = (int) $product->stock;
+        $newStock = $oldStock;
+        $stockModified = false;
+
+        if (array_key_exists('name', $parsed) && trim((string) $parsed['name']) !== '') {
+            if (trim((string) $parsed['name']) !== trim((string) $product->name)) {
+                $dirty['name'] = trim((string) $parsed['name']);
+            }
+        }
+
+        if (array_key_exists('selling_price', $parsed) && $parsed['selling_price'] !== null) {
+            $newPrice = max(0, (float) $parsed['selling_price']);
+            if ((int) round($newPrice) !== (int) round((float) $product->selling_price)) {
+                $dirty['selling_price'] = $newPrice;
+            }
+        }
+
+        if (array_key_exists('weight', $parsed) && $parsed['weight'] !== null) {
+            $newWeight = max(1, (int) $parsed['weight']);
+            if ($newWeight !== (int) ($product->weight ?? 500)) {
+                $dirty['weight'] = $newWeight;
+            }
+        }
+
+        if (array_key_exists('stock', $parsed) && $parsed['stock'] !== null && ! $product->isBundle()) {
+            $valStock = max(0, (int) $parsed['stock']);
+            if ($valStock !== $oldStock) {
+                $newStock = $valStock;
+                $dirty['stock'] = $newStock;
+                $stockModified = true;
+            }
+        }
 
         if (array_key_exists('sku', $parsed)) {
-            $updateData['sku'] = ! empty($parsed['sku']) ? trim($parsed['sku']) : null;
+            $cleanSku = trim((string) $parsed['sku']);
+            $cleanSku = $cleanSku !== '' ? $cleanSku : null;
+            if ($cleanSku !== $product->sku) {
+                $dirty['sku'] = $cleanSku;
+            }
+        }
+
+        if ($categoryId !== null && $categoryId !== $product->category_id) {
+            $dirty['category_id'] = $categoryId;
+        }
+
+        if (array_key_exists('status', $parsed) && ! empty($parsed['status'])) {
+            if ($parsed['status'] !== $product->status) {
+                $dirty['status'] = $parsed['status'];
+            }
+        }
+
+        if (array_key_exists('is_bundle', $parsed)) {
+            $bVal = (bool) $parsed['is_bundle'];
+            if ($bVal !== (bool) $product->is_bundle) {
+                $dirty['is_bundle'] = $bVal;
+            }
+        }
+
+        if (array_key_exists('is_hidden', $parsed)) {
+            $hVal = (bool) $parsed['is_hidden'];
+            if ($hVal !== (bool) $product->is_hidden_from_catalog) {
+                $dirty['is_hidden_from_catalog'] = $hVal;
+            }
         }
 
         if (array_key_exists('description', $parsed)) {
-            $updateData['description'] = $parsed['description'];
+            $cleanDesc = (string) $parsed['description'];
+            if ($cleanDesc !== (string) ($product->description ?? '')) {
+                $dirty['description'] = $cleanDesc;
+            }
         }
 
-        if ($categoryId !== null) {
-            $updateData['category_id'] = $categoryId;
+        if (empty($dirty)) {
+            return 'unchanged';
         }
 
-        if (isset($parsed['is_bundle'])) {
-            $updateData['is_bundle'] = (bool) $parsed['is_bundle'];
-        }
+        $product->update($dirty);
 
-        if (isset($parsed['is_hidden'])) {
-            $updateData['is_hidden_from_catalog'] = (bool) $parsed['is_hidden'];
-        }
-
-        // Jika bukan bundle dan stok berubah, catat movement
-        if (! $product->isBundle() && isset($parsed['stock']) && $newStock !== $oldStock) {
-            $updateData['stock'] = $newStock;
-
+        if ($stockModified) {
             $diff = $newStock - $oldStock;
             StockMovement::create([
                 'store_id' => $store->id,
@@ -415,11 +650,11 @@ class ProductImportExportService
             ]);
         }
 
-        $product->update($updateData);
-
         if ($product->isBundle()) {
             $product->syncBundleStock();
         }
+
+        return 'updated';
     }
 
     /**
@@ -470,38 +705,40 @@ class ProductImportExportService
     /**
      * Petakan posisi kolom header ke nama properti terstandarisasi.
      */
-    protected function resolveHeaderMap(array $headerRaw): array
+    public function resolveHeaderMap(array $headerRaw): array
     {
         $map = [];
 
         foreach ($headerRaw as $index => $colName) {
             $clean = mb_strtolower(trim((string) $colName));
-            $clean = str_replace([' ', '-', '_'], '', $clean);
+            $clean = str_replace([' ', '-', '_', '.', '/'], '', $clean);
 
-            if (in_array($clean, ['id', 'idproduk', 'productid'], true)) {
+            if (in_array($clean, ['id', 'idproduk', 'productid', '#'], true)) {
                 $map['id'] = $index;
-            } elseif (in_array($clean, ['name', 'nama', 'namaproduk', 'productname'], true)) {
+            } elseif (in_array($clean, ['name', 'nama', 'namaproduk', 'productname', 'item', 'produk'], true)) {
                 $map['name'] = $index;
             } elseif ($clean === 'slug') {
                 $map['slug'] = $index;
-            } elseif (in_array($clean, ['sku', 'kodeproduk', 'kode'], true)) {
+            } elseif (in_array($clean, ['sku', 'kodeproduk', 'kode', 'barcode', 'productcode'], true)) {
                 $map['sku'] = $index;
-            } elseif (in_array($clean, ['category', 'kategori', 'categoryname', 'namakategori'], true)) {
+            } elseif (in_array($clean, ['category', 'kategori', 'categoryname', 'namakategori', 'kelompok'], true)) {
                 $map['category'] = $index;
-            } elseif (in_array($clean, ['sellingprice', 'hargajual', 'harga', 'price'], true)) {
+            } elseif (in_array($clean, ['sellingprice', 'hargajual', 'harga', 'price', 'hargasatuan'], true)) {
                 $map['selling_price'] = $index;
-            } elseif (in_array($clean, ['weight', 'berat', 'beratgram', 'weightgrams'], true)) {
+            } elseif (in_array($clean, ['weight', 'berat', 'beratgram', 'weightgrams', 'bobot'], true)) {
                 $map['weight'] = $index;
-            } elseif (in_array($clean, ['stock', 'stok', 'qty', 'quantity', 'jumlah'], true)) {
+            } elseif (in_array($clean, ['stock', 'stok', 'qty', 'quantity', 'jumlah', 'saldo'], true)) {
                 $map['stock'] = $index;
-            } elseif ($clean === 'status') {
+            } elseif (in_array($clean, ['status', 'kondisi'], true)) {
                 $map['status'] = $index;
             } elseif (in_array($clean, ['isbundle', 'bundle', 'setelan', 'paket'], true)) {
                 $map['is_bundle'] = $index;
-            } elseif (in_array($clean, ['ishidden', 'hidden', 'sembunyi', 'sembunyikan'], true)) {
+            } elseif (in_array($clean, ['ishidden', 'hidden', 'sembunyi', 'sembunyikan', 'tersembunyi'], true)) {
                 $map['is_hidden'] = $index;
-            } elseif (in_array($clean, ['description', 'deskripsi', 'keterangan'], true)) {
+            } elseif (in_array($clean, ['description', 'deskripsi', 'keterangan', 'detail', 'catatan'], true)) {
                 $map['description'] = $index;
+            } elseif (in_array($clean, ['checksum', 'hash', 'ceksum', 'chk'], true)) {
+                $map['checksum'] = $index;
             }
         }
 
@@ -510,55 +747,82 @@ class ProductImportExportService
 
     /**
      * Ekstrak data 1 baris CSV berdasarkan header map.
+     * Hanya mengisi kunci-kunci yang memang ada pada header file CSV (partial column support).
      */
     protected function parseRow(array $row, array $map): array
     {
-        $get = fn (string $key) => isset($map[$key], $row[$map[$key]]) ? trim((string) $row[$map[$key]]) : null;
+        $has = fn (string $key) => isset($map[$key]) && array_key_exists($map[$key], $row);
+        $get = fn (string $key) => $has($key) ? trim((string) $row[$map[$key]]) : null;
 
-        $sellingPrice = $get('selling_price');
-        if ($sellingPrice !== null) {
-            // Bersihkan format titik/koma ribuan jika user input 'Rp 150.000'
-            $cleanPrice = preg_replace('/[^0-9.]/', '', str_replace(',', '.', str_replace('.', '', $sellingPrice)));
-            $priceVal = (float) $cleanPrice;
-        } else {
-            $priceVal = null;
+        $parsed = [];
+
+        if ($has('id')) {
+            $parsed['id'] = $get('id');
         }
 
-        $weight = $get('weight');
-        if ($weight !== null) {
-            $cleanWeight = (int) preg_replace('/[^0-9]/', '', $weight);
-            $weightVal = max(1, $cleanWeight);
-        } else {
-            $weightVal = null;
+        if ($has('name')) {
+            $parsed['name'] = $get('name');
         }
 
-        $stock = $get('stock');
-        $stockVal = ($stock !== null && $stock !== '') ? (int) $stock : null;
-
-        $status = mb_strtolower((string) $get('status'));
-        if (! in_array($status, ['active', 'draft', 'inactive'], true)) {
-            $status = 'active';
+        if ($has('slug')) {
+            $parsed['slug'] = $get('slug');
         }
 
-        $isBundle = $get('is_bundle');
-        $isBundleVal = in_array(mb_strtolower((string) $isBundle), ['1', 'true', 'ya', 'yes'], true);
+        if ($has('sku')) {
+            $parsed['sku'] = $get('sku');
+        }
 
-        $isHidden = $get('is_hidden');
-        $isHiddenVal = in_array(mb_strtolower((string) $isHidden), ['1', 'true', 'ya', 'yes'], true);
+        if ($has('category')) {
+            $parsed['category'] = $get('category');
+        }
 
-        return [
-            'id' => $get('id'),
-            'name' => $get('name'),
-            'slug' => $get('slug'),
-            'sku' => $get('sku'),
-            'category' => $get('category'),
-            'selling_price' => $priceVal,
-            'weight' => $weightVal,
-            'stock' => $stockVal,
-            'status' => $status,
-            'is_bundle' => $isBundleVal,
-            'is_hidden' => $isHiddenVal,
-            'description' => $get('description'),
-        ];
+        if ($has('selling_price')) {
+            $sellingPrice = $get('selling_price');
+            if ($sellingPrice !== null && $sellingPrice !== '') {
+                $cleanPrice = preg_replace('/[^0-9.]/', '', str_replace(',', '.', str_replace('.', '', $sellingPrice)));
+                $parsed['selling_price'] = (float) $cleanPrice;
+            }
+        }
+
+        if ($has('weight')) {
+            $weight = $get('weight');
+            if ($weight !== null && $weight !== '') {
+                $parsed['weight'] = max(1, (int) preg_replace('/[^0-9]/', '', $weight));
+            }
+        }
+
+        if ($has('stock')) {
+            $stock = $get('stock');
+            if ($stock !== null && $stock !== '') {
+                $parsed['stock'] = (int) $stock;
+            }
+        }
+
+        if ($has('status')) {
+            $status = mb_strtolower((string) $get('status'));
+            if (in_array($status, ['active', 'draft', 'inactive'], true)) {
+                $parsed['status'] = $status;
+            }
+        }
+
+        if ($has('is_bundle')) {
+            $isBundle = $get('is_bundle');
+            $parsed['is_bundle'] = in_array(mb_strtolower((string) $isBundle), ['1', 'true', 'ya', 'yes'], true);
+        }
+
+        if ($has('is_hidden')) {
+            $isHidden = $get('is_hidden');
+            $parsed['is_hidden'] = in_array(mb_strtolower((string) $isHidden), ['1', 'true', 'ya', 'yes'], true);
+        }
+
+        if ($has('description')) {
+            $parsed['description'] = $get('description');
+        }
+
+        if ($has('checksum')) {
+            $parsed['checksum'] = $get('checksum');
+        }
+
+        return $parsed;
     }
 }

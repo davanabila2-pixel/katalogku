@@ -89,8 +89,8 @@ class ProductsImportCommand extends Command
                 $batchSize,
                 $dryRun,
                 null,
-                function ($batchIndex, $rowsInBatch, $createdTotal, $updatedTotal) use ($progressBar) {
-                    $progressBar->setMessage("Batch #{$batchIndex} ({$rowsInBatch} item) | Dibuat: {$createdTotal}, Diupdate: {$updatedTotal}");
+                function ($batchIndex, $rowsInBatch, $createdTotal, $updatedTotal, $unchangedTotal) use ($progressBar) {
+                    $progressBar->setMessage("Batch #{$batchIndex} ({$rowsInBatch} item) | Dibuat: {$createdTotal}, Diupdate: {$updatedTotal}, Checksum Sama: {$unchangedTotal}");
                     $progressBar->advance();
                 }
             );
@@ -114,6 +114,7 @@ class ProductsImportCommand extends Command
                 ['Total Baris CSV Diproses', $result['total_rows']],
                 ['Produk Baru Dibuat (Insert)', $result['created_count']],
                 ['Produk Diperbarui (Update)', $result['updated_count']],
+                ['Produk Tanpa Perubahan (Unchanged by Checksum)', $result['unchanged_count']],
                 ['Baris Dilewati / Error', $result['skipped_count']],
                 ['Jumlah Batch Transaksi', $result['batches_count']],
                 ['Status Eksekusi', $dryRun ? 'SIMULASI (DRY-RUN - Tidak Disimpan)' : 'BERHASIL DISIMPAN'],

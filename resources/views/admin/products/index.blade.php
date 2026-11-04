@@ -11,10 +11,10 @@
   <div class="toolbar-right">
     <x-search-input placeholder="Cari produk/SKU…" width="250px" />
     <span class="category-hierarchy" id="product-count"></span>
-    <a href="{{ route('admin.products.export', $store) }}" class="btn btn-ghost btn-sm" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;color:#334155" title="Export seluruh produk ke file CSV (Excel)">
+    <button type="button" class="btn btn-ghost btn-sm" id="product-export-btn" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;display:inline-flex;align-items:center;gap:5px;color:#334155" title="Export produk ke CSV dengan pilihan kolom & checksum">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Export CSV
-    </a>
+    </button>
     <button type="button" class="btn btn-ghost btn-sm" id="product-import-btn" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;display:inline-flex;align-items:center;gap:5px;color:#334155" title="Import produk dari file CSV per batch">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Import CSV
@@ -23,7 +23,7 @@
   </div>
 </form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
-<table class="table" id="product-table" data-api-url="{{ route('api.products.index', $store) }}" data-form-data-url="{{ route('api.products.form_data', $store) }}" data-store-url="{{ route('api.products.store', $store) }}" data-import-url="{{ route('admin.products.import', $store) }}" data-template-url="{{ route('admin.products.template', $store) }}">
+<table class="table" id="product-table" data-api-url="{{ route('api.products.index', $store) }}" data-form-data-url="{{ route('api.products.form_data', $store) }}" data-store-url="{{ route('api.products.store', $store) }}" data-export-url="{{ route('admin.products.export', $store) }}" data-import-url="{{ route('admin.products.import', $store) }}" data-template-url="{{ route('admin.products.template', $store) }}">
 <thead><tr><th>Produk</th><th>Kategori</th><th>Harga Jual</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead>
 <tbody id="product-rows">
 <tr><td colspan="6"><div class="table-loading"><span class="skeleton" style="width:140px"></span> Memuat data produk…</div></td></tr>
@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var statusBadge = AdminTable.statusBadge;
     var formDataUrl = table.getAttribute('data-form-data-url');
     var storeUrl = table.getAttribute('data-store-url');
+    var exportUrl = table.getAttribute('data-export-url');
     var importUrl = table.getAttribute('data-import-url');
     var templateUrl = table.getAttribute('data-template-url');
 
@@ -388,13 +389,104 @@ document.addEventListener('DOMContentLoaded', function () {
         openProductForm(formDataUrl, 'Tambah produk');
     });
 
+    var exportBtn = document.getElementById('product-export-btn');
+    if (exportBtn && exportUrl) {
+        exportBtn.addEventListener('click', function () {
+            var columnsList = [
+                { id: 'name', label: 'Nama Produk', checked: true },
+                { id: 'slug', label: 'Slug URL', checked: true },
+                { id: 'sku', label: 'SKU / Barcode', checked: true },
+                { id: 'category', label: 'Kategori', checked: true },
+                { id: 'selling_price', label: 'Harga Jual', checked: true },
+                { id: 'weight', label: 'Berat (Gram)', checked: true },
+                { id: 'stock', label: 'Stok', checked: true },
+                { id: 'status', label: 'Status Produk', checked: true },
+                { id: 'is_bundle', label: 'Tipe Setelan', checked: true },
+                { id: 'is_hidden', label: 'Visibilitas Katalog', checked: true },
+                { id: 'description', label: 'Deskripsi Produk', checked: true },
+                { id: 'checksum', label: 'Checksum (Integritas Baris)', checked: true }
+            ];
+
+            var colCheckboxesHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:8px;margin-top:10px">';
+            columnsList.forEach(function (col) {
+                colCheckboxesHtml += '<label class="modal-check" style="font-size:13px"><input type="checkbox" name="cols" value="' + esc(col.id) + '"' + (col.checked ? ' checked' : '') + '> <span>' + esc(col.label) + '</span></label>';
+            });
+            colCheckboxesHtml += '</div>';
+
+            var exportBody = '<div class="modal-field">'
+                + '<p style="margin:0 0 10px 0;font-size:13px;color:#334155">Pilih kolom yang ingin diexport. Kolom <code>id</code> dan <code>checksum</code> otomatis disertakan agar hasil export bisa diedit dan diimport kembali per-kolom.</p>'
+                + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
+                + '<button type="button" class="btn btn-ghost btn-sm" id="btn-col-all" style="font-size:11px;padding:3px 10px;height:auto">Pilih Semua</button>'
+                + '<button type="button" class="btn btn-ghost btn-sm" id="btn-col-pricing" style="font-size:11px;padding:3px 10px;height:auto">Hanya Harga & Stok</button>'
+                + '<button type="button" class="btn btn-ghost btn-sm" id="btn-col-reset" style="font-size:11px;padding:3px 10px;height:auto">Reset Default</button>'
+                + '</div>'
+                + colCheckboxesHtml
+                + '</div>';
+
+            AdminUI.formModal({
+                title: 'Export Produk (Pilih Kolom & Checksum)',
+                width: 'lg',
+                submitText: 'Unduh File CSV',
+                body: exportBody,
+                onMount: function (form) {
+                    var checks = form.querySelectorAll('input[name="cols"]');
+                    var btnAll = form.querySelector('#btn-col-all');
+                    var btnPricing = form.querySelector('#btn-col-pricing');
+                    var btnReset = form.querySelector('#btn-col-reset');
+
+                    if (btnAll) {
+                        btnAll.addEventListener('click', function () {
+                            checks.forEach(function (c) { c.checked = true; });
+                        });
+                    }
+
+                    if (btnPricing) {
+                        btnPricing.addEventListener('click', function () {
+                            checks.forEach(function (c) {
+                                c.checked = ['name', 'selling_price', 'stock', 'checksum'].indexOf(c.value) !== -1;
+                            });
+                        });
+                    }
+
+                    if (btnReset) {
+                        btnReset.addEventListener('click', function () {
+                            checks.forEach(function (c) { c.checked = true; });
+                        });
+                    }
+                },
+                submit: function (values, ui) {
+                    var selected = [];
+                    ui.form.querySelectorAll('input[name="cols"]:checked').forEach(function (c) {
+                        selected.push(c.value);
+                    });
+
+                    if (!selected.length) {
+                        return Promise.reject(new Error('Pilih minimal satu kolom untuk diexport.'));
+                    }
+
+                    var categorySelect = document.querySelector('#product-filters select[name="category_id"]');
+                    var catVal = categorySelect ? categorySelect.value : '';
+
+                    var targetUrl = exportUrl + '?columns=' + encodeURIComponent(selected.join(','));
+                    if (catVal) {
+                        targetUrl += '&category_id=' + encodeURIComponent(catVal);
+                    }
+
+                    window.location.href = targetUrl;
+                    ui.close();
+                    return Promise.resolve();
+                }
+            });
+        });
+    }
+
     var importBtn = document.getElementById('product-import-btn');
     if (importBtn && importUrl) {
         importBtn.addEventListener('click', function () {
             var bodyHtml = '<div class="modal-field">'
                 + '<label class="modal-label">Pilih File CSV Produk <span style="color:var(--critical)">*</span></label>'
                 + '<input type="file" name="file" accept=".csv,text/csv,text/plain" required style="display:block;width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;background:#f8fafc">'
-                + '<small class="modal-help">Format file harus berupa CSV (.csv atau .txt) dengan header standar hasil export.</small>'
+                + '<small class="modal-help">Format file harus berupa CSV (.csv atau .txt). Kolom bisa lengkap atau sebagian saja (per-kolom).</small>'
                 + '</div>'
                 + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">'
                 + '<div class="modal-field">'
@@ -413,12 +505,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 + '</div>'
                 + '</div>'
                 + '<div class="modal-subcard" style="margin-top:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.5">'
-                + '<strong style="display:block;margin-bottom:6px;color:#1e293b">💡 Panduan Edit & Tambah Produk:</strong>'
+                + '<strong style="display:block;margin-bottom:6px;color:#1e293b">💡 Panduan Import Per-Kolom & Checksum:</strong>'
                 + '<ul style="margin:0 0 10px 18px;padding:0;color:#475569">'
-                + '<li><strong>Edit Produk:</strong> Biarkan nilai kolom <code>id</code> tetap sesuai hasil export CSV.</li>'
-                + '<li><strong>Tambah Produk Baru:</strong> Tambahkan baris baru dengan mengosongkan kolom <code>id</code>.</li>'
-                + '<li><strong>Kategori:</strong> Jika kategori belum ada di toko, sistem akan membuatnya secara otomatis.</li>'
-                + '<li><strong>Stok:</strong> Perubahan stok otomatis tercatat di riwayat pergerakan stok.</li>'
+                + '<li><strong>Per-Kolom Fleksibel:</strong> File CSV boleh hanya memuat kolom yang ingin diubah (contoh: hanya <code>id</code> dan <code>harga_jual</code> untuk update harga, atau <code>id</code> dan <code>stok</code>). Kolom lain tidak akan tertimpa.</li>'
+                + '<li><strong>Verifikasi by Checksum:</strong> Sistem otomatis mendeteksi checksum baris. Baris yang nilainya tidak diedit akan dilewati (<em>unchanged</em>) tanpa membebani database.</li>'
+                + '<li><strong>Tambah Produk Baru:</strong> Tambahkan baris baru dengan mengosongkan kolom <code>id</code> dan mengisi nama produk.</li>'
+                + '<li><strong>Kategori & Stok:</strong> Kategori baru otomatis dibuat jika belum ada. Perubahan stok otomatis tercatat di kartu stok.</li>'
                 + '</ul>'
                 + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:8px;border-top:1px dashed #cbd5e1">'
                 + '<a href="' + esc(templateUrl) + '" class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px;height:auto;border:1px solid #cbd5e1;background:#fff;border-radius:6px;text-decoration:none">📥 Unduh Template CSV</a>'
