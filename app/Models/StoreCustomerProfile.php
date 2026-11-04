@@ -18,6 +18,7 @@ class StoreCustomerProfile extends Model
         'longitude',
         'city',
         'district',
+        'province',
         'notes',
     ];
 

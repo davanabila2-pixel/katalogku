@@ -704,22 +704,40 @@
               <div class="field-hint-text">Alamat lengkap gerai atau gudang asal pengiriman paket.</div>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:14px;margin-bottom:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+              <div class="field">
+                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="select-store-province">
+                  Provinsi Asal Toko <span style="font-size:11px;color:#0284c7;font-weight:normal;">(Master Wilayah)</span>
+                </label>
+                <select id="select-store-province" class="select" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;background:#fff;">
+                  <option value="">-- Pilih Provinsi --</option>
+                </select>
+                <input type="hidden" id="input-store-province" name="province" value="{{ old('province', $store->province ?? '') }}">
+              </div>
+
+              <div class="field">
+                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="select-store-city">Kota / Kabupaten</label>
+                <select id="select-store-city" class="select" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;background:#fff;" disabled>
+                  <option value="">-- Pilih Kota / Kabupaten --</option>
+                </select>
+                <input type="hidden" id="input-store-city" name="city" value="{{ old('city', $store->city) }}">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+              <div class="field">
+                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="select-store-district">Kecamatan</label>
+                <select id="select-store-district" class="select" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;background:#fff;" disabled>
+                  <option value="">-- Pilih Kecamatan --</option>
+                </select>
+                <input type="hidden" id="input-store-district" name="district" value="{{ old('district', $store->district) }}">
+              </div>
+
               <div class="field">
                 <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="input-store-postal-code">
                   Kode Pos <span style="font-size:11px;color:#ff4d61;font-weight:normal;">(Wajib untuk Biteship)</span>
                 </label>
                 <input class="input-styled" type="text" id="input-store-postal-code" name="postal_code" value="{{ old('postal_code', $store->postal_code) }}" placeholder="cth: 55213" maxlength="10">
-              </div>
-
-              <div class="field">
-                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="input-store-city">Kota / Kabupaten</label>
-                <input class="input-styled" type="text" id="input-store-city" name="city" value="{{ old('city', $store->city) }}" placeholder="cth: Yogyakarta">
-              </div>
-
-              <div class="field">
-                <label style="font-weight:600;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;" for="input-store-district">Kecamatan</label>
-                <input class="input-styled" type="text" id="input-store-district" name="district" value="{{ old('district', $store->district) }}" placeholder="cth: Danurejan">
               </div>
             </div>
 
@@ -1173,8 +1191,22 @@ document.addEventListener('DOMContentLoaded', function () {
   <script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places"></script>
 @endif
 
+<script src="{{ asset('js/wilayah-dropdown.js') }}"></script>
+
 <script>
 (function() {
+  window.storeWilayah = initWilayahDropdown({
+    provinceSelectId: 'select-store-province',
+    citySelectId: 'select-store-city',
+    districtSelectId: 'select-store-district',
+    provinceInputId: 'input-store-province',
+    cityInputId: 'input-store-city',
+    districtInputId: 'input-store-district',
+    initialProvince: @json(old('province', $store->province ?? '')),
+    initialCity: @json(old('city', $store->city ?? '')),
+    initialDistrict: @json(old('district', $store->district ?? ''))
+  });
+
   let defaultStoreLat = {{ $store->latitude ?: -6.2088 }};
   let defaultStoreLng = {{ $store->longitude ?: 106.8456 }};
   const adminHasSavedCoords = {{ $store->hasCoordinates() ? 'true' : 'false' }};
@@ -1244,24 +1276,36 @@ document.addEventListener('DOMContentLoaded', function () {
     const postalInput = document.getElementById('input-store-postal-code');
     const cityInput = document.getElementById('input-store-city');
     const districtInput = document.getElementById('input-store-district');
+    const provinceInput = document.getElementById('input-store-province');
 
     if (place.formatted_address && addressInput) {
       addressInput.value = place.formatted_address;
     }
 
     if (place.address_components) {
+      let foundCity = '', foundDistrict = '', foundProvince = '';
       place.address_components.forEach(function(comp) {
         const types = comp.types;
         if (types.includes('postal_code') && postalInput) {
           postalInput.value = comp.long_name;
         }
-        if ((types.includes('administrative_area_level_2') || types.includes('locality')) && cityInput && !cityInput.value) {
-          cityInput.value = comp.long_name.replace(/^(Kota|Kabupaten)\s+/i, '');
+        if (types.includes('administrative_area_level_1')) {
+          foundProvince = comp.long_name;
+          if (provinceInput) provinceInput.value = foundProvince;
         }
-        if (types.includes('administrative_area_level_3') && districtInput) {
-          districtInput.value = comp.long_name.replace(/^Kecamatan\s+/i, '');
+        if ((types.includes('administrative_area_level_2') || types.includes('locality'))) {
+          foundCity = comp.long_name.replace(/^(Kota|Kabupaten)\s+/i, '');
+          if (cityInput) cityInput.value = foundCity;
+        }
+        if (types.includes('administrative_area_level_3')) {
+          foundDistrict = comp.long_name.replace(/^Kecamatan\s+/i, '');
+          if (districtInput) districtInput.value = foundDistrict;
         }
       });
+
+      if (window.storeWilayah && (foundCity || foundDistrict || foundProvince)) {
+        window.storeWilayah.setFromText(foundCity, foundDistrict, foundProvince);
+      }
     }
   }
 

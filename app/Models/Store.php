@@ -32,6 +32,7 @@ class Store extends Model
         'longitude',
         'city',
         'district',
+        'province',
         'status',
         'hide_component_products',
     ];

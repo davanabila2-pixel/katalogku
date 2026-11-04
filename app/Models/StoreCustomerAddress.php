@@ -20,6 +20,7 @@ class StoreCustomerAddress extends Model
         'postal_code',
         'city',
         'district',
+        'province',
         'latitude',
         'longitude',
         'notes',

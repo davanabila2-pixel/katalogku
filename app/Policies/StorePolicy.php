@@ -14,7 +14,7 @@ class StorePolicy
 
     public function view(User $user, Store $store): bool
     {
-        return $user->managesStore($store->id);
+        return $user->isSuperadmin() || $user->managesStore($store->id);
     }
 
     public function create(User $user): bool
@@ -24,7 +24,7 @@ class StorePolicy
 
     public function update(User $user, Store $store): bool
     {
-        return $user->managesStore($store->id);
+        return $user->isSuperadmin() || $user->managesStore($store->id);
     }
 
     public function updateSlug(User $user, Store $store): bool

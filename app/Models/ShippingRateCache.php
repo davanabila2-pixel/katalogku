@@ -81,3 +81,4 @@ class ShippingRateCache extends Model
         return static::where('expires_at', '<=', now())->delete();
     }
 }
+

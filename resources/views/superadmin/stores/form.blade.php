@@ -11,7 +11,36 @@
   <div class="field"><label>Slogan / Tagline</label><input class="input" type="text" name="slogan" value="{{ old('slogan', $store->slogan) }}" maxlength="255" placeholder="cth: Secondhand, First Choice."></div>
   <div class="field"><label>Deskripsi</label><textarea class="textarea" name="description">{{ old('description', $store->description) }}</textarea></div>
   <div class="field"><label>Kontak</label><input class="input" type="text" name="contact_information" value="{{ old('contact_information', $store->contact_information) }}"></div>
-  <div class="field"><label>Alamat</label><textarea class="textarea" name="address">{{ old('address', $store->address) }}</textarea></div>
+  <div class="field"><label>Alamat Fisik Lengkap</label><textarea class="textarea" name="address" placeholder="Nama jalan, nomor bangunan, dsb.">{{ old('address', $store->address) }}</textarea></div>
+  <div class="form-row">
+    <div class="field">
+      <label>Provinsi</label>
+      <select id="superadmin_province_select" class="select" style="width:100%;background:#fff;">
+        <option value="">-- Pilih Provinsi --</option>
+      </select>
+      <input type="hidden" id="superadmin_province" name="province" value="{{ old('province', $store->province) }}">
+    </div>
+    <div class="field">
+      <label>Kota / Kabupaten</label>
+      <select id="superadmin_city_select" class="select" style="width:100%;background:#fff;" disabled>
+        <option value="">-- Pilih Kota / Kabupaten --</option>
+      </select>
+      <input type="hidden" id="superadmin_city" name="city" value="{{ old('city', $store->city) }}">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="field">
+      <label>Kecamatan</label>
+      <select id="superadmin_district_select" class="select" style="width:100%;background:#fff;" disabled>
+        <option value="">-- Pilih Kecamatan --</option>
+      </select>
+      <input type="hidden" id="superadmin_district" name="district" value="{{ old('district', $store->district) }}">
+    </div>
+    <div class="field">
+      <label>Kode Pos</label>
+      <input class="input" type="text" name="postal_code" value="{{ old('postal_code', $store->postal_code) }}" placeholder="cth: 40115" maxlength="10">
+    </div>
+  </div>
   <div class="field"><label>Status</label><select class="select" name="status"><option value="active" {{ old('status', $store->status) === 'active' ? 'selected' : '' }}>Aktif</option><option value="inactive" {{ old('status', $store->status) === 'inactive' ? 'selected' : '' }}>Nonaktif</option></select></div>
   <div class="field"><label>Logo</label><input type="file" name="logo" accept="image/*"></div>
   <h3>Admin utama</h3>
@@ -23,10 +52,23 @@
   <a class="btn btn-ghost" href="{{ route('superadmin.stores.index') }}">Batal</a>
 </form>
 </div>
+<script src="{{ asset('js/wilayah-dropdown.js') }}"></script>
 <script>
 const nameEl = document.getElementById('storename'), slugEl = document.getElementById('storeslug'), prev = document.getElementById('slugprev');
 function autoSlug(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').substring(0,100); }
 nameEl.addEventListener('input', () => { if (!slugEl.dataset.touched) { slugEl.value = autoSlug(nameEl.value); prev.textContent = slugEl.value || 'slug-toko'; } });
 slugEl.addEventListener('input', () => { slugEl.dataset.touched = '1'; prev.textContent = slugEl.value || 'slug-toko'; });
+
+initWilayahDropdown({
+  provinceSelectId: 'superadmin_province_select',
+  citySelectId: 'superadmin_city_select',
+  districtSelectId: 'superadmin_district_select',
+  provinceInputId: 'superadmin_province',
+  cityInputId: 'superadmin_city',
+  districtInputId: 'superadmin_district',
+  initialProvince: @json(old('province', $store->province ?? '')),
+  initialCity: @json(old('city', $store->city ?? '')),
+  initialDistrict: @json(old('district', $store->district ?? ''))
+});
 </script>
 @endsection

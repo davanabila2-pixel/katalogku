@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\StoreProfileController;
 use App\Http\Controllers\Api\Superadmin\CatalogController as SuperadminCatalogApiController;
 use App\Http\Controllers\Api\Superadmin\StoreController as SuperadminStoreApiController;
 use App\Http\Controllers\Api\Superadmin\UserController as SuperadminUserApiController;
+use App\Http\Controllers\Api\WilayahController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,3 +71,19 @@ Route::middleware(['web', 'auth', 'superadmin'])
         Route::get('catalog/stock', [SuperadminCatalogApiController::class, 'stock'])->name('catalog.stock');
         Route::get('catalog/audit', [SuperadminCatalogApiController::class, 'audit'])->name('catalog.audit');
     });
+
+// API Wilayah Indonesia (Provinsi, Kota/Kabupaten, Kecamatan)
+Route::prefix('v1/wilayah')->name('api.wilayah.')->group(function () {
+    Route::get('provinces', [WilayahController::class, 'provinces'])->name('provinces');
+    Route::get('cities', [WilayahController::class, 'cities'])->name('cities');
+    Route::get('districts', [WilayahController::class, 'districts'])->name('districts');
+    Route::get('resolve', [WilayahController::class, 'resolve'])->name('resolve');
+});
+
+Route::prefix('wilayah')->group(function () {
+    Route::get('provinces', [WilayahController::class, 'provinces']);
+    Route::get('cities', [WilayahController::class, 'cities']);
+    Route::get('districts', [WilayahController::class, 'districts']);
+    Route::get('resolve', [WilayahController::class, 'resolve']);
+});
+

@@ -42,6 +42,7 @@ class StoreProfileController extends Controller
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'city' => ['nullable', 'string', 'max:100'],
             'district' => ['nullable', 'string', 'max:100'],
+            'province' => ['nullable', 'string', 'max:100'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
             'remove_banner' => ['nullable', 'boolean'],

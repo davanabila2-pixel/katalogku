@@ -234,22 +234,44 @@
         <textarea class="textarea" id="address" name="address" rows="3" required placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, patokan..." style="width:100%;border-radius:10px;padding:10px 14px;border:1.5px solid #cbd5e1;font-size:14px;font-family:inherit;">{{ old('address', $profile->address) }}</textarea>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="field">
+          <label class="label" for="customer_province_select" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
+            Provinsi <span style="font-size:11px;color:#0284c7;font-weight:normal;">(Master Wilayah)</span>
+          </label>
+          <select id="customer_province_select" class="select" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;background:#fff;">
+            <option value="">-- Pilih Provinsi --</option>
+          </select>
+          <input type="hidden" id="province" name="province" value="{{ old('province', $profile->province ?? '') }}">
+        </div>
+
+        <div class="field">
+          <label class="label" for="customer_city_select" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
+            Kota / Kabupaten
+          </label>
+          <select id="customer_city_select" class="select" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;background:#fff;" disabled>
+            <option value="">-- Pilih Kota / Kabupaten --</option>
+          </select>
+          <input type="hidden" id="city" name="city" value="{{ old('city', $profile->city) }}">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+        <div class="field">
+          <label class="label" for="customer_district_select" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
+            Kecamatan
+          </label>
+          <select id="customer_district_select" class="select" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;background:#fff;" disabled>
+            <option value="">-- Pilih Kecamatan --</option>
+          </select>
+          <input type="hidden" id="district" name="district" value="{{ old('district', $profile->district) }}">
+        </div>
+
         <div class="field">
           <label class="label" for="postal_code" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
             Kode Pos <span style="font-size:11px;color:#0284c7;font-weight:normal;">(Penting untuk Ongkir)</span>
           </label>
           <input class="input" type="text" id="postal_code" name="postal_code" value="{{ old('postal_code', $profile->postal_code) }}" placeholder="cth: 40115" maxlength="10" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;">
-        </div>
-
-        <div class="field">
-          <label class="label" for="city" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">Kota / Kabupaten</label>
-          <input class="input" type="text" id="city" name="city" value="{{ old('city', $profile->city) }}" placeholder="cth: Bandung" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;">
-        </div>
-
-        <div class="field">
-          <label class="label" for="district" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">Kecamatan</label>
-          <input class="input" type="text" id="district" name="district" value="{{ old('district', $profile->district) }}" placeholder="cth: Coblong" style="width:100%;border-radius:10px;padding:9px 12px;border:1.5px solid #cbd5e1;font-size:13.5px;">
         </div>
       </div>
 
@@ -294,6 +316,8 @@
   <script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places"></script>
 @endif
 
+<script src="{{ asset('js/wilayah-dropdown.js') }}"></script>
+
 <script>
   let defaultLat = {{ $profile->latitude ?: -6.2088 }};
   let defaultLng = {{ $profile->longitude ?: 106.8456 }};
@@ -306,6 +330,18 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     initInteractiveMap();
+
+    window.customerWilayah = initWilayahDropdown({
+      provinceSelectId: 'customer_province_select',
+      citySelectId: 'customer_city_select',
+      districtSelectId: 'customer_district_select',
+      provinceInputId: 'province',
+      cityInputId: 'city',
+      districtInputId: 'district',
+      initialProvince: @json(old('province', $profile->province ?? '')),
+      initialCity: @json(old('city', $profile->city ?? '')),
+      initialDistrict: @json(old('district', $profile->district ?? ''))
+    });
   });
 
   function updateCoordInputs(lat, lng) {
@@ -434,17 +470,28 @@
 
   function extractAddressComponents(components) {
     if (!components) return;
+    let foundCity = '', foundDistrict = '', foundProvince = '';
     components.forEach(c => {
       if (c.types.includes('postal_code')) {
         document.getElementById('postal_code').value = c.long_name;
       }
-      if (c.types.includes('administrative_division_level_2')) {
-        document.getElementById('city').value = c.long_name.replace('Kota ', '').replace('Kabupaten ', '');
+      if (c.types.includes('administrative_area_level_1')) {
+        foundProvince = c.long_name;
+        document.getElementById('province').value = foundProvince;
       }
-      if (c.types.includes('administrative_division_level_3') || c.types.includes('sublocality_level_1')) {
-        document.getElementById('district').value = c.long_name.replace('Kecamatan ', '');
+      if (c.types.includes('administrative_area_level_2')) {
+        foundCity = c.long_name.replace('Kota ', '').replace('Kabupaten ', '');
+        document.getElementById('city').value = foundCity;
+      }
+      if (c.types.includes('administrative_area_level_3') || c.types.includes('sublocality_level_1')) {
+        foundDistrict = c.long_name.replace('Kecamatan ', '');
+        document.getElementById('district').value = foundDistrict;
       }
     });
+
+    if (window.customerWilayah && (foundCity || foundDistrict || foundProvince)) {
+      window.customerWilayah.setFromText(foundCity, foundDistrict, foundProvince);
+    }
   }
 
   function reverseGeocodeGoogle(lat, lng) {
@@ -532,10 +579,16 @@
     document.getElementById('addressLabel').value = 'Rumah';
     document.getElementById('address').value = '';
     document.getElementById('postal_code').value = '';
+    document.getElementById('province').value = '';
     document.getElementById('city').value = '';
     document.getElementById('district').value = '';
     document.getElementById('notes').value = '';
     document.getElementById('addressIsDefault').checked = false;
+
+    if (window.customerWilayah) {
+      document.getElementById('customer_province_select').value = '';
+      window.customerWilayah.loadCities('');
+    }
 
     document.getElementById('addressFormCardSection').scrollIntoView({ behavior: 'smooth' });
   }
@@ -555,10 +608,15 @@
     document.getElementById('addressPhone').value = addr.phone || '';
     document.getElementById('address').value = addr.address || '';
     document.getElementById('postal_code').value = addr.postal_code || '';
+    document.getElementById('province').value = addr.province || '';
     document.getElementById('city').value = addr.city || '';
     document.getElementById('district').value = addr.district || '';
     document.getElementById('notes').value = addr.notes || '';
     document.getElementById('addressIsDefault').checked = !!addr.is_default;
+
+    if (window.customerWilayah) {
+      window.customerWilayah.setFromText(addr.city || '', addr.district || '', addr.province || '');
+    }
 
     if (addr.latitude && addr.longitude) {
       setMapPinPosition(parseFloat(addr.latitude), parseFloat(addr.longitude));

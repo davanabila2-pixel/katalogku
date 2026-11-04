@@ -53,6 +53,7 @@ class StoreCustomerController extends Controller
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'city' => ['nullable', 'string', 'max:100'],
             'district' => ['nullable', 'string', 'max:100'],
+            'province' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -129,6 +130,7 @@ class StoreCustomerController extends Controller
             'postal_code' => ['nullable', 'string', 'max:10'],
             'city' => ['nullable', 'string', 'max:100'],
             'district' => ['nullable', 'string', 'max:100'],
+            'province' => ['nullable', 'string', 'max:100'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -157,6 +159,7 @@ class StoreCustomerController extends Controller
             'postal_code' => $data['postal_code'] ?? null,
             'city' => $data['city'] ?? null,
             'district' => $data['district'] ?? null,
+            'province' => $data['province'] ?? null,
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
             'notes' => $data['notes'] ?? null,
@@ -173,6 +176,7 @@ class StoreCustomerController extends Controller
                     'postal_code' => $data['postal_code'] ?? null,
                     'city' => $data['city'] ?? null,
                     'district' => $data['district'] ?? null,
+                    'province' => $data['province'] ?? null,
                     'latitude' => $data['latitude'] ?? null,
                     'longitude' => $data['longitude'] ?? null,
                     'notes' => $data['notes'] ?? null,
@@ -210,6 +214,7 @@ class StoreCustomerController extends Controller
             'postal_code' => ['nullable', 'string', 'max:10'],
             'city' => ['nullable', 'string', 'max:100'],
             'district' => ['nullable', 'string', 'max:100'],
+            'province' => ['nullable', 'string', 'max:100'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -233,6 +238,7 @@ class StoreCustomerController extends Controller
             'postal_code' => $data['postal_code'] ?? null,
             'city' => $data['city'] ?? null,
             'district' => $data['district'] ?? null,
+            'province' => $data['province'] ?? null,
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
             'notes' => $data['notes'] ?? null,
@@ -249,6 +255,7 @@ class StoreCustomerController extends Controller
                     'postal_code' => $data['postal_code'] ?? null,
                     'city' => $data['city'] ?? null,
                     'district' => $data['district'] ?? null,
+                    'province' => $data['province'] ?? null,
                     'latitude' => $data['latitude'] ?? null,
                     'longitude' => $data['longitude'] ?? null,
                     'notes' => $data['notes'] ?? null,
@@ -370,6 +377,7 @@ class StoreCustomerController extends Controller
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'city' => ['nullable', 'string', 'max:100'],
             'district' => ['nullable', 'string', 'max:100'],
+            'province' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -391,6 +399,7 @@ class StoreCustomerController extends Controller
                 'longitude' => $data['longitude'] ?? null,
                 'city' => $data['city'] ?? null,
                 'district' => $data['district'] ?? null,
+                'province' => $data['province'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
         } else {
@@ -404,6 +413,7 @@ class StoreCustomerController extends Controller
                 'postal_code' => $data['postal_code'] ?? null,
                 'city' => $data['city'] ?? null,
                 'district' => $data['district'] ?? null,
+                'province' => $data['province'] ?? null,
                 'latitude' => $data['latitude'] ?? null,
                 'longitude' => $data['longitude'] ?? null,
                 'notes' => $data['notes'] ?? null,
