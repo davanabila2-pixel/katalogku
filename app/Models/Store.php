@@ -212,7 +212,66 @@ class Store extends Model
      */
     public function hasDynamicQris(): bool
     {
-        return ! empty($this->qris_payload);
+        if (! empty($this->qris_payload)) {
+            return true;
+        }
+
+        if (! empty($this->qr_image_path)) {
+            return ! empty($this->tryExtractQrisPayload());
+        }
+
+        return false;
+    }
+
+    /**
+     * Coba ekstrak payload QRIS dari file gambar qr_image_path bila belum tersimpan di database.
+     */
+    public function tryExtractQrisPayload(): ?string
+    {
+        if (! empty($this->qris_payload)) {
+            return $this->qris_payload;
+        }
+
+        if (empty($this->qr_image_path)) {
+            return null;
+        }
+
+        try {
+            $pathOrUrl = $this->qr_image_path;
+            $tmp = null;
+
+            if (str_starts_with($pathOrUrl, 'http://') || str_starts_with($pathOrUrl, 'https://')) {
+                $content = @file_get_contents($pathOrUrl);
+                if (! $content) {
+                    return null;
+                }
+                $tmp = tempnam(sys_get_temp_dir(), 'qris_').'.jpg';
+                file_put_contents($tmp, $content);
+                $filePath = $tmp;
+            } elseif (file_exists($pathOrUrl)) {
+                $filePath = $pathOrUrl;
+            } elseif (\Illuminate\Support\Facades\Storage::disk('public')->exists($pathOrUrl)) {
+                $filePath = \Illuminate\Support\Facades\Storage::disk('public')->path($pathOrUrl);
+            } else {
+                return null;
+            }
+
+            $payload = app(QrisService::class)->extractFromImage($filePath);
+            if ($tmp && file_exists($tmp)) {
+                @unlink($tmp);
+            }
+
+            if ($payload) {
+                $this->qris_payload = $payload;
+                $this->updateQuietly(['qris_payload' => $payload]);
+
+                return $payload;
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Gagal auto-extract QRIS untuk toko {$this->slug}: ".$e->getMessage());
+        }
+
+        return null;
     }
 
     /**

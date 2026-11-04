@@ -280,4 +280,27 @@ class StoreCourierAndDynamicQrisTest extends TestCase
             'shipping_fee' => 12000,
         ])->assertOk()->assertJson(['success' => true]);
     }
+
+    public function test_store_auto_extracts_qris_payload_if_missing(): void
+    {
+        $static = $this->staticQris();
+        $png = (new QRCode(new QROptions([
+            'outputInterface' => QRGdImagePNG::class,
+            'outputBase64' => false,
+            'scale' => 8,
+        ])))->render($static);
+        $tmp = tempnam(sys_get_temp_dir(), 'test_qr_').'.png';
+        file_put_contents($tmp, $png);
+
+        [, $store] = $this->createStore([
+            'qr_image_path' => $tmp,
+            'qris_payload' => null,
+        ]);
+
+        $this->assertNull($store->getRawOriginal('qris_payload'));
+        $this->assertTrue($store->hasDynamicQris());
+        $this->assertSame($static, $store->qris_payload);
+
+        @unlink($tmp);
+    }
 }

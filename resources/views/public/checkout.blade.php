@@ -290,8 +290,8 @@
                         <img id="checkoutQrImage" @if($store->hasDynamicQris()) data-dynamic="1" data-base-url="{{ route('store.qris', $store->slug) }}" @endif src="{{ $store->hasDynamicQris() ? $store->dynamicQrisUrl((float) $totalPrice) : $store->qrImageUrl() }}" alt="QRIS {{ $store->name }}" class="qr-code-img">
                       </div>
                       @if($store->hasDynamicQris())
-                        <div id="checkoutQrDynamicNote" style="margin-top:8px;font-size:11.5px;font-weight:700;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:5px 9px;text-align:center;">
-                          ✓ QR sudah berisi nominal, langsung scan &amp; bayar
+                        <div id="checkoutQrDynamicNote" style="margin-top:8px;font-size:12px;font-weight:700;color:#047857;background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:8px;padding:6px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
+                          <span>⚡</span> <span>QRIS Dinamis: QR sudah berisi nominal, langsung scan &amp; bayar</span>
                         </div>
                       @endif
                       <div class="qr-account-badge">{{ $store->qr_account_name ?: ($store->name . ' QRIS') }}</div>
@@ -312,7 +312,11 @@
                       <div class="qr-instruction-steps" style="margin-top:12px;">
                         <ol>
                           <li>Buka aplikasi m-Banking atau E-Wallet (BCA, Mandiri, BRI, GoPay, OVO, ShopeePay, Dana, dll).</li>
-                          <li>Scan kode QR di samping dan bayar pas sesuai total: <strong id="checkoutInstructionTotal">Rp {{ number_format($totalPrice, 0, ',', '.') }}</strong></li>
+                          @if($store->hasDynamicQris())
+                            <li>Scan kode QR di samping. <strong>Nominal total otomatis muncul di layar HP Anda: <span id="checkoutInstructionTotal" style="color:var(--brand-coral);">Rp {{ number_format($totalPrice, 0, ',', '.') }}</span></strong> (tidak perlu ketik nominal manual).</li>
+                          @else
+                            <li>Scan kode QR di samping dan bayar pas sesuai total: <strong id="checkoutInstructionTotal">Rp {{ number_format($totalPrice, 0, ',', '.') }}</strong></li>
+                          @endif
                           <li>Simpan tangkapan layar (screenshot) bukti transfer dan unggah pada bagian di bawah.</li>
                         </ol>
                       </div>
