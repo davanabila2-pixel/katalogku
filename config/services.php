@@ -56,6 +56,8 @@ return [
     'biteship' => [
         'key' => env('BITESHIP_API_KEY'),
         'base_url' => env('BITESHIP_BASE_URL', 'https://api.biteship.com/v1'),
+        'cache_enabled' => env('BITESHIP_CACHE_ENABLED', true),
+        'cache_ttl_days' => (int) env('BITESHIP_CACHE_TTL_DAYS', 1),
     ],
 
 ];

@@ -81,3 +81,17 @@ Artisan::command('drive:auth', function () {
         return 1;
     }
 })->purpose('Otorisasi Google Drive dan simpan refresh token ke .env');
+
+Artisan::command('shipping:prune-cache', function () {
+    $count = \App\Models\ShippingRateCache::pruneExpired();
+    $this->info("Berhasil membersihkan {$count} data cache ongkir yang sudah kedaluwarsa.");
+})->purpose('Bersihkan data cache ongkos kirim Biteship yang sudah kedaluwarsa dari database');
+
+Artisan::command('shipping:refresh-rates', function (\App\Services\BiteshipService $biteship) {
+    $this->info('Memulai sinkronisasi tarif ongkir dari Biteship...');
+    $count = $biteship->refreshOutdatedRates(50);
+    $this->info("Selesai! {$count} rute pengiriman berhasil diperbarui dari Biteship API.");
+})->purpose('Perbarui tarif ongkir di database dari API Biteship setiap 1 hari sekali');
+
+\Illuminate\Support\Facades\Schedule::command('shipping:refresh-rates')->dailyAt('02:00');
+
