@@ -404,9 +404,9 @@
                               <span id="directQtyDisplay" class="checkout-stepper-val">{{ $item['quantity'] }}</span>
                               <button type="button" class="checkout-stepper-btn" onclick="adjustDirectQty(1, {{ $item['stock'] }}, {{ $item['price'] }})" title="Tambah jumlah">+</button>
                             </div>
-                            <span class="summary-item-price-unit">× {{ $item['price_formatted'] }}</span>
+                            <span class="summary-item-price-unit">× {{ $item['price_formatted'] }} ({{ $item['weight_formatted'] ?? '500 gr' }})</span>
                           @else
-                            <span>{{ $item['quantity'] }} unit × {{ $item['price_formatted'] }}</span>
+                            <span>{{ $item['quantity'] }} unit × {{ $item['price_formatted'] }} ({{ $item['weight_formatted'] ?? '500 gr' }})</span>
                           @endif
                         </div>
                         @if(!empty($item['is_out_of_stock']))
@@ -427,6 +427,10 @@
                   <div class="summary-price-line">
                     <span>Jumlah Barang</span>
                     <strong id="checkoutTotalQtySummary">{{ $totalQty }} unit</strong>
+                  </div>
+                  <div class="summary-price-line">
+                    <span>Total Berat Kirim</span>
+                    <strong id="checkoutTotalWeightSummary" style="color:var(--ink-deep);">{{ $totalWeightFormatted ?? '—' }}</strong>
                   </div>
                   <div class="summary-price-line">
                     <span>Subtotal Produk</span>
@@ -679,6 +683,15 @@
     if (qtyDisplay) qtyDisplay.textContent = newQty;
     if (qtyInput) qtyInput.value = newQty;
     if (totalQtySummary) totalQtySummary.textContent = newQty + ' unit';
+
+    const weightSummary = document.getElementById('checkoutTotalWeightSummary');
+    if (weightSummary) {
+      const unitW = {{ (int) ($items[0]['weight'] ?? 500) }};
+      const totG = newQty * unitW;
+      weightSummary.textContent = totG >= 1000
+        ? (totG / 1000).toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' kg'
+        : totG.toLocaleString('id-ID') + ' gr';
+    }
 
     const newSubtotal = newQty * price;
     const formatted = formatRupiah(newSubtotal);

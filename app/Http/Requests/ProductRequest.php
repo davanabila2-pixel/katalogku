@@ -65,6 +65,7 @@ class ProductRequest extends FormRequest
                 },
             ],
             'selling_price' => ['required', 'numeric', 'min:0', 'max:999999999999.99'],
+            'weight' => ['nullable', 'integer', 'min:1', 'max:500000'],
             'status' => ['required', Rule::in(['draft', 'active', 'inactive'])],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
             'gallery_images' => ['nullable', 'array', 'max:10'],

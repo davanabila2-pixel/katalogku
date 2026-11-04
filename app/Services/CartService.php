@@ -21,12 +21,12 @@ class CartService
         // Jika user login, gabungkan item tamu dari sesi ke akun
         if ($userId) {
             $this->mergeGuestCartToUser($sessionId, $userId);
-            $items = CartItem::with(['product', 'store'])
+            $items = CartItem::with(['product.bundleItems', 'store'])
                 ->where('user_id', $userId)
                 ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
                 ->get();
         } else {
-            $items = CartItem::with(['product', 'store'])
+            $items = CartItem::with(['product.bundleItems', 'store'])
                 ->where('session_id', $sessionId)
                 ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
                 ->get();
@@ -76,6 +76,8 @@ class CartService
                     'items' => [],
                     'store_subtotal' => 0,
                     'store_subtotal_formatted' => 'Rp 0',
+                    'total_weight' => 0,
+                    'total_weight_formatted' => '0 gr',
                     'can_checkout' => true,
                     'out_of_stock_count' => 0,
                 ];
@@ -86,7 +88,9 @@ class CartService
                 $grouped[$store->id]['out_of_stock_count']++;
             }
 
+            $itemWeight = $product->effectiveWeight();
             $grouped[$store->id]['store_subtotal'] += $subtotal;
+            $grouped[$store->id]['total_weight'] += ($itemWeight * $item->quantity);
             $grouped[$store->id]['items'][] = [
                 'id' => $item->id,
                 'product_id' => $product->id,
@@ -94,6 +98,8 @@ class CartService
                 'slug' => $product->slug,
                 'price' => (float) $product->selling_price,
                 'price_formatted' => 'Rp ' . number_format($product->selling_price, 0, ',', '.'),
+                'weight' => $itemWeight,
+                'weight_formatted' => $product->formattedWeight(),
                 'quantity' => $item->quantity,
                 'stock' => $currentStock,
                 'is_out_of_stock' => $isOutOfStock,
@@ -107,6 +113,8 @@ class CartService
 
         foreach ($grouped as &$g) {
             $g['store_subtotal_formatted'] = 'Rp ' . number_format($g['store_subtotal'], 0, ',', '.');
+            $totGrams = (int) ($g['total_weight'] ?? 0);
+            $g['total_weight_formatted'] = Product::formatGrams($totGrams);
         }
         unset($g);
 

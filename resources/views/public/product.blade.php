@@ -175,11 +175,12 @@
       @endif
     </div>
 
-    {{-- Meta Toko, Kategori, SKU --}}
+    {{-- Meta Toko, Kategori, SKU, Berat --}}
     <p style="color:var(--steel);font-size:13px;margin:0 0 16px;line-height:1.4">
       Toko: <a href="{{ $store->url() }}" style="color:var(--ink-deep);font-weight:600;text-decoration:none">{{ $store->name }}</a>
       @if($product->category) · Kategori: <span style="color:var(--ink-deep)">{{ $product->category->name }}</span>@endif
       @if($product->sku) · SKU: <span style="font-family:monospace">{{ $product->sku }}</span>@endif
+      · Berat: <span style="color:var(--ink-deep);font-weight:600">{{ $product->formattedWeight() }}</span>
     </p>
 
     {{-- 3. Deskripsi di Bawah Stok --}}
@@ -275,6 +276,7 @@
                 </a>
                 <div style="font-size:12px;color:var(--steel)">
                   {{ $item->pivot->quantity }}x · Rp {{ number_format($item->selling_price, 0, ',', '.') }} / unit
+                  · {{ $item->formattedWeight() }}
                   · <span style="{{ $item->stock > 0 ? 'color:var(--success)' : 'color:var(--critical)' }}">Stok: {{ $item->stock }}</span>
                 </div>
               </div>

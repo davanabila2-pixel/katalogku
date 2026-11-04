@@ -114,6 +114,7 @@ class ProductController extends Controller
                 'category_id' => $product->category_id,
                 'description' => $product->description,
                 'selling_price' => (float) $product->selling_price,
+                'weight' => (int) $product->effectiveWeight(),
                 'status' => $product->status,
                 'is_bundle' => $product->isBundle(),
                 'is_hidden_from_catalog' => (bool) $product->is_hidden_from_catalog,
@@ -340,13 +341,14 @@ class ProductController extends Controller
             ->where('is_bundle', false)
             ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
             ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'selling_price', 'stock'])
+            ->get(['id', 'name', 'sku', 'selling_price', 'stock', 'weight'])
             ->map(fn (Product $product) => [
                 'id' => $product->id,
                 'name' => $product->name,
                 'sku' => $product->sku,
                 'selling_price' => (float) $product->selling_price,
                 'stock' => (int) $product->stock,
+                'weight' => (int) ($product->weight ?? 500),
             ])->values();
     }
 

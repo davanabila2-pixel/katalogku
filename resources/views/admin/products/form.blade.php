@@ -142,11 +142,11 @@
               }
             }
           @endphp
-          <div class="bundle-item-row" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--hairline-soft)" data-price="{{ $sp->selling_price }}" data-stock="{{ $sp->stock }}">
+          <div class="bundle-item-row" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--hairline-soft)" data-price="{{ $sp->selling_price }}" data-stock="{{ $sp->stock }}" data-weight="{{ $sp->weight ?? 500 }}">
             <input type="checkbox" name="bundle_items[{{ $sp->id }}][product_id]" value="{{ $sp->id }}" id="comp_{{ $sp->id }}" class="bundle-checkbox" {{ $isChecked ? 'checked' : '' }} onchange="calculateBundleEstimate()">
             <label for="comp_{{ $sp->id }}" style="flex:1;margin:0;cursor:pointer;font-size:14px">
               <strong>{{ $sp->name }}</strong>
-              <span style="color:var(--steel);font-size:13px"> · Rp {{ number_format($sp->selling_price, 0, ',', '.') }} · Stok fisik: <strong>{{ $sp->stock }}</strong></span>
+              <span style="color:var(--steel);font-size:13px"> · Rp {{ number_format($sp->selling_price, 0, ',', '.') }} · {{ $sp->formattedWeight() }} · Stok fisik: <strong>{{ $sp->stock }}</strong></span>
             </label>
             <div style="display:flex;align-items:center;gap:6px">
               <span style="font-size:12px;color:var(--steel)">Jumlah/set:</span>
@@ -180,6 +180,17 @@
       <label>Harga jual (Rp)</label>
       <input class="input" type="number" id="selling_price_input" name="selling_price" value="{{ old('selling_price', $product->selling_price) }}" min="0" step="0.01" required>
       <small style="color:var(--steel);display:block;margin-top:4px" id="bundle-price-hint"></small>
+    </div>
+    <div class="field">
+      <label>Berat Produk (gram)</label>
+      <input class="input" type="number" id="weight_input" name="weight" value="{{ old('weight', $product->weight) }}" min="1" max="500000" placeholder="cth: 500">
+      <small style="color:var(--steel);display:block;margin-top:4px" id="bundle-weight-hint">
+        @if($product->isBundle())
+          Otomatis dari akumulasi komponen jika dikosongkan.
+        @else
+          Dipakai untuk kalkulasi ongkir ekspedisi riil (1 kg = 1000 gr).
+        @endif
+      </small>
     </div>
     <div class="field"><label>Status publikasi</label><select class="select" name="status"><option value="draft" {{ old('status', $product->status) === 'draft' ? 'selected' : '' }}>Draft</option><option value="active" {{ old('status', $product->status) === 'active' ? 'selected' : '' }}>Aktif (tampil publik)</option><option value="inactive" {{ old('status', $product->status) === 'inactive' ? 'selected' : '' }}>Nonaktif</option></select></div>
   </div>
@@ -233,13 +244,18 @@ function toggleBundleSection(isBundle) {
 
 function calculateBundleEstimate() {
   var isBundle = document.querySelector('input[name="is_bundle"]:checked');
+  var weightHint = document.getElementById('bundle-weight-hint');
   if (!isBundle || isBundle.value !== '1') {
     document.getElementById('bundle-price-hint').innerText = '';
+    if (weightHint) {
+      weightHint.innerText = 'Dipakai untuk kalkulasi ongkir ekspedisi riil (1 kg = 1000 gr).';
+    }
     return;
   }
 
   var rows = document.querySelectorAll('.bundle-item-row');
   var totalOriginalPrice = 0;
+  var totalBundleWeight = 0;
   var minStock = null;
   var checkedCount = 0;
 
@@ -250,9 +266,11 @@ function calculateBundleEstimate() {
       checkedCount++;
       var price = parseFloat(row.getAttribute('data-price')) || 0;
       var stock = parseInt(row.getAttribute('data-stock')) || 0;
+      var weight = parseInt(row.getAttribute('data-weight')) || 500;
       var qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
 
       totalOriginalPrice += (price * qty);
+      totalBundleWeight += (weight * qty);
       var possibleSets = Math.floor(stock / qty);
       if (minStock === null || possibleSets < minStock) {
         minStock = possibleSets;
@@ -270,16 +288,27 @@ function calculateBundleEstimate() {
       calcBox.style.color = '#856404';
     }
     if (priceHint) priceHint.innerText = '';
+    if (weightHint) {
+      weightHint.innerText = 'Otomatis dari akumulasi komponen jika dikosongkan.';
+    }
   } else {
+    var weightFormatted = totalBundleWeight >= 1000
+      ? (totalBundleWeight / 1000).toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' kg'
+      : totalBundleWeight.toLocaleString('id-ID') + ' gr';
+
     if (calcBox) {
-      calcBox.innerHTML = '✅ <strong>Kalkulasi Paket:</strong><br>' +
+      calcBox.innerHTML = '✅ <strong>Kalkulasi Paket Setelan:</strong><br>' +
         '• Total Harga Normal Beli Satuan: <strong>Rp ' + totalOriginalPrice.toLocaleString('id-ID') + '</strong><br>' +
+        '• Total Berat Akumulasi Komponen: <strong>' + totalBundleWeight.toLocaleString('id-ID') + ' gr (' + weightFormatted + ')</strong><br>' +
         '• Estimasi Stok Paket Otomatis: <strong>' + (minStock !== null ? minStock : 0) + ' paket</strong> (mengikuti stok terendah komponen).';
       calcBox.style.background = '#e7f3ff';
       calcBox.style.color = '#004085';
     }
     if (priceHint) {
       priceHint.innerText = '💡 Total harga normal jika beli terpisah: Rp ' + totalOriginalPrice.toLocaleString('id-ID');
+    }
+    if (weightHint) {
+      weightHint.innerHTML = '💡 Akumulasi komponen otomatis: <strong>' + totalBundleWeight.toLocaleString('id-ID') + ' gr (' + weightFormatted + ')</strong>. Kosongkan jika ingin memakai berat otomatis ini.';
     }
   }
 }

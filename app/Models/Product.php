@@ -25,6 +25,7 @@ class Product extends Model
         'barcode_image_path',
         'description',
         'selling_price',
+        'weight',
         'stock',
         'image_path',
         'status',
@@ -36,6 +37,7 @@ class Product extends Model
             'is_bundle' => 'boolean',
             'is_hidden_from_catalog' => 'boolean',
             'selling_price' => 'decimal:2',
+            'weight' => 'integer',
             'stock' => 'integer',
         ];
     }
@@ -156,6 +158,73 @@ class Product extends Model
         $selling = (float) $this->selling_price;
 
         return max(0.0, round($original - $selling, 2));
+    }
+
+    /**
+     * Total berat paket setelan (bundle) dalam satuan gram, dihitung dari
+     * akumulasi berat komponen dikalikan kuantitas masing-masing per paket.
+     */
+    public function bundleTotalWeight(): int
+    {
+        if (! $this->isBundle()) {
+            return max(1, (int) ($this->attributes['weight'] ?? 500));
+        }
+
+        $items = $this->bundleItems;
+        if ($items->isEmpty()) {
+            return max(1, (int) ($this->attributes['weight'] ?? 500));
+        }
+
+        $total = 0;
+        foreach ($items as $item) {
+            $itemWeight = max(1, (int) ($item->weight ?? 500));
+            $qty = max(1, (int) ($item->pivot->quantity ?? 1));
+            $total += ($itemWeight * $qty);
+        }
+
+        return max(1, $total);
+    }
+
+    /**
+     * Berat efektif produk dalam satuan gram yang dipakai untuk perhitungan ongkir.
+     * Jika produk setelan (bundle): menggunakan berat khusus jika diisi admin (override box),
+     * atau otomatis menggunakan akumulasi berat komponen penyusunnya.
+     */
+    public function effectiveWeight(): int
+    {
+        if ($this->isBundle()) {
+            $customWeight = (int) ($this->attributes['weight'] ?? 0);
+            if ($customWeight > 0) {
+                return $customWeight;
+            }
+
+            return $this->bundleTotalWeight();
+        }
+
+        return max(1, (int) ($this->attributes['weight'] ?? 500));
+    }
+
+    /**
+     * Format angka gram ke tampilan berat ramah pengguna (cth: "500 gr", "1,2 kg", "2 kg").
+     */
+    public static function formatGrams(int $grams): string
+    {
+        if ($grams >= 1000) {
+            $kg = round($grams / 1000, 2);
+            $formatted = rtrim(rtrim(number_format($kg, 2, ',', '.'), '0'), ',');
+
+            return "{$formatted} kg";
+        }
+
+        return number_format($grams, 0, ',', '.') . ' gr';
+    }
+
+    /**
+     * Format tampilan berat ramah pengguna produk ini.
+     */
+    public function formattedWeight(): string
+    {
+        return static::formatGrams($this->effectiveWeight());
     }
 
     public function isHiddenFromCatalog(): bool

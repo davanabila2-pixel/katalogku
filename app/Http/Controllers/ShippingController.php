@@ -47,26 +47,28 @@ class ShippingController extends Controller
             'postal_code' => $destinationPostal,
         ];
 
-        // Hitung estimasi berat dari produk
+        // Hitung estimasi berat dari produk atau keranjang (mendukung bundle dan berat per produk)
         $items = [];
         if ($request->filled('product_id')) {
-            $product = Product::where('store_id', $store->id)
+            $product = Product::with('bundleItems')
+                ->where('store_id', $store->id)
                 ->where('id', $request->input('product_id'))
                 ->first();
 
             if ($product) {
                 $qty = max(1, (int) $request->input('quantity', 1));
+                $unitWeight = $product->effectiveWeight();
                 $items[] = [
                     'name' => $product->name,
                     'price' => (float) $product->selling_price,
                     'quantity' => $qty,
-                    'weight' => 500 * $qty, // 500 gram per produk
+                    'weight' => $unitWeight * $qty,
                 ];
             }
         } else {
             $userId = auth()->id();
             $sessionId = $request->session()->getId();
-            $cartItems = CartItem::with('product')
+            $cartItems = CartItem::with(['product.bundleItems'])
                 ->where('store_id', $store->id)
                 ->when($userId, fn ($q) => $q->where('user_id', $userId))
                 ->when(! $userId, fn ($q) => $q->where('session_id', $sessionId))
@@ -74,11 +76,12 @@ class ShippingController extends Controller
 
             foreach ($cartItems as $it) {
                 if ($it->product) {
+                    $unitWeight = $it->product->effectiveWeight();
                     $items[] = [
                         'name' => $it->product->name,
                         'price' => (float) $it->product->selling_price,
                         'quantity' => $it->quantity,
-                        'weight' => 500 * $it->quantity,
+                        'weight' => $unitWeight * $it->quantity,
                     ];
                 }
             }

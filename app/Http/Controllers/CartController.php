@@ -107,7 +107,8 @@ class CartController extends Controller
         $hasOutOfStock = false;
 
         if ($productId) {
-            $directProduct = Product::where('store_id', $store->id)
+            $directProduct = Product::with('bundleItems')
+                ->where('store_id', $store->id)
                 ->where('id', $productId)
                 ->publiclyVisible()
                 ->first();
@@ -128,6 +129,8 @@ class CartController extends Controller
                     'slug' => $directProduct->slug,
                     'price' => (float) $directProduct->selling_price,
                     'price_formatted' => 'Rp ' . number_format($directProduct->selling_price, 0, ',', '.'),
+                    'weight' => $directProduct->effectiveWeight(),
+                    'weight_formatted' => $directProduct->formattedWeight(),
                     'quantity' => $qty,
                     'stock' => (int) $directProduct->stock,
                     'is_out_of_stock' => $isOutOfStock,
@@ -152,6 +155,11 @@ class CartController extends Controller
                 $hasOutOfStock = ! $storeCart['can_checkout'];
             }
         }
+
+        $totalWeight = (int) collect($items)->sum(function ($it) {
+            return ((int) ($it['weight'] ?? 500)) * ((int) ($it['quantity'] ?? 1));
+        });
+        $totalWeightFormatted = Product::formatGrams($totalWeight);
 
         $user = auth()->user();
         $customerProfile = $user ? $user->customerProfileFor($store->id) : null;
@@ -224,6 +232,8 @@ class CartController extends Controller
             'items',
             'totalPrice',
             'totalQty',
+            'totalWeight',
+            'totalWeightFormatted',
             'isDirectBuy',
             'directProduct',
             'hasOutOfStock',
@@ -414,10 +424,14 @@ class CartController extends Controller
                     . "📦 *Ongkir*: {$ongkirFormatted}\n";
             }
 
+            $prodTotalWeight = $product->effectiveWeight() * $qty;
+            $prodWeightText = Product::formatGrams($prodTotalWeight);
+
             $waMsg = "Halo {$store->name}, saya telah melakukan pemesanan melalui katalog:\n\n"
                 . "🛍️ *PESANAN TOKO*\n"
                 . "🏷️ *No. Pesanan*: {$order->order_code}\n"
                 . "📦 *Produk*: {$product->name} (x{$qty})\n"
+                . "⚖️ *Estimasi Berat*: {$prodWeightText}\n"
                 . ($shippingText ? "💰 *Subtotal Produk*: Rp " . number_format($itemsSubtotal, 0, ',', '.') . "\n" . $shippingText : "")
                 . "💵 *Total Pembayaran*: {$totalFormatted}\n"
                 . "💳 *Metode*: " . ($hasProof ? 'QRIS Toko (Bukti Terunggah)' : 'Konfirmasi Pembayaran') . "\n\n"
@@ -613,17 +627,21 @@ class CartController extends Controller
 
         // Format pesan WhatsApp
         $itemListText = '';
+        $cartTotalWeight = 0;
         foreach ($cartItems as $idx => $it) {
             $num = $idx + 1;
             $itemSub = 'Rp ' . number_format($it->product->selling_price * $it->quantity, 0, ',', '.');
+            $w = $it->product ? ($it->product->effectiveWeight() * $it->quantity) : 0;
+            $cartTotalWeight += $w;
             $itemListText .= "  {$num}. {$it->product->name} (x{$it->quantity}) = {$itemSub}\n";
         }
+        $cartWeightText = Product::formatGrams($cartTotalWeight);
 
         $waMsg = "Halo {$store->name}, saya telah memesan melalui keranjang belanja katalog:\n\n"
             . "🛍️ *PESANAN KERANJANG*\n"
             . "🏷️ *No. Pesanan*: {$order->order_code}\n"
             . "📦 *Daftar Barang*:\n{$itemListText}"
-            . "🔢 *Total Item*: {$totalQty} unit\n"
+            . "🔢 *Total Item*: {$totalQty} unit ({$cartWeightText})\n"
             . ($shippingCartText ?: '')
             . "💵 *Total Pembayaran*: {$totalFormatted}\n"
             . "💳 *Metode*: " . ($hasProof ? 'QRIS Toko (Bukti Terunggah)' : 'Konfirmasi Pembayaran') . "\n\n"
