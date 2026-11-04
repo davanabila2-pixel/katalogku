@@ -1,5 +1,5 @@
 /**
- * Wilayah Indonesia Cascading Dropdown Helper
+ * Wilayah Indonesia Cascading Dropdown Helper (Select2 & Native Support)
  * Menghubungkan dropdown Provinsi -> Kota/Kabupaten -> Kecamatan
  * Menggunakan data lokal dari /api/wilayah
  */
@@ -17,6 +17,34 @@
       return null;
     }
 
+    const hasSelect2 = typeof window.jQuery !== 'undefined' && typeof window.jQuery.fn.select2 !== 'undefined';
+    const $ = window.jQuery;
+
+    // Inisialisasi Select2 jika library jQuery & Select2 tersedia di halaman
+    function setupSelect2(el, placeholderText) {
+      if (!hasSelect2 || !el) return;
+      const opts = {
+        placeholder: placeholderText,
+        allowClear: true,
+        width: '100%',
+        dropdownAutoWidth: true,
+      };
+      if (config.dropdownParent) {
+        opts.dropdownParent = $(config.dropdownParent);
+      }
+      $(el).select2(opts);
+    }
+
+    function syncSelect2(el) {
+      if (hasSelect2 && el) {
+        $(el).trigger('change.select2');
+      }
+    }
+
+    setupSelect2(provinceSelect, '-- Pilih Provinsi --');
+    setupSelect2(citySelect, '-- Pilih Kota / Kabupaten --');
+    setupSelect2(districtSelect, '-- Pilih Kecamatan --');
+
     let provincesData = [];
     let citiesData = [];
     let districtsData = [];
@@ -25,6 +53,7 @@
     function resetSelect(selectEl, placeholder) {
       selectEl.innerHTML = `<option value="">${placeholder}</option>`;
       selectEl.disabled = true;
+      syncSelect2(selectEl);
     }
 
     // Load Daftar Provinsi
@@ -43,6 +72,7 @@
           provinceSelect.appendChild(opt);
         });
         provinceSelect.disabled = false;
+        syncSelect2(provinceSelect);
       } catch (e) {
         console.warn('Gagal memuat provinsi:', e);
       }
@@ -60,6 +90,7 @@
 
       citySelect.innerHTML = '<option value="">Memuat kota...</option>';
       citySelect.disabled = true;
+      syncSelect2(citySelect);
       resetSelect(districtSelect, '-- Pilih Kecamatan --');
 
       try {
@@ -79,6 +110,7 @@
           citySelect.appendChild(opt);
         });
         citySelect.disabled = false;
+        syncSelect2(citySelect);
 
         if (selectedCityId) {
           const selOpt = citySelect.options[citySelect.selectedIndex];
@@ -100,6 +132,7 @@
 
       districtSelect.innerHTML = '<option value="">Memuat kecamatan...</option>';
       districtSelect.disabled = true;
+      syncSelect2(districtSelect);
 
       try {
         const res = await fetch(`/api/wilayah/districts?city_id=${encodeURIComponent(cityId)}`);
@@ -118,6 +151,7 @@
           districtSelect.appendChild(opt);
         });
         districtSelect.disabled = false;
+        syncSelect2(districtSelect);
 
         if (selectedDistrictId) {
           const selOpt = districtSelect.options[districtSelect.selectedIndex];
@@ -129,30 +163,39 @@
       }
     }
 
-    // Event Listener: Provinsi diganti
-    provinceSelect.addEventListener('change', function() {
+    // Handlers
+    function onProvinceChanged() {
       const selectedOpt = provinceSelect.options[provinceSelect.selectedIndex];
       const provinceName = selectedOpt && selectedOpt.value ? (selectedOpt.dataset.name || selectedOpt.textContent) : '';
       if (provinceInput) provinceInput.value = provinceName;
 
-      loadCities(this.value);
-    });
+      loadCities(provinceSelect.value);
+    }
 
-    // Event Listener: Kota diganti
-    citySelect.addEventListener('change', function() {
+    function onCityChanged() {
       const selectedOpt = citySelect.options[citySelect.selectedIndex];
       const cityName = selectedOpt && selectedOpt.value ? (selectedOpt.dataset.name || selectedOpt.textContent) : '';
       if (cityInput) cityInput.value = cityName;
 
-      loadDistricts(this.value);
-    });
+      loadDistricts(citySelect.value);
+    }
 
-    // Event Listener: Kecamatan diganti
-    districtSelect.addEventListener('change', function() {
+    function onDistrictChanged() {
       const selectedOpt = districtSelect.options[districtSelect.selectedIndex];
       const districtName = selectedOpt && selectedOpt.value ? (selectedOpt.dataset.name || selectedOpt.textContent) : '';
       if (districtInput) districtInput.value = districtName;
-    });
+    }
+
+    // Pasang Event Listeners (kompatibel dengan Select2 dan Native)
+    if (hasSelect2) {
+      $(provinceSelect).on('change', onProvinceChanged);
+      $(citySelect).on('change', onCityChanged);
+      $(districtSelect).on('change', onDistrictChanged);
+    } else {
+      provinceSelect.addEventListener('change', onProvinceChanged);
+      citySelect.addEventListener('change', onCityChanged);
+      districtSelect.addEventListener('change', onDistrictChanged);
+    }
 
     // Sinkronisasi otomatis dari nama teks (cth: "Bandung", "Bandung Wetan")
     async function resolveAndSelect(cityText, districtText, provinceText = '') {
@@ -167,16 +210,38 @@
         if (resolved.province && resolved.province.id) {
           provinceSelect.value = resolved.province.id;
           if (provinceInput) provinceInput.value = resolved.province.name;
+          syncSelect2(provinceSelect);
 
           await loadCities(resolved.province.id, resolved.city ? resolved.city.id : null);
 
           if (resolved.city && resolved.city.id) {
+            citySelect.value = resolved.city.id;
+            if (cityInput) cityInput.value = resolved.city.name;
+            syncSelect2(citySelect);
+
             await loadDistricts(resolved.city.id, resolved.district ? resolved.district.id : null);
+
+            if (resolved.district && resolved.district.id) {
+              districtSelect.value = resolved.district.id;
+              if (districtInput) districtInput.value = resolved.district.name;
+              syncSelect2(districtSelect);
+            }
           }
         }
       } catch (e) {
         console.warn('Gagal resolve wilayah:', e);
       }
+    }
+
+    // Reset dropdowns ke awal
+    function reset() {
+      provinceSelect.value = '';
+      syncSelect2(provinceSelect);
+      resetSelect(citySelect, '-- Pilih Kota / Kabupaten --');
+      resetSelect(districtSelect, '-- Pilih Kecamatan --');
+      if (provinceInput) provinceInput.value = '';
+      if (cityInput) cityInput.value = '';
+      if (districtInput) districtInput.value = '';
     }
 
     // Inisialisasi awal
@@ -197,6 +262,7 @@
       loadProvinces,
       loadCities,
       loadDistricts,
+      reset,
       setFromText: function(cityName, districtName, provinceName = '') {
         return resolveAndSelect(cityName, districtName, provinceName);
       }
@@ -205,4 +271,3 @@
 
   window.initWilayahDropdown = initWilayahDropdown;
 })(window);
-

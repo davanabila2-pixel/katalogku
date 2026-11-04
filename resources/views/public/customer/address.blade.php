@@ -308,6 +308,12 @@
   </div>
 </div>
 
+{{-- Select2 CSS & JS (Searchable Wilayah Dropdown) --}}
+<link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
+<link rel="stylesheet" href="{{ asset('css/wilayah-select2.css') }}">
+<script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
+
 {{-- Leaflet CSS & JS (Fallback peta interaktif universal) --}}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -586,8 +592,7 @@
     document.getElementById('addressIsDefault').checked = false;
 
     if (window.customerWilayah) {
-      document.getElementById('customer_province_select').value = '';
-      window.customerWilayah.loadCities('');
+      window.customerWilayah.reset();
     }
 
     document.getElementById('addressFormCardSection').scrollIntoView({ behavior: 'smooth' });

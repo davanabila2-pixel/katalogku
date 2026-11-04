@@ -52,6 +52,11 @@
   <a class="btn btn-ghost" href="{{ route('superadmin.stores.index') }}">Batal</a>
 </form>
 </div>
+{{-- Select2 CSS & JS (Searchable Wilayah Dropdown) --}}
+<link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
+<link rel="stylesheet" href="{{ asset('css/wilayah-select2.css') }}">
+<script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
 <script src="{{ asset('js/wilayah-dropdown.js') }}"></script>
 <script>
 const nameEl = document.getElementById('storename'), slugEl = document.getElementById('storeslug'), prev = document.getElementById('slugprev');
