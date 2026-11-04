@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ProductImportExportController as AdminProductImportExportController;
 use App\Http\Controllers\Admin\StockController as AdminStockController;
 use App\Http\Controllers\Admin\StoreLinkController;
 use App\Http\Controllers\Admin\StoreProfileController;
@@ -87,6 +88,12 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('links/{link}/move', [StoreLinkController::class, 'move'])->name('links.move');
 
         Route::resource('categories', AdminCategoryController::class)->except(['show']);
+
+        // Import & Export Produk (CSV Batch)
+        Route::get('products/export', [AdminProductImportExportController::class, 'export'])->name('products.export');
+        Route::get('products/template', [AdminProductImportExportController::class, 'template'])->name('products.template');
+        Route::post('products/import', [AdminProductImportExportController::class, 'import'])->name('products.import');
+
         Route::resource('products', AdminProductController::class)->except(['show']);
         Route::post('products/{product}/adjust', [AdminProductController::class, 'adjust'])->name('products.adjust');
         Route::post('products/{product}/barcode/regenerate', [AdminProductController::class, 'regenerateBarcode'])->name('products.barcode.regenerate');

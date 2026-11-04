@@ -11,11 +11,19 @@
   <div class="toolbar-right">
     <x-search-input placeholder="Cari produk/SKU…" width="250px" />
     <span class="category-hierarchy" id="product-count"></span>
+    <a href="{{ route('admin.products.export', $store) }}" class="btn btn-ghost btn-sm" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;color:#334155" title="Export seluruh produk ke file CSV (Excel)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export CSV
+    </a>
+    <button type="button" class="btn btn-ghost btn-sm" id="product-import-btn" style="font-size:12px;padding:0 12px;height:38px;border:1px solid #ced0d4;background:#fff;border-radius:20px;display:inline-flex;align-items:center;gap:5px;color:#334155" title="Import produk dari file CSV per batch">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Import CSV
+    </button>
     <button class="btn btn-primary btn-sm" type="button" id="product-create">+ Tambah Produk</button>
   </div>
 </form>
 <div class="panel" style="padding:0"><div class="table-wrap" style="border:none">
-<table class="table" id="product-table" data-api-url="{{ route('api.products.index', $store) }}" data-form-data-url="{{ route('api.products.form_data', $store) }}" data-store-url="{{ route('api.products.store', $store) }}">
+<table class="table" id="product-table" data-api-url="{{ route('api.products.index', $store) }}" data-form-data-url="{{ route('api.products.form_data', $store) }}" data-store-url="{{ route('api.products.store', $store) }}" data-import-url="{{ route('admin.products.import', $store) }}" data-template-url="{{ route('admin.products.template', $store) }}">
 <thead><tr><th>Produk</th><th>Kategori</th><th>Harga Jual</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead>
 <tbody id="product-rows">
 <tr><td colspan="6"><div class="table-loading"><span class="skeleton" style="width:140px"></span> Memuat data produk…</div></td></tr>
@@ -34,6 +42,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var statusBadge = AdminTable.statusBadge;
     var formDataUrl = table.getAttribute('data-form-data-url');
     var storeUrl = table.getAttribute('data-store-url');
+    var importUrl = table.getAttribute('data-import-url');
+    var templateUrl = table.getAttribute('data-template-url');
 
     function money(value) {
         return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
@@ -377,6 +387,74 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('product-create').addEventListener('click', function () {
         openProductForm(formDataUrl, 'Tambah produk');
     });
+
+    var importBtn = document.getElementById('product-import-btn');
+    if (importBtn && importUrl) {
+        importBtn.addEventListener('click', function () {
+            var bodyHtml = '<div class="modal-field">'
+                + '<label class="modal-label">Pilih File CSV Produk <span style="color:var(--critical)">*</span></label>'
+                + '<input type="file" name="file" accept=".csv,text/csv,text/plain" required style="display:block;width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;background:#f8fafc">'
+                + '<small class="modal-help">Format file harus berupa CSV (.csv atau .txt) dengan header standar hasil export.</small>'
+                + '</div>'
+                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">'
+                + '<div class="modal-field">'
+                + '<label class="modal-label">Ukuran Batch Transaksi</label>'
+                + '<select name="batch_size" class="select" style="width:100%">'
+                + '<option value="50">50 baris per batch</option>'
+                + '<option value="100" selected>100 baris per batch (Standar)</option>'
+                + '<option value="200">200 baris per batch</option>'
+                + '<option value="500">500 baris per batch</option>'
+                + '</select>'
+                + '<small class="modal-help">Tiap batch disimpan dalam transaksi database terpisah.</small>'
+                + '</div>'
+                + '<div class="modal-field">'
+                + '<label class="modal-label">Mode Simulasi</label>'
+                + '<label class="modal-check" style="margin-top:8px"><input type="checkbox" name="dry_run" value="1"> <span><strong>Dry Run</strong> (validasi tanpa simpan ke database)</span></label>'
+                + '</div>'
+                + '</div>'
+                + '<div class="modal-subcard" style="margin-top:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.5">'
+                + '<strong style="display:block;margin-bottom:6px;color:#1e293b">💡 Panduan Edit & Tambah Produk:</strong>'
+                + '<ul style="margin:0 0 10px 18px;padding:0;color:#475569">'
+                + '<li><strong>Edit Produk:</strong> Biarkan nilai kolom <code>id</code> tetap sesuai hasil export CSV.</li>'
+                + '<li><strong>Tambah Produk Baru:</strong> Tambahkan baris baru dengan mengosongkan kolom <code>id</code>.</li>'
+                + '<li><strong>Kategori:</strong> Jika kategori belum ada di toko, sistem akan membuatnya secara otomatis.</li>'
+                + '<li><strong>Stok:</strong> Perubahan stok otomatis tercatat di riwayat pergerakan stok.</li>'
+                + '</ul>'
+                + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:8px;border-top:1px dashed #cbd5e1">'
+                + '<a href="' + esc(templateUrl) + '" class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px;height:auto;border:1px solid #cbd5e1;background:#fff;border-radius:6px;text-decoration:none">📥 Unduh Template CSV</a>'
+                + '<span style="color:#64748b;font-size:11px">Artisan CLI: <code>php artisan products:import &lt;file&gt;</code></span>'
+                + '</div>'
+                + '</div>';
+
+            AdminUI.formModal({
+                title: 'Import Produk (Batch CSV)',
+                width: 'lg',
+                submitText: 'Unggah & Proses Import',
+                body: bodyHtml,
+                submit: function (values, ui) {
+                    var fileInput = ui.form.querySelector('input[type="file"]');
+                    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                        return Promise.reject(new Error('Silakan pilih file CSV terlebih dahulu.'));
+                    }
+
+                    var formData = new FormData(ui.form);
+                    ui.setBusy(true);
+
+                    return AdminApi.request(importUrl, {
+                        method: 'POST',
+                        body: formData
+                    }).then(function (res) {
+                        AdminUI.toast(res.message, res.status === 'error' ? 'error' : 'success');
+                        controller.reload();
+                    });
+                }
+            }).catch(function (error) {
+                if (error && error.message) {
+                    AdminUI.toast(error.message, 'error');
+                }
+            });
+        });
+    }
 
     controller.tbody.addEventListener('click', function (event) {
         var editBtn = event.target.closest('[data-action="edit"]');

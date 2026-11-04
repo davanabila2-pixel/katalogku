@@ -7,6 +7,15 @@ use App\Models\User;
 
 class ProductPolicy
 {
+    public function viewAny(User $user, ?int $storeId = null): bool
+    {
+        if ($user->isSuperadmin()) {
+            return true;
+        }
+
+        return $storeId !== null ? $user->managesStore($storeId) : true;
+    }
+
     public function view(User $user, Product $product): bool
     {
         return $user->managesStore($product->store_id);
