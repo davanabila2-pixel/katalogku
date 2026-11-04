@@ -818,6 +818,16 @@
 
         <!-- Panel: Master Ekspedisi -->
         <div class="tab-panel" role="tabpanel" id="panel-ekspedisi" aria-labelledby="tab-ekspedisi" hidden>
+          <div style="margin-bottom:18px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <strong style="color:#1e40af;font-size:13.5px;display:block;">✨ Halaman Khusus Master Ekspedisi & Cek Ongkir</strong>
+              <span style="color:#3b82f6;font-size:12.5px;">Atur pilihan kurir, alamat asal pengiriman toko, dan simulasi cek ongkir langsung di menu Master Ekspedisi.</span>
+            </div>
+            <a href="{{ route('admin.couriers.index', $store) }}" class="btn btn-primary btn-sm" style="font-size:12px;padding:6px 14px;border-radius:20px;text-decoration:none;background:#2563eb;color:#fff;">
+              Buka Master Ekspedisi &rarr;
+            </a>
+          </div>
+
           <div class="section-intro">
             <h3>Master Ekspedisi</h3>
             <p>Pilih ekspedisi yang aktif untuk toko ini. Hanya ekspedisi aktif yang muncul pada cek ongkir saat pelanggan checkout. "Ambil Sendiri / Ongkir Manual" selalu tersedia.</p>

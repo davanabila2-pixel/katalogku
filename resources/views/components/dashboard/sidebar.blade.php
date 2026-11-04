@@ -22,6 +22,7 @@
 
             <p class="sidebar-label">Setup & Konfigurasi</p>
             <a class="{{ request()->routeIs('admin.profile.*') ? 'active' : '' }}" href="{{ route('admin.profile.edit', $store) }}" title="Profil Toko"><x-dashboard.nav-icon name="store" /><span class="nav-label">Profil Toko</span></a>
+            <a class="{{ request()->routeIs('admin.couriers.*') ? 'active' : '' }}" href="{{ route('admin.couriers.index', $store) }}" title="Master Ekspedisi & Cek Ongkir"><x-dashboard.nav-icon name="truck" /><span class="nav-label">Master Ekspedisi</span></a>
 
             <p class="sidebar-label">Katalog Produk</p>
             <a class="{{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index', $store) }}" title="Kategori"><x-dashboard.nav-icon name="folder" /><span class="nav-label">Kategori</span></a>

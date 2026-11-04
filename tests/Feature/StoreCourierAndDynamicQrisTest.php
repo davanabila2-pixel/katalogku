@@ -186,7 +186,7 @@ class StoreCourierAndDynamicQrisTest extends TestCase
 
         $this->assertNull($store->active_couriers);
         $this->assertContains('jne', $store->activeCourierCodes());
-        $this->assertCount(8, $store->activeCourierCodes());
+        $this->assertCount(count(\App\Support\Couriers::all()), $store->activeCourierCodes());
 
         $this->actingAs($admin)->get(route('admin.profile.edit', $store))
             ->assertOk()->assertSee('Master Ekspedisi');

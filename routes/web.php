@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BatchController as AdminBatchController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\CourierController as AdminCourierController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -82,6 +83,12 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('profil', [StoreProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profil', [StoreProfileController::class, 'update'])->name('profile.update');
+
+        // Master Ekspedisi & Pengaturan Cek Ongkir Toko
+        Route::get('ekspedisi', [AdminCourierController::class, 'index'])->name('couriers.index');
+        Route::put('ekspedisi', [AdminCourierController::class, 'update'])->name('couriers.update');
+        Route::post('ekspedisi/simulate', [AdminCourierController::class, 'simulate'])->name('couriers.simulate');
+        Route::post('ekspedisi/clear-cache', [AdminCourierController::class, 'clearCache'])->name('couriers.clear_cache');
 
         // Halaman tautan (gaya linktree): daftar link yang dibagikan ke pelanggan.
         Route::resource('links', StoreLinkController::class)->only(['index', 'store', 'update', 'destroy']);
