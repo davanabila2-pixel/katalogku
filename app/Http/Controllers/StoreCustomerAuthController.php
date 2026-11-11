@@ -10,7 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Socialite\Facades\Socialite;
 
 class StoreCustomerAuthController extends Controller
 {
@@ -19,12 +21,19 @@ class StoreCustomerAuthController extends Controller
         return Store::where('slug', $storeSlug)->where('status', 'active')->firstOrFail();
     }
 
-    public function showLogin(string $storeSlug)
+    public function showLogin(Request $request, string $storeSlug)
     {
         $store = $this->getStore($storeSlug);
 
         if (Auth::check()) {
             return redirect()->route('store.show', $store->slug);
+        }
+
+        if ($request->filled('return_url')) {
+            $returnUrl = $request->query('return_url');
+            if (str_starts_with($returnUrl, '/') && ! str_starts_with($returnUrl, '//')) {
+                $request->session()->put('url.intended', $returnUrl);
+            }
         }
 
         $showcaseProducts = $store->products()
@@ -81,12 +90,19 @@ class StoreCustomerAuthController extends Controller
             ->with('status', "Selamat datang kembali di {$store->name}!");
     }
 
-    public function showRegister(string $storeSlug)
+    public function showRegister(Request $request, string $storeSlug)
     {
         $store = $this->getStore($storeSlug);
 
         if (Auth::check()) {
             return redirect()->route('store.show', $store->slug);
+        }
+
+        if ($request->filled('return_url')) {
+            $returnUrl = $request->query('return_url');
+            if (str_starts_with($returnUrl, '/') && ! str_starts_with($returnUrl, '//')) {
+                $request->session()->put('url.intended', $returnUrl);
+            }
         }
 
         $showcaseProducts = $store->products()
@@ -167,7 +183,168 @@ class StoreCustomerAuthController extends Controller
             $store->id
         );
 
-        return redirect()->route('store.show', $store->slug)
+        return redirect()->intended(route('store.show', $store->slug))
             ->with('status', "Selamat datang di {$store->name}! Akun pelanggan Anda berhasil dibuat.");
+    }
+
+    public function redirectToGoogle(Request $request, string $storeSlug)
+    {
+        $store = $this->getStore($storeSlug);
+
+        if (Auth::check()) {
+            if ($request->filled('return_url')) {
+                $returnUrl = $request->query('return_url');
+                if (str_starts_with($returnUrl, '/') && ! str_starts_with($returnUrl, '//')) {
+                    return redirect($returnUrl);
+                }
+            }
+            return redirect()->route('store.show', $store->slug);
+        }
+
+        if (empty(config('services.google.client_id')) || empty(config('services.google.client_secret'))) {
+            return redirect()->route('store.login', $store->slug)
+                ->withErrors(['email' => 'Login Google belum dikonfigurasi di server. Silakan login dengan email & password.']);
+        }
+
+        $returnUrl = null;
+        if ($request->filled('return_url')) {
+            $candidate = $request->query('return_url');
+            if (str_starts_with($candidate, '/') && ! str_starts_with($candidate, '//')) {
+                $returnUrl = $candidate;
+            }
+        } elseif ($request->session()->has('url.intended')) {
+            $returnUrl = $request->session()->get('url.intended');
+        }
+
+        if ($returnUrl) {
+            $request->session()->put('customer_return_url', $returnUrl);
+        }
+        $request->session()->put('customer_store_slug', $store->slug);
+
+        $statePayload = base64_encode(json_encode([
+            'store_slug' => $store->slug,
+            'return_url' => $returnUrl,
+            'sig' => sha1($store->slug . config('app.key')),
+        ]));
+
+        $driver = Socialite::driver('google')->stateless();
+        if (config('services.google.redirect')) {
+            $driver->redirectUrl(config('services.google.redirect'));
+        }
+
+        return $driver->with(['state' => $statePayload])->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request, ?string $storeSlug = null, ?string $fallbackReturnUrl = null)
+    {
+        $resolvedSlug = $storeSlug;
+        $resolvedReturnUrl = $fallbackReturnUrl;
+
+        // Coba ekstrak dari parameter state (kebal terhadap cookie mismatch antar domain/port)
+        if ($request->filled('state')) {
+            try {
+                $decoded = json_decode(base64_decode($request->query('state')), true);
+                if (is_array($decoded) && ! empty($decoded['store_slug'])) {
+                    if (isset($decoded['sig']) && hash_equals(sha1($decoded['store_slug'] . config('app.key')), $decoded['sig'])) {
+                        $resolvedSlug = $resolvedSlug ?: $decoded['store_slug'];
+                        $resolvedReturnUrl = $resolvedReturnUrl ?: ($decoded['return_url'] ?? null);
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        $resolvedSlug = $resolvedSlug ?: $request->session()->pull('customer_store_slug');
+        if (! $resolvedSlug) {
+            return redirect()->route('login')->withErrors(['email' => 'Sesi login toko telah berakhir. Silakan coba lagi.']);
+        }
+
+        $store = Store::where('slug', $resolvedSlug)->where('status', 'active')->first();
+        if (! $store) {
+            return redirect()->route('login')->withErrors(['email' => 'Toko tidak ditemukan atau sedang tidak aktif.']);
+        }
+
+        try {
+            $driver = Socialite::driver('google')->stateless();
+            if (config('services.google.redirect')) {
+                $driver->redirectUrl(config('services.google.redirect'));
+            }
+            $google = $driver->user();
+        } catch (\Throwable $e) {
+            return redirect()->route('store.login', $store->slug)
+                ->withErrors(['email' => 'Gagal masuk dengan Google: proses dibatalkan atau terjadi gangguan. Silakan coba lagi.']);
+        }
+
+        if (! $google->getEmail()) {
+            return redirect()->route('store.login', $store->slug)
+                ->withErrors(['email' => 'Akun Google Anda tidak menyediakan akses alamat email.']);
+        }
+
+        $user = User::where('google_id', $google->getId())->first()
+            ?? User::where('email', $google->getEmail())->first();
+
+        if ($user) {
+            if (! $user->is_active) {
+                return redirect()->route('store.login', $store->slug)
+                    ->withErrors(['email' => 'Akun dinonaktifkan. Silakan hubungi admin toko.']);
+            }
+
+            if (! $user->google_id) {
+                $user->forceFill(['google_id' => $google->getId()])->save();
+            }
+
+            if (! $user->email_verified_at) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+        } else {
+            $user = User::create([
+                'name' => $google->getName() ?: Str::before($google->getEmail(), '@'),
+                'email' => $google->getEmail(),
+                'password' => null,
+                'google_id' => $google->getId(),
+                'role' => 'user',
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]);
+
+            AuditLogger::log(
+                'auth.customer.register.google',
+                $user,
+                "Akun pelanggan {$user->email} terdaftar via Google di toko {$store->name}.",
+                ['store_slug' => $store->slug, 'google_id' => $google->getId()],
+                $user,
+                $store->id
+            );
+        }
+
+        // Pastikan profil pelanggan untuk toko ini ada
+        StoreCustomerProfile::firstOrCreate(
+            [
+                'store_id' => $store->id,
+                'user_id' => $user->id,
+            ],
+            [
+                'name' => $user->name,
+            ]
+        );
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        AuditLogger::log(
+            'auth.customer.login.google',
+            $user,
+            "Pelanggan {$user->email} masuk via Google ke toko {$store->name}.",
+            ['store_slug' => $store->slug],
+            $user,
+            $store->id
+        );
+
+        $returnUrl = $resolvedReturnUrl ?: $request->session()->pull('customer_return_url');
+        if ($returnUrl && str_starts_with($returnUrl, '/') && ! str_starts_with($returnUrl, '//')) {
+            return redirect($returnUrl)->with('status', "Selamat datang di {$store->name}!");
+        }
+
+        return redirect()->intended(route('store.show', $store->slug))
+            ->with('status', "Selamat datang di {$store->name}!");
     }
 }

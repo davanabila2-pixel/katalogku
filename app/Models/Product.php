@@ -277,7 +277,7 @@ class Product extends Model
     public function imageUrl(): string
     {
         if ($this->image_path && str_starts_with($this->image_path, 'http')) {
-            return $this->image_path;
+            return \App\Support\GoogleDriveUrl::toDirectCdnUrl($this->image_path);
         }
 
         return asset('images/product-fallback.svg');
@@ -291,7 +291,7 @@ class Product extends Model
         $urls = [];
 
         if ($this->image_path && str_starts_with($this->image_path, 'http')) {
-            $urls[] = $this->image_path;
+            $urls[] = \App\Support\GoogleDriveUrl::toDirectCdnUrl($this->image_path);
         }
 
         // Muat relasi images jika belum dimuat
@@ -318,7 +318,7 @@ class Product extends Model
     public function barcodeUrl(): ?string
     {
         if ($this->barcode_image_path && str_starts_with($this->barcode_image_path, 'http')) {
-            return $this->barcode_image_path;
+            return \App\Support\GoogleDriveUrl::toDirectCdnUrl($this->barcode_image_path);
         }
 
         return null;

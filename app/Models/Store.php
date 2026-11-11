@@ -165,7 +165,7 @@ class Store extends Model
         }
 
         if (str_starts_with($this->logo_path, 'http://') || str_starts_with($this->logo_path, 'https://')) {
-            return $this->logo_path;
+            return \App\Support\GoogleDriveUrl::toDirectCdnUrl($this->logo_path);
         }
 
         return null;
@@ -178,7 +178,7 @@ class Store extends Model
         }
 
         if (str_starts_with($this->banner_path, 'http://') || str_starts_with($this->banner_path, 'https://')) {
-            return $this->banner_path;
+            return \App\Support\GoogleDriveUrl::toDirectCdnUrl($this->banner_path);
         }
 
         return null;
@@ -196,7 +196,7 @@ class Store extends Model
         }
 
         if (str_starts_with($this->qr_image_path, 'http://') || str_starts_with($this->qr_image_path, 'https://')) {
-            return $this->qr_image_path;
+            return \App\Support\GoogleDriveUrl::toDirectCdnUrl($this->qr_image_path);
         }
 
         return null;
@@ -241,7 +241,17 @@ class Store extends Model
             $tmp = null;
 
             if (str_starts_with($pathOrUrl, 'http://') || str_starts_with($pathOrUrl, 'https://')) {
-                $content = @file_get_contents($pathOrUrl);
+                $fetchUrl = \App\Support\GoogleDriveUrl::isGoogleDriveUrl($pathOrUrl)
+                    ? \App\Support\GoogleDriveUrl::directLh3Url($pathOrUrl)
+                    : $pathOrUrl;
+
+                $ctx = stream_context_create([
+                    'http' => [
+                        'timeout' => 5,
+                        'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                    ],
+                ]);
+                $content = @file_get_contents($fetchUrl, false, $ctx);
                 if (! $content) {
                     return null;
                 }

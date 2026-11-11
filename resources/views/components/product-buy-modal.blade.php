@@ -249,9 +249,22 @@
   }
 
   window.openProductBuy = function(data) {
+    const storeSlug = (data && data.storeSlug) || window.currentStoreSlug;
+    const qty = (data && data.quantity) || 1;
+    const checkoutUrl = (data && data.id && storeSlug)
+      ? '/' + encodeURIComponent(storeSlug) + '/checkout?product_id=' + encodeURIComponent(data.id) + '&quantity=' + encodeURIComponent(qty)
+      : (storeSlug ? '/' + encodeURIComponent(storeSlug) + '/checkout' : '/login');
+
+    if (!window.isCustomerLoggedIn) {
+      const loginUrl = storeSlug
+        ? '/' + encodeURIComponent(storeSlug) + '/masuk?return_url=' + encodeURIComponent(checkoutUrl)
+        : '/login';
+      window.location.href = loginUrl;
+      return;
+    }
+
     if (data && data.storeSlug && data.id) {
-      const qty = data.quantity || 1;
-      window.location.href = '/' + encodeURIComponent(data.storeSlug) + '/checkout?product_id=' + encodeURIComponent(data.id) + '&quantity=' + encodeURIComponent(qty);
+      window.location.href = checkoutUrl;
       return;
     }
 

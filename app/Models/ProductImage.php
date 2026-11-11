@@ -28,7 +28,7 @@ class ProductImage extends Model
     public function imageUrl(): string
     {
         if ($this->image_path && str_starts_with($this->image_path, 'http')) {
-            return $this->image_path;
+            return \App\Support\GoogleDriveUrl::toDirectCdnUrl($this->image_path);
         }
 
         return asset('images/product-fallback.svg');

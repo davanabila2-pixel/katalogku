@@ -78,6 +78,13 @@
         <h1 class="store-auth-title">Daftar Akun Pelanggan</h1>
         <p class="store-auth-subtitle">Buat akun untuk belanja, lacak pesanan, dan bertransaksi di <strong>{{ $store->name }}</strong>:</p>
 
+        @if (session('status') || session('info'))
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 11px 15px; margin-bottom: 16px; font-size: 13px; color: #1e40af; display: flex; align-items: center; gap: 9px; line-height: 1.45;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>{{ session('status') ?? session('info') }}</span>
+          </div>
+        @endif
+
         @if ($errors->any())
           <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #dc2626;">
             {{ $errors->first() }}
@@ -148,10 +155,25 @@
           </button>
         </form>
 
+        {{-- Divider & Google OAuth --}}
+        <div class="store-auth-divider">
+          <span>atau daftar otomatis</span>
+        </div>
+
+        <a href="{{ route('store.login.google', ['storeSlug' => $store->slug, 'return_url' => request('return_url')]) }}" class="store-auth-google-btn">
+          <svg class="google-icon" width="19" height="19" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24Z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+          </svg>
+          <span>Daftar Cepat dengan Google</span>
+        </a>
+
         <div class="store-auth-nav-links">
           <p class="store-auth-switch-link">
             Sudah memiliki akun di toko ini?
-            <a href="{{ route('store.login', $store->slug) }}">Masuk di sini</a>
+            <a href="{{ route('store.login', ['storeSlug' => $store->slug, 'return_url' => request('return_url')]) }}">Masuk di sini</a>
           </p>
           <a href="{{ $store->url() }}" class="store-auth-return-link">
             ← Kembali ke Katalog {{ $store->name }}

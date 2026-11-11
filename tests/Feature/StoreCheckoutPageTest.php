@@ -55,13 +55,61 @@ class StoreCheckoutPageTest extends TestCase
 
     public function test_checkout_page_shows_empty_state_when_cart_is_empty(): void
     {
+        $user = User::factory()->create();
         [$owner, $store, $product] = $this->createStoreWithProduct(10, 50000);
 
-        $response = $this->get("/{$store->slug}/checkout");
+        $response = $this->actingAs($user)->get("/{$store->slug}/checkout");
 
         $response->assertStatus(200);
         $response->assertSee('Keranjang Belanja Toko Kosong');
         $response->assertSee('Jelajahi Produk ' . $store->name);
+    }
+
+    public function test_guest_cannot_view_checkout_page_and_is_redirected_to_store_login(): void
+    {
+        [$owner, $store, $product] = $this->createStoreWithProduct(10, 50000);
+
+        $response = $this->get("/{$store->slug}/checkout");
+
+        $response->assertRedirect(route('store.login', $store->slug));
+        $response->assertSessionHas('info');
+    }
+
+    public function test_guest_cannot_add_product_to_cart_and_receives_unauthenticated_401(): void
+    {
+        [$owner, $store, $product] = $this->createStoreWithProduct(10, 50000);
+
+        $response = $this->postJson('/cart/add', [
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJson([
+                'success' => false,
+                'unauthenticated' => true,
+                'redirect' => route('store.login', $store->slug),
+            ]);
+    }
+
+    public function test_guest_cannot_submit_checkout_and_receives_unauthenticated_401(): void
+    {
+        [$owner, $store, $product] = $this->createStoreWithProduct(10, 50000);
+
+        $response = $this->postJson("/{$store->slug}/cart/checkout", [
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'buyer_name' => 'Tamu Pembeli',
+            'buyer_phone' => '081234567890',
+            'buyer_address' => 'Jl. Tamu No. 1, Jakarta',
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJson([
+                'success' => false,
+                'unauthenticated' => true,
+                'redirect' => route('store.login', $store->slug),
+            ]);
     }
 
     public function test_checkout_page_renders_cart_items_and_form(): void
@@ -92,9 +140,10 @@ class StoreCheckoutPageTest extends TestCase
 
     public function test_checkout_page_renders_direct_buy_product(): void
     {
+        $user = User::factory()->create();
         [$owner, $store, $product] = $this->createStoreWithProduct(5, 120000);
 
-        $response = $this->get("/{$store->slug}/checkout?product_id={$product->id}&quantity=2");
+        $response = $this->actingAs($user)->get("/{$store->slug}/checkout?product_id={$product->id}&quantity=2");
 
         $response->assertStatus(200);
         $response->assertSee('Checkout Pesanan');
@@ -152,9 +201,10 @@ class StoreCheckoutPageTest extends TestCase
 
     public function test_direct_buy_submission_via_ajax_creates_order(): void
     {
+        $user = User::factory()->create();
         [$owner, $store, $product] = $this->createStoreWithProduct(8, 80000);
 
-        $response = $this->postJson("/{$store->slug}/cart/checkout", [
+        $response = $this->actingAs($user)->postJson("/{$store->slug}/cart/checkout", [
             'product_id' => $product->id,
             'quantity' => 2,
             'buyer_name' => 'Dewi Lestari',

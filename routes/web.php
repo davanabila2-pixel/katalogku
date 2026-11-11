@@ -161,6 +161,10 @@ Route::get('/{storeSlug}/daftar', [StoreCustomerAuthController::class, 'showRegi
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.register');
 Route::post('/{storeSlug}/daftar', [StoreCustomerAuthController::class, 'register'])
     ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.register.submit');
+Route::get('/{storeSlug}/auth/google', [StoreCustomerAuthController::class, 'redirectToGoogle'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.login.google');
+Route::get('/{storeSlug}/auth/google/callback', [StoreCustomerAuthController::class, 'handleGoogleCallback'])
+    ->where('storeSlug', '[a-z0-9][a-z0-9-]*')->name('store.login.google.callback');
 
 Route::middleware('auth')->group(function () {
     Route::get('/{storeSlug}/profil', [StoreCustomerController::class, 'profile'])

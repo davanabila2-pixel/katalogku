@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CartItem;
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
@@ -310,6 +311,55 @@ class StoreCustomerIsolationTest extends TestCase
         $this->assertEquals('081299887766', $profile->phone);
         $this->assertEquals('Jl. Melati No. 8 Surabaya', $profile->address);
         $this->assertEquals('Tolong dibungkus rapi', $profile->notes);
+    }
+
+    public function test_guest_redirected_to_store_login_when_buying_and_redirected_back_to_checkout_after_login(): void
+    {
+        $store = Store::create([
+            'name' => 'Toko Fashion Byvii',
+            'slug' => 'byvii-fashion',
+            'status' => 'active',
+        ]);
+
+        $category = Category::create([
+            'store_id' => $store->id,
+            'name' => 'Dress',
+            'slug' => 'dress',
+        ]);
+
+        $product = Product::create([
+            'store_id' => $store->id,
+            'category_id' => $category->id,
+            'name' => 'Summer Floral Dress',
+            'slug' => 'summer-floral-dress',
+            'selling_price' => 125000,
+            'stock' => 5,
+            'status' => 'active',
+        ]);
+
+        $customerUser = User::factory()->create([
+            'name' => 'Nadia Rahma',
+            'email' => 'nadia@example.com',
+            'password' => bcrypt('password123'),
+            'role' => 'user',
+            'is_active' => true,
+        ]);
+
+        // 1. Tamu mencoba langsung beli / checkout
+        $checkoutUrl = "/{$store->slug}/checkout?product_id={$product->id}&quantity=2";
+        $response = $this->get($checkoutUrl);
+
+        $response->assertRedirect(route('store.login', $store->slug));
+        $response->assertSessionHas('info', 'Silakan masuk ke akun pelanggan Anda terlebih dahulu untuk melanjutkan pembelian.');
+
+        // 2. Tamu login di halaman toko
+        $loginResponse = $this->post(route('store.login.submit', $store->slug), [
+            'email' => 'nadia@example.com',
+            'password' => 'password123',
+        ]);
+
+        // 3. Sistem otomatis mengarahkan kembali ke halaman checkout yang dituju
+        $loginResponse->assertRedirect($checkoutUrl);
     }
 }
 

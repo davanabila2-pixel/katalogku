@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ $seo['title'] ?? config('app.name') }}</title>
   <meta name="description" content="{{ $seo['description'] ?? 'Katalog penjualan multi-toko.' }}">
@@ -339,6 +340,9 @@
             xhr.send();
         }
     }, 20 * 60 * 1000); // 20 minutes
+</script>
+<script>
+  window.isCustomerLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
 </script>
 @if(isset($store) && $store)
   @php

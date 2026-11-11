@@ -329,6 +329,14 @@
   window.addToCart = function(productId, qty) {
     qty = qty || 1;
     const btn = event ? event.currentTarget : null;
+
+    if (!window.isCustomerLoggedIn) {
+      const storeSlug = window.currentStoreSlug || null;
+      const targetLogin = storeSlug ? '/' + encodeURIComponent(storeSlug) + '/masuk' : '/login';
+      window.location.href = targetLogin;
+      return;
+    }
+
     if (btn) btn.disabled = true;
 
     const payload = {
@@ -351,6 +359,10 @@
     .then(function(res) { return res.json().then(function(d) { return { status: res.status, data: d }; }); })
     .then(function(result) {
       if (btn) btn.disabled = false;
+      if (result.status === 401 || (result.data && result.data.unauthenticated)) {
+        window.location.href = result.data.redirect || (window.currentStoreSlug ? '/' + encodeURIComponent(window.currentStoreSlug) + '/masuk' : '/login');
+        return;
+      }
       if (result.status === 200 && result.data.success) {
         cachedCart = result.data.cart;
         updateCartBadges(cachedCart.total_quantity || 0);
@@ -431,7 +443,22 @@
 
     if (!cart || !cart.stores || cart.stores.length === 0) {
       container.innerHTML = '';
-      if (emptyState) emptyState.style.display = 'flex';
+      if (emptyState) {
+        if (!window.isCustomerLoggedIn) {
+          const storeSlug = window.currentStoreSlug;
+          const loginUrl = storeSlug ? '/' + encodeURIComponent(storeSlug) + '/masuk' : '/login';
+          emptyState.innerHTML = `
+            <div class="cart-empty-icon" style="font-size:38px;margin-bottom:12px">🔒</div>
+            <h4 style="font-weight:700;color:var(--ink-deep);margin:0 0 6px">Wajib Masuk Terlebih Dahulu</h4>
+            <p style="font-size:13px;color:var(--steel);margin:0 0 16px;max-width:260px;line-height:1.4">Silakan masuk ke akun pelanggan Anda untuk melihat dan menambahkan produk ke keranjang belanja.</p>
+            <a href="${loginUrl}" class="btn btn-primary btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              <span>Masuk ke Akun Toko</span>
+            </a>
+          `;
+        }
+        emptyState.style.display = 'flex';
+      }
       if (footer) footer.style.display = 'none';
       return;
     }
@@ -592,6 +619,10 @@
     if (!store) return;
     const slug = typeof store === 'string' ? store : (store.store_slug || store.slug);
     if (slug) {
+      if (!window.isCustomerLoggedIn) {
+        window.location.href = '/' + encodeURIComponent(slug) + '/masuk?return_url=' + encodeURIComponent('/' + encodeURIComponent(slug) + '/checkout');
+        return;
+      }
       window.location.href = '/' + encodeURIComponent(slug) + '/checkout';
       return;
     }

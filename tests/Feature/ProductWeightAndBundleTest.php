@@ -319,8 +319,9 @@ class ProductWeightAndBundleTest extends TestCase
         $pdpResponse->assertSee('Berat:');
         $pdpResponse->assertSee('650 gr');
 
-        // Halaman Checkout Direct Buy menampilkan total berat pengiriman
-        $checkoutResponse = $this->get(route('store.checkout', [
+        // Halaman Checkout Direct Buy menampilkan total berat pengiriman (wajib login)
+        $customer = User::factory()->create();
+        $checkoutResponse = $this->actingAs($customer)->get(route('store.checkout', [
             'storeSlug' => $store->slug,
             'product_id' => $bundle->id,
             'quantity' => 2,

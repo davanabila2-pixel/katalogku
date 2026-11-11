@@ -38,6 +38,28 @@ class CartController extends Controller
             'quantity' => ['nullable', 'integer', 'min:1'],
         ]);
 
+        if (! auth()->check()) {
+            $storeSlug = null;
+            if ($request->filled('store_id')) {
+                $storeSlug = Store::where('id', $request->input('store_id'))->value('slug');
+            } elseif ($request->filled('product_id')) {
+                $storeSlug = Product::with('store')->find($request->input('product_id'))?->store?->slug;
+            }
+            $loginUrl = $storeSlug ? route('store.login', $storeSlug) : route('login');
+
+            $previousUrl = url()->previous();
+            if ($previousUrl && ! str_contains($previousUrl, '/masuk') && ! str_contains($previousUrl, '/daftar')) {
+                $request->session()->put('url.intended', $previousUrl);
+            }
+
+            return response()->json([
+                'success' => false,
+                'unauthenticated' => true,
+                'message' => 'Silakan masuk ke akun pelanggan Anda terlebih dahulu untuk menambahkan produk ke keranjang.',
+                'redirect' => $loginUrl,
+            ], 401);
+        }
+
         $qty = (int) ($validated['quantity'] ?? 1);
 
         try {
@@ -61,6 +83,14 @@ class CartController extends Controller
      */
     public function update(Request $request, int $id, CartService $cartService): JsonResponse
     {
+        if (! auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'unauthenticated' => true,
+                'message' => 'Silakan masuk terlebih dahulu.',
+            ], 401);
+        }
+
         $validated = $request->validate([
             'quantity' => ['required', 'integer', 'min:0'],
         ]);
@@ -78,6 +108,14 @@ class CartController extends Controller
      */
     public function remove(Request $request, int $id, CartService $cartService): JsonResponse
     {
+        if (! auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'unauthenticated' => true,
+                'message' => 'Silakan masuk terlebih dahulu.',
+            ], 401);
+        }
+
         $cartService->removeItem($request, $id);
 
         return response()->json([
@@ -96,6 +134,11 @@ class CartController extends Controller
 
         if (! $store->isActive()) {
             abort(404);
+        }
+
+        if (! auth()->check()) {
+            return redirect()->guest(route('store.login', $store->slug))
+                ->with('info', 'Silakan masuk ke akun pelanggan Anda terlebih dahulu untuk melanjutkan pembelian.');
         }
 
         $productId = $request->query('product_id');
@@ -250,6 +293,19 @@ class CartController extends Controller
     public function checkout(Request $request, string $storeSlug, CartService $cartService)
     {
         $store = Store::where('slug', $storeSlug)->firstOrFail();
+
+        if (! auth()->check()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'unauthenticated' => true,
+                    'message' => 'Silakan masuk ke akun pelanggan Anda terlebih dahulu untuk menyelesaikan pesanan.',
+                    'redirect' => route('store.login', $storeSlug),
+                ], 401);
+            }
+            return redirect()->guest(route('store.login', $storeSlug))
+                ->with('info', 'Silakan masuk ke akun pelanggan Anda terlebih dahulu untuk melanjutkan pembelian.');
+        }
 
         $data = $request->validate([
             'buyer_name' => ['required', 'string', 'max:100'],

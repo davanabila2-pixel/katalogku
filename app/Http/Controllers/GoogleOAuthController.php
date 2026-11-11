@@ -13,13 +13,47 @@ class GoogleOAuthController extends Controller
 {
     public function redirect()
     {
+        if (empty(config('services.google.client_id')) || empty(config('services.google.client_secret'))) {
+            return redirect()->route('login')->withErrors(['email' => 'Login Google belum dikonfigurasi. Hubungi Superadmin.']);
+        }
+
         return Socialite::driver('google')->redirect();
     }
 
     public function callback(Request $request)
     {
+        $customerStoreSlug = null;
+        $customerReturnUrl = null;
+
+        // 1. Cek dari parameter state (kebal terhadap cookie mismatch antar domain / port)
+        if ($request->filled('state')) {
+            try {
+                $decoded = json_decode(base64_decode($request->query('state')), true);
+                if (is_array($decoded) && ! empty($decoded['store_slug'])) {
+                    if (isset($decoded['sig']) && hash_equals(sha1($decoded['store_slug'] . config('app.key')), $decoded['sig'])) {
+                        $customerStoreSlug = $decoded['store_slug'];
+                        $customerReturnUrl = $decoded['return_url'] ?? null;
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // 2. Fallback cek dari session jika ada
+        if (! $customerStoreSlug && $request->session()->has('customer_store_slug')) {
+            $customerStoreSlug = $request->session()->pull('customer_store_slug');
+            $customerReturnUrl = $request->session()->pull('customer_return_url');
+        }
+
+        if ($customerStoreSlug) {
+            return app(StoreCustomerAuthController::class)->handleGoogleCallback($request, $customerStoreSlug, $customerReturnUrl);
+        }
+
         try {
-            $google = Socialite::driver('google')->user();
+            $driver = Socialite::driver('google')->stateless();
+            if (config('services.google.redirect')) {
+                $driver->redirectUrl(config('services.google.redirect'));
+            }
+            $google = $driver->user();
         } catch (\Exception $e) {
             return redirect()->route('login')->withErrors(['email' => 'Login Google gagal. Coba lagi.']);
         }
