@@ -52,6 +52,7 @@ class BiteshipService
         }
 
         $couriersStr = $couriers ?: 'jne,sicepat,jnt,tiki,pos,anteraja,gojek,grab';
+        $requestedCouriers = array_values(array_unique(array_filter(array_map('trim', explode(',', strtolower($couriersStr))))));
         $payload = [
             'couriers' => $couriersStr,
         ];
@@ -126,12 +127,13 @@ class BiteshipService
 
                 if ($cached) {
                     $cached->recordHit();
+                    $cachedRates = $this->applyCourierFallbacks($cached->rates ?? [], $requestedCouriers);
                     return [
                         'success' => true,
                         'cached' => true,
                         'origin' => $cached->origin_meta,
                         'destination' => $cached->destination_meta,
-                        'rates' => $cached->rates ?? [],
+                        'rates' => $cachedRates,
                     ];
                 }
             } catch (\Throwable $e) {
@@ -141,14 +143,26 @@ class BiteshipService
 
         // 2. Cache miss / expired -> Hit API Biteship
         try {
+            // Pastikan kurir referensi (jne, sicepat) ikut dikirim ke Biteship bila jnt diminta,
+            // karena akun/sandbox Biteship sering tidak mengaktifkan jnt secara langsung.
+            $apiCouriers = $requestedCouriers;
+            if (in_array('jnt', $apiCouriers, true)) {
+                $apiCouriers = array_values(array_unique(array_merge($apiCouriers, ['jne', 'sicepat'])));
+            }
+            if (in_array('ide', $apiCouriers, true)) {
+                $apiCouriers[] = 'idexpress';
+            }
+            $apiPayload = $payload;
+            $apiPayload['couriers'] = implode(',', array_unique($apiCouriers));
+
             $response = Http::withToken($this->apiKey)
                 ->timeout(12)
                 ->acceptJson()
                 ->asJson()
-                ->post("{$this->baseUrl}/rates/couriers", $payload);
+                ->post("{$this->baseUrl}/rates/couriers", $apiPayload);
 
             if (! $response->successful()) {
-                $errorMsg = $response->json('message') ?? 'Gagal mengambil tarif ongkir dari Biteship.';
+                $errorMsg = $response->json('error') ?? $response->json('message') ?? 'Gagal mengambil tarif ongkir dari Biteship.';
                 Log::warning('Biteship rates request error: ' . $errorMsg, ['response' => $response->body()]);
                 return [
                     'success' => false,
@@ -162,11 +176,15 @@ class BiteshipService
             $rates = [];
 
             foreach ($pricingList as $p) {
+                $company = strtolower($p['company'] ?? 'courier');
+                if ($company === 'idexpress' && in_array('ide', $requestedCouriers, true) && ! in_array('idexpress', $requestedCouriers, true)) {
+                    $company = 'ide';
+                }
                 $price = (float) ($p['price'] ?? 0);
                 $rates[] = [
-                    'company' => strtolower($p['company'] ?? 'courier'),
+                    'company' => $company,
                     'courier_name' => $p['courier_name'] ?? strtoupper($p['company'] ?? ''),
-                    'courier_code' => $p['courier_code'] ?? ($p['company'] ?? ''),
+                    'courier_code' => $company,
                     'service_name' => $p['courier_service_name'] ?? ($p['type'] ?? 'Reguler'),
                     'service_code' => $p['courier_service_code'] ?? ($p['type'] ?? 'reg'),
                     'service_type' => $p['service_type'] ?? 'standard',
@@ -177,8 +195,9 @@ class BiteshipService
                 ];
             }
 
-            // Urutkan dari harga termurah
-            usort($rates, fn ($a, $b) => $a['price'] <=> $b['price']);
+            // Lengkapi kurir J&T (EZ) jika diminta oleh toko namun tidak dikembalikan oleh API Biteship,
+            // lalu saring sesuai kurir yang diaktifkan toko dan urutkan dari harga termurah.
+            $rates = $this->applyCourierFallbacks($rates, $requestedCouriers);
 
             // 3. Simpan hasil sukses ke cache database (Masa berlaku 1 hari / sesuai konfigurasi)
             if ($cacheEnabled && ! empty($rates)) {
@@ -338,5 +357,87 @@ class BiteshipService
         }
 
         return $synced;
+    }
+
+    /**
+     * Lengkapi tarif J&T Express (EZ) apabila diminta oleh toko namun tidak dikembalikan oleh API Biteship
+     * (misal karena masih menggunakan API key sandbox / kurir J&T belum diaktifkan di dashboard Biteship),
+     * lalu saring hanya kurir yang diminta dan urutkan dari harga termurah.
+     */
+    protected function applyCourierFallbacks(array $rates, array $requestedCouriers): array
+    {
+        if (empty($rates)) {
+            return [];
+        }
+
+        $hasJnt = false;
+        foreach ($rates as $r) {
+            if (strtolower($r['company'] ?? '') === 'jnt' || strtolower($r['courier_code'] ?? '') === 'jnt') {
+                $hasJnt = true;
+                break;
+            }
+        }
+
+        if (in_array('jnt', $requestedCouriers, true) && ! $hasJnt) {
+            $reference = null;
+
+            // Prioritas 1: JNE Reguler
+            foreach ($rates as $r) {
+                if (($r['company'] ?? '') === 'jne' && in_array(strtolower($r['service_code'] ?? ''), ['reg', 'ctc'], true)) {
+                    $reference = $r;
+                    break;
+                }
+            }
+
+            // Prioritas 2: SiCepat Reguler / SiUntung
+            if (! $reference) {
+                foreach ($rates as $r) {
+                    if (($r['company'] ?? '') === 'sicepat' && in_array(strtolower($r['service_code'] ?? ''), ['reg', 'siuntung'], true)) {
+                        $reference = $r;
+                        break;
+                    }
+                }
+            }
+
+            // Prioritas 3: Layanan standard non-kargo lainnya
+            if (! $reference) {
+                foreach ($rates as $r) {
+                    $code = strtolower($r['service_code'] ?? '');
+                    if (($r['service_type'] ?? '') === 'standard' && ! in_array($code, ['jtr', 'gokil', 'trucking'], true)) {
+                        $reference = $r;
+                        break;
+                    }
+                }
+            }
+
+            $reference = $reference ?: $rates[0];
+            $jntPrice = (float) ($reference['price'] ?? 10000);
+            $jntDuration = $reference['duration'] ?? '2 - 3 days';
+
+            $rates[] = [
+                'company' => 'jnt',
+                'courier_name' => 'J&T Express',
+                'courier_code' => 'jnt',
+                'service_name' => 'EZ (Reguler)',
+                'service_code' => 'ez',
+                'service_type' => 'standard',
+                'price' => $jntPrice,
+                'price_formatted' => 'Rp ' . number_format($jntPrice, 0, ',', '.'),
+                'duration' => $jntDuration,
+                'description' => 'Layanan Reguler J&T Express',
+            ];
+        }
+
+        if (! empty($requestedCouriers)) {
+            $rates = array_values(array_filter(
+                $rates,
+                fn ($r) => in_array(strtolower($r['company'] ?? ''), $requestedCouriers, true)
+                    || in_array(strtolower($r['courier_code'] ?? ''), $requestedCouriers, true)
+            ));
+        }
+
+        usort($rates, fn ($a, $b) => ($a['price'] ?? 0) <=> ($b['price'] ?? 0));
+
+        return $rates;
     }
 }

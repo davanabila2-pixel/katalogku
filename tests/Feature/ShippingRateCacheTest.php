@@ -298,4 +298,24 @@ class ShippingRateCacheTest extends TestCase
         // Zero additional HTTP API calls to Biteship!
         Http::assertSentCount(1);
     }
+
+    public function test_jnt_rate_is_provided_when_requested_even_if_biteship_omits_it(): void
+    {
+        Http::fake([
+            'https://api.biteship.com/v1/rates/couriers*' => Http::response($this->fakeBiteshipRatesResponse(), 200),
+        ]);
+
+        $biteship = app(BiteshipService::class);
+        $origin = ['postal_code' => 60111];
+        $destination = ['postal_code' => 12340];
+        $items = [['name' => 'Kemeja', 'price' => 100000, 'quantity' => 1, 'weight' => 500]];
+
+        $res = $biteship->checkRates($origin, $destination, $items, 'jne,sicepat,jnt');
+
+        $this->assertTrue($res['success']);
+        $companies = array_column($res['rates'], 'company');
+        $this->assertContains('jnt', $companies);
+        $this->assertContains('jne', $companies);
+        $this->assertContains('sicepat', $companies);
+    }
 }
