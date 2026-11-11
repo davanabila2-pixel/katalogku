@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\Output\QRGdImagePNG;
 use chillerlan\QRCode\Output\QRMarkupSVG;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
@@ -107,6 +108,23 @@ class QrisService
             'quietzoneSize' => 2,
             'outputBase64' => false,
             'svgAddXmlHeader' => false,
+        ]);
+
+        return (string) (new QRCode($options))->render($payload);
+    }
+
+    /**
+     * Render payload menjadi PNG QR code resolusi tinggi (mudah dibaca dari galeri m-Banking / e-Wallet).
+     */
+    public function renderPng(string $payload): string
+    {
+        $options = new QROptions([
+            'outputInterface' => QRGdImagePNG::class,
+            'eccLevel' => EccLevel::M,
+            'addQuietzone' => true,
+            'quietzoneSize' => 4,
+            'scale' => 12,
+            'outputBase64' => false,
         ]);
 
         return (string) (new QRCode($options))->render($payload);

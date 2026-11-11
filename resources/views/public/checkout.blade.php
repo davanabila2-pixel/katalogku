@@ -287,7 +287,7 @@
                   <div class="checkout-qr-layout">
                     <div class="checkout-qr-box">
                       <div class="qr-image-frame">
-                        <img id="checkoutQrImage" @if($store->hasDynamicQris()) data-dynamic="1" data-base-url="{{ route('store.qris', $store->slug) }}" @endif src="{{ $store->hasDynamicQris() ? $store->dynamicQrisUrl((float) $totalPrice) : $store->qrImageUrl() }}" alt="QRIS {{ $store->name }}" class="qr-code-img">
+                        <img id="checkoutQrImage" @if($store->hasDynamicQris()) data-dynamic="1" data-base-url="{{ route('store.qris', $store->slug) }}" @endif src="{{ $store->hasDynamicQris() ? $store->dynamicQrisUrl((float) $totalPrice) : $store->qrImageUrl() }}" alt="QRIS {{ $store->name }}" class="qr-code-img" crossorigin="anonymous">
                       </div>
                       @if($store->hasDynamicQris())
                         <div id="checkoutQrDynamicNote" style="margin-top:8px;font-size:12px;font-weight:700;color:#047857;background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:8px;padding:6px 10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -295,6 +295,18 @@
                         </div>
                       @endif
                       <div class="qr-account-badge">{{ $store->qr_account_name ?: ($store->name . ' QRIS') }}</div>
+                      <a id="btnDownloadCheckoutQr"
+                         href="{{ $store->hasDynamicQris() ? route('store.qris', [$store->slug, 'amount' => (int) round($totalPrice), 'download' => 1]) : $store->qrImageUrl() }}"
+                         download="QRIS-{{ $store->slug }}-Rp{{ (int) round($totalPrice) }}.png"
+                         data-store-slug="{{ $store->slug }}"
+                         data-store-name="{{ $store->name }}"
+                         data-account-name="{{ $store->qr_account_name ?: ($store->name . ' QRIS') }}"
+                         onclick="return downloadDynamicQrisCard(event, this)"
+                         class="btn-download-qris"
+                         title="Unduh gambar QRIS pembayaran ke HP / perangkat Anda">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span id="btnDownloadCheckoutQrText">Unduh QRIS Pembayaran</span>
+                      </a>
                     </div>
 
                     <div class="checkout-qr-details">
@@ -313,9 +325,9 @@
                         <ol>
                           <li>Buka aplikasi m-Banking atau E-Wallet (BCA, Mandiri, BRI, GoPay, OVO, ShopeePay, Dana, dll).</li>
                           @if($store->hasDynamicQris())
-                            <li>Scan kode QR di samping. <strong>Nominal total otomatis muncul di layar HP Anda: <span id="checkoutInstructionTotal" style="color:var(--brand-coral);">Rp {{ number_format($totalPrice, 0, ',', '.') }}</span></strong> (tidak perlu ketik nominal manual).</li>
+                            <li>Scan kode QR di samping atau klik <strong>Unduh QRIS Pembayaran</strong> untuk mengunggah QR dari galeri HP Anda. <strong>Nominal total otomatis muncul: <span id="checkoutInstructionTotal" style="color:var(--brand-coral);">Rp {{ number_format($totalPrice, 0, ',', '.') }}</span></strong> (tidak perlu ketik nominal manual).</li>
                           @else
-                            <li>Scan kode QR di samping dan bayar pas sesuai total: <strong id="checkoutInstructionTotal">Rp {{ number_format($totalPrice, 0, ',', '.') }}</strong></li>
+                            <li>Scan kode QR di samping atau klik <strong>Unduh QRIS Pembayaran</strong> dan bayar pas sesuai total: <strong id="checkoutInstructionTotal">Rp {{ number_format($totalPrice, 0, ',', '.') }}</strong></li>
                           @endif
                           <li>Simpan tangkapan layar (screenshot) bukti transfer dan unggah pada bagian di bawah.</li>
                         </ol>
@@ -574,6 +586,30 @@
 .courier-badge-tag.wahana { background: #fef9c3; color: #854d0e; }
 .courier-badge-tag.gojek { background: #dcfce7; color: #15803d; }
 .courier-badge-tag.grab { background: #dcfce7; color: #166534; }
+.btn-download-qris {
+  margin-top: 10px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1.5px solid #0f172a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-download-qris:hover {
+  background: var(--brand-coral, #ff385c);
+  border-color: var(--brand-coral, #ff385c);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
 </style>
 
 {{-- Scripts untuk Interaktivitas Halaman Checkout --}}
@@ -663,9 +699,128 @@
 
     // QRIS dinamis: muat ulang QR dengan nominal total terbaru (termasuk ongkir).
     const qrImg = document.getElementById('checkoutQrImage');
-    if (qrImg && qrImg.dataset.dynamic === '1' && grandTotal > 0) {
-      qrImg.src = qrImg.dataset.baseUrl + '?amount=' + Math.round(grandTotal);
+    const qrDownloadBtn = document.getElementById('btnDownloadCheckoutQr');
+    const roundedTotal = Math.round(grandTotal);
+    if (qrImg && qrImg.dataset.dynamic === '1' && roundedTotal > 0) {
+      qrImg.src = qrImg.dataset.baseUrl + '?amount=' + roundedTotal;
+      if (qrDownloadBtn) {
+        const slug = qrDownloadBtn.dataset.storeSlug || 'toko';
+        qrDownloadBtn.href = qrImg.dataset.baseUrl + '?amount=' + roundedTotal + '&download=1';
+        qrDownloadBtn.setAttribute('download', `QRIS-${slug}-Rp${roundedTotal}.png`);
+      }
     }
+  }
+
+  function downloadDynamicQrisCard(event, btn) {
+    const qrImg = document.getElementById('checkoutQrImage');
+    if (!qrImg || qrImg.dataset.dynamic !== '1') {
+      return true;
+    }
+
+    event.preventDefault();
+    const textSpan = document.getElementById('btnDownloadCheckoutQrText');
+    const origText = textSpan ? textSpan.textContent : 'Unduh QRIS Pembayaran';
+    if (textSpan) textSpan.textContent = 'Menyiapkan QRIS...';
+
+    const grandTotal = window.currentGrandTotal || {{ (int) round($totalPrice) }};
+    const formattedTotal = formatRupiah(grandTotal);
+    const storeSlug = btn.dataset.storeSlug || 'toko';
+    const storeName = btn.dataset.storeName || 'Toko';
+    const accountName = btn.dataset.accountName || (storeName + ' QRIS');
+    const fileName = `QRIS-${storeSlug}-Rp${grandTotal}.png`;
+    const fallbackUrl = btn.href;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 720;
+        canvas.height = 900;
+        const ctx = canvas.getContext('2d');
+
+        // Background putih bersih agar mudah dipindai dari galeri m-Banking / e-Wallet
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Border kartu luar
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+        // Header Nama Toko & Merchant QRIS
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(accountName, canvas.width / 2, 78);
+
+        // Badge QRIS Dinamis
+        ctx.fillStyle = '#ecfdf5';
+        ctx.fillRect(150, 98, canvas.width - 300, 38);
+        ctx.strokeStyle = '#a7f3d0';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(150, 98, canvas.width - 300, 38);
+        ctx.fillStyle = '#047857';
+        ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText('⚡ QRIS DINAMIS — NOMINAL OTOMATIS', canvas.width / 2, 123);
+
+        // Gambar QR Code di tengah dengan quiet zone putih
+        const qrSize = 520;
+        const qrX = (canvas.width - qrSize) / 2;
+        const qrY = 158;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32);
+        ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+
+        // Box Total Pembayaran di bagian bawah
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(60, 710, canvas.width - 120, 128);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(60, 710, canvas.width - 120, 128);
+
+        ctx.fillStyle = '#475569';
+        ctx.font = '600 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText('Total Pembayaran Pas:', canvas.width / 2, 748);
+
+        ctx.fillStyle = '#e11d48';
+        ctx.font = 'bold 38px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText(formattedTotal, canvas.width / 2, 802);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '500 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText('Unggah gambar ini dari galeri aplikasi m-Banking / E-Wallet Anda', canvas.width / 2, 864);
+
+        canvas.toBlob(function(blob) {
+          if (!blob) {
+            window.location.href = fallbackUrl;
+            return;
+          }
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+
+          if (textSpan) {
+            textSpan.textContent = '✓ QRIS Berhasil Diunduh';
+            setTimeout(() => { textSpan.textContent = origText; }, 2200);
+          }
+        }, 'image/png');
+      } catch (e) {
+        if (textSpan) textSpan.textContent = origText;
+        window.location.href = fallbackUrl;
+      }
+    };
+    img.onerror = function() {
+      if (textSpan) textSpan.textContent = origText;
+      window.location.href = fallbackUrl;
+    };
+    img.src = qrImg.src;
+    return false;
   }
 
   // Direct Buy Qty Adjuster

@@ -160,6 +160,12 @@ class StoreCourierAndDynamicQrisTest extends TestCase
         $this->assertStringContainsString('image/svg+xml', $response->headers->get('Content-Type'));
         $this->assertStringContainsString('<svg', $response->getContent());
 
+        // Download QRIS dinamis sebagai PNG
+        $downloadResponse = $this->get(route('store.qris', [$store->slug, 'amount' => 212000, 'download' => 1]));
+        $downloadResponse->assertOk();
+        $this->assertStringContainsString('image/png', $downloadResponse->headers->get('Content-Type'));
+        $this->assertStringContainsString("attachment; filename=\"QRIS-{$store->slug}-Rp212000.png\"", $downloadResponse->headers->get('Content-Disposition'));
+
         $this->get(route('store.qris', [$store->slug, 'amount' => 0]))->assertNotFound();
         $this->get(route('store.qris', [$store->slug]))->assertNotFound();
     }
@@ -178,6 +184,8 @@ class StoreCourierAndDynamicQrisTest extends TestCase
         $response->assertOk();
         $response->assertSee('amount=200000', false);
         $response->assertSee('QR sudah berisi nominal');
+        $response->assertSee('Unduh QRIS Pembayaran');
+        $response->assertSee('btnDownloadCheckoutQr', false);
     }
 
     public function test_master_ekspedisi_disimpan_dan_default_semua_aktif(): void

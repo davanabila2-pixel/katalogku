@@ -23,9 +23,30 @@ class StoreQrisController extends Controller
         $payload = $qris->makeDynamic($store->qris_payload, $amount);
         abort_if($payload === null, 404);
 
-        return response($qris->renderSvg($payload), 200, [
+        $isDownload = $request->boolean('download');
+        $wantsPng = $isDownload || strtolower((string) $request->query('format')) === 'png';
+        $amountInt = (int) round($amount);
+
+        if ($wantsPng && extension_loaded('gd')) {
+            $headers = [
+                'Content-Type' => 'image/png',
+                'Cache-Control' => 'public, max-age=300',
+            ];
+            if ($isDownload) {
+                $headers['Content-Disposition'] = "attachment; filename=\"QRIS-{$store->slug}-Rp{$amountInt}.png\"";
+            }
+
+            return response($qris->renderPng($payload), 200, $headers);
+        }
+
+        $headers = [
             'Content-Type' => 'image/svg+xml',
             'Cache-Control' => 'public, max-age=300',
-        ]);
+        ];
+        if ($isDownload) {
+            $headers['Content-Disposition'] = "attachment; filename=\"QRIS-{$store->slug}-Rp{$amountInt}.svg\"";
+        }
+
+        return response($qris->renderSvg($payload), 200, $headers);
     }
 }
