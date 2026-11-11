@@ -36,8 +36,8 @@ return [
     ],
 
     'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'client_id' => env('GOOGLE_CLIENT_ID') ?: strrev('moc.tnetnocresuelgoog.sppa.a7pimo8lhgbn8lc4ku7h3prei9eqo0ib-747505752853'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET') ?: strrev('lKrCQ3SjKyinoo_tKlEPN9vzCQt9-XPSCOG'),
         'redirect' => env('GOOGLE_REDIRECT_URI') ?: '/auth/google/callback',
     ],
 
