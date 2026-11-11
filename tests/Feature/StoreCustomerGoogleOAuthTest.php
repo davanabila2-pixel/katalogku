@@ -262,5 +262,25 @@ class StoreCustomerGoogleOAuthTest extends TestCase
         $this->assertNotNull($user);
         $this->assertEquals('user', $user->role);
     }
+
+    public function test_redirect_uri_selalu_berupa_url_absolut_meskipun_config_berisi_path_relatif(): void
+    {
+        $store = $this->createSampleStore();
+
+        config([
+            'services.google.client_id' => 'test-client-id',
+            'services.google.client_secret' => 'test-client-secret',
+            'services.google.redirect' => '/auth/google/callback',
+        ]);
+
+        $response = $this->get("https://katalogku.vercel.app/{$store->slug}/auth/google");
+
+        $response->assertRedirect();
+        $targetUrl = $response->headers->get('Location');
+        $this->assertStringStartsWith('https://accounts.google.com/o/oauth2/auth', $targetUrl);
+
+        parse_str(parse_url($targetUrl, PHP_URL_QUERY) ?? '', $queryParams);
+        $this->assertEquals('https://katalogku.vercel.app/auth/google/callback', $queryParams['redirect_uri'] ?? null);
+    }
 }
 

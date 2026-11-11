@@ -227,10 +227,8 @@ class StoreCustomerAuthController extends Controller
             'sig' => sha1($store->slug . config('app.key')),
         ]));
 
-        $driver = Socialite::driver('google')->stateless();
-        if (config('services.google.redirect')) {
-            $driver->redirectUrl(config('services.google.redirect'));
-        }
+        $redirectUrl = GoogleOAuthController::resolveRedirectUrl($request);
+        $driver = Socialite::driver('google')->stateless()->redirectUrl($redirectUrl);
 
         return $driver->with(['state' => $statePayload])->redirect();
     }
@@ -264,10 +262,8 @@ class StoreCustomerAuthController extends Controller
         }
 
         try {
-            $driver = Socialite::driver('google')->stateless();
-            if (config('services.google.redirect')) {
-                $driver->redirectUrl(config('services.google.redirect'));
-            }
+            $redirectUrl = GoogleOAuthController::resolveRedirectUrl($request);
+            $driver = Socialite::driver('google')->stateless()->redirectUrl($redirectUrl);
             $google = $driver->user();
         } catch (\Throwable $e) {
             return redirect()->route('store.login', $store->slug)

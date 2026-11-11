@@ -11,13 +11,40 @@ use Laravel\Socialite\Facades\Socialite;
 
 class GoogleOAuthController extends Controller
 {
-    public function redirect()
+    public static function resolveRedirectUrl(Request $request): string
+    {
+        $configured = (string) config('services.google.redirect', '');
+        if ($configured !== '' && str_starts_with($configured, 'http')) {
+            return $configured;
+        }
+
+        $path = $configured !== '' ? '/' . ltrim($configured, '/') : '/auth/google/callback';
+        $schemeAndHost = $request->getSchemeAndHttpHost();
+
+        if (
+            isset($_ENV['VERCEL'])
+            || isset($_SERVER['VERCEL'])
+            || str_contains($schemeAndHost, '.vercel.app')
+            || $request->header('x-forwarded-proto') === 'https'
+        ) {
+            $schemeAndHost = preg_replace('/^http:\/\//i', 'https://', $schemeAndHost);
+        }
+
+        return rtrim($schemeAndHost, '/') . $path;
+    }
+
+    public function redirect(Request $request)
     {
         if (empty(config('services.google.client_id')) || empty(config('services.google.client_secret'))) {
             return redirect()->route('login')->withErrors(['email' => 'Login Google belum dikonfigurasi. Hubungi Superadmin.']);
         }
 
-        return Socialite::driver('google')->redirect();
+        $redirectUrl = self::resolveRedirectUrl($request);
+
+        return Socialite::driver('google')
+            ->stateless()
+            ->redirectUrl($redirectUrl)
+            ->redirect();
     }
 
     public function callback(Request $request)
@@ -49,11 +76,11 @@ class GoogleOAuthController extends Controller
         }
 
         try {
-            $driver = Socialite::driver('google')->stateless();
-            if (config('services.google.redirect')) {
-                $driver->redirectUrl(config('services.google.redirect'));
-            }
-            $google = $driver->user();
+            $redirectUrl = self::resolveRedirectUrl($request);
+            $google = Socialite::driver('google')
+                ->stateless()
+                ->redirectUrl($redirectUrl)
+                ->user();
         } catch (\Exception $e) {
             return redirect()->route('login')->withErrors(['email' => 'Login Google gagal. Coba lagi.']);
         }
