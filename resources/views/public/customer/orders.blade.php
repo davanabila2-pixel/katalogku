@@ -41,17 +41,11 @@
     <div class="user-orders-list">
       @foreach($orders as $ord)
         @php
-          $statusBadges = [
-              'pending' => ['label' => 'Menunggu Konfirmasi', 'class' => 'status-badge-pending'],
-              'processing' => ['label' => 'Diproses', 'class' => 'status-badge-processing'],
-              'shipped' => ['label' => 'Dikirim', 'class' => 'status-badge-shipped'],
-              'completed' => ['label' => 'Selesai', 'class' => 'status-badge-completed'],
-              'cancelled' => ['label' => 'Dibatalkan', 'class' => 'status-badge-cancelled'],
-          ];
-          $badge = $statusBadges[$ord->status] ?? ['label' => ucfirst($ord->status), 'class' => 'status-badge-pending'];
+          $badge = $ord->customerStatusMeta();
           $product = $ord->product;
           $productUrl = $product ? route('store.product', [$store->slug, $product->slug]) : null;
           $productImg = $ord->displayProductImageUrl();
+          $storeWaUrl = $store->whatsappUrl("Halo {$store->name}, saya ingin menanyakan status pesanan {$ord->order_code}");
         @endphp
         <div class="user-order-card">
           <div class="user-order-head">
@@ -89,24 +83,17 @@
                 Penerima: <strong>{{ $ord->buyer_name }}</strong> ({{ $ord->buyer_phone }})<br>
                 Alamat: {{ $ord->buyer_address }}
               </p>
+              <x-order-tracking-box :order="$ord" />
             </div>
 
             <div class="user-order-pricing">
               <span class="user-order-total-label">Total Pesanan</span>
               <span class="user-order-total-val">Rp {{ number_format($ord->total_price, 0, ',', '.') }}</span>
-              @if($store->contact_information)
-                @php
-                  $cleanPhone = preg_replace('/[^0-9]/', '', $store->contact_information);
-                  if (str_starts_with($cleanPhone, '0')) {
-                      $cleanPhone = '62' . substr($cleanPhone, 1);
-                  }
-                @endphp
-                @if(strlen($cleanPhone) >= 9)
-                  <a href="https://wa.me/{{ $cleanPhone }}?text=Halo%20{{ urlencode($store->name) }},%20saya%20ingin%20menanyakan%20status%20pesanan%20{{ urlencode($ord->order_code) }}" target="_blank" rel="noopener" class="user-order-wa-btn">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    <span>Hubungi Toko</span>
-                  </a>
-                @endif
+              @if($storeWaUrl)
+                <a href="{{ $storeWaUrl }}" target="_blank" rel="noopener" class="user-order-wa-btn">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <span>Hubungi Toko</span>
+                </a>
               @endif
             </div>
           </div>

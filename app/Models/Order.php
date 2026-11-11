@@ -30,6 +30,8 @@ class Order extends Model
         'shipping_service',
         'shipping_fee',
         'shipping_etd',
+        'tracking_number',
+        'shipped_at',
         'buyer_postal_code',
         'buyer_latitude',
         'buyer_longitude',
@@ -48,6 +50,7 @@ class Order extends Model
             'shipping_fee' => 'decimal:2',
             'buyer_latitude' => 'float',
             'buyer_longitude' => 'float',
+            'shipped_at' => 'datetime',
             'rating' => 'integer',
             'reviewed_at' => 'datetime',
         ];
@@ -155,6 +158,46 @@ class Order extends Model
         }
 
         return $parts[0] . ' ' . strtoupper(substr($parts[1], 0, 1)) . '.';
+    }
+
+    public function buyerWhatsappUrl(?string $message = null): ?string
+    {
+        if (empty($this->buyer_phone)) {
+            return null;
+        }
+
+        $clean = preg_replace('/[^0-9]/', '', $this->buyer_phone);
+        if (str_starts_with($clean, '0')) {
+            $clean = '62' . substr($clean, 1);
+        } elseif (str_starts_with($clean, '8')) {
+            $clean = '62' . $clean;
+        }
+
+        if (strlen($clean) < 9) {
+            return null;
+        }
+
+        return empty($message)
+            ? "https://wa.me/{$clean}"
+            : "https://wa.me/{$clean}?text=" . urlencode($message);
+    }
+
+    /**
+     * Label dan class badge untuk tampilan halaman Riwayat Pesanan pelanggan.
+     *
+     * @return array{label: string, class: string}
+     */
+    public function customerStatusMeta(): array
+    {
+        return match ($this->status) {
+            'pending' => ['label' => 'Menunggu Konfirmasi', 'class' => 'status-badge-pending'],
+            'paid' => ['label' => 'Sudah Dibayar', 'class' => 'status-badge-completed'],
+            'processing' => ['label' => ! empty($this->tracking_number) ? 'Dikirim / Diproses' : 'Diproses', 'class' => 'status-badge-processing'],
+            'shipped' => ['label' => 'Dikirim', 'class' => 'status-badge-shipped'],
+            'completed' => ['label' => 'Selesai', 'class' => 'status-badge-completed'],
+            'cancelled' => ['label' => 'Dibatalkan', 'class' => 'status-badge-cancelled'],
+            default => ['label' => ucfirst((string) $this->status), 'class' => 'status-badge-pending'],
+        };
     }
 }
 

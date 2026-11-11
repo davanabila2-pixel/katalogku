@@ -120,6 +120,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
         Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
         Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
+        Route::patch('orders/{order}/tracking', [AdminOrderController::class, 'updateTracking'])->name('orders.tracking');
     });
 });
 
